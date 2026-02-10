@@ -46,7 +46,7 @@ const navigationItems = [
   { name: 'Promessa', href: '/pillars/promise', icon: Star, pillar: 'promise' },
   { name: 'Posicionamento', href: '/pillars/positioning', icon: Crosshair, pillar: 'positioning' },
   { name: 'Personalidade', href: '/pillars/personality', icon: Users, pillar: 'personality' },
-  { name: 'Universalidade', href: '/pillars/universality', icon: Globe, pillar: 'universality' },
+  { name: 'Universal', href: '/pillars/universality', icon: Globe, pillar: 'universality' },
   { type: 'divider', label: 'Gestão' },
   { name: 'Intelligence', href: '/intelligence', icon: BarChart3 },
   { name: 'Planejamento', href: '/planning', icon: ListTodo },
