@@ -712,6 +712,7 @@ async def generate_insights(request: AIInsightRequest, user: dict = Depends(get_
         "purpose": "Você é um especialista em propósito de marca. Com base nas habilidades, curiosidades, paixões e impactos fornecidos, gere uma declaração de propósito inspiradora e autêntica. Responda em português do Brasil.",
         "positioning": "Você é um especialista em posicionamento de marca. Com base no contexto competitivo fornecido, gere uma declaração de posicionamento clara e diferenciadora. Responda em português do Brasil.",
         "personality": "Você é um especialista em personalidade de marca e arquétipos. Com base nos atributos fornecidos, desenvolva uma narrativa de humanização da marca. Responda em português do Brasil.",
+        "valuation": "Você é um especialista em brand valuation e avaliação de marcas, com profundo conhecimento da metodologia Interbrand. Com base nos dados de Brand Strength, Role of Brand Index e performance financeira fornecidos, gere recomendações estratégicas para aumentar o valor da marca. Foque em ações específicas para melhorar os fatores mais fracos e capitalizar nos pontos fortes. Responda em português do Brasil de forma clara e acionável.",
         "default": "Você é um especialista em branding e estratégia de marca. Analise o contexto fornecido e gere insights acionáveis. Responda em português do Brasil."
     }
     
