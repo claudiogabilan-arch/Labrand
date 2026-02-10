@@ -111,9 +111,24 @@ LaBrand é uma plataforma completa de gestão de marca (Brand OS) que permite di
 
 ### Gestão
 - [x] Intelligence Dashboard (métricas MOCK)
-- [x] Planejamento & Execução (Kanban)
+- [x] Planejamento & Execução (Kanban interno)
 - [x] Scorecard & Decisões
 - [x] Narrativas e História da Marca
+- [x] Relatórios (página adicionada)
+- [x] Configurações (página adicionada)
+- [x] **Brand Valuation** (metodologia Interbrand) ✅ NOVO
+
+### Brand Valuation (Avaliação de Marca)
+- [x] Análise Financeira (Receita, Lucro Operacional, Margem, Custo de Capital)
+- [x] Role of Brand Index (RBI) - slider 0-100%
+- [x] Brand Strength Score (10 fatores Interbrand)
+  - Clareza, Comprometimento, Governança, Responsividade
+  - Autenticidade, Relevância, Diferenciação, Consistência
+  - Presença, Engajamento
+- [x] Cálculo automático do Valor da Marca
+- [x] Categorias P/E (Overperformer/Underperformer Consistente/Inconsistente)
+- [x] Geração de recomendações estratégicas com IA
+- [x] Autosave de dados
 
 ### Interface
 - [x] Sidebar colapsável
@@ -181,6 +196,7 @@ LaBrand é uma plataforma completa de gestão de marca (Brand OS) que permite di
 
 ### Pilares
 - `GET/PUT /api/brands/{id}/pillars/{pillar_name}` - CRUD de pilares
+  - Pilares: start, values, purpose, promise, positioning, personality, universality, **valuation**
 
 ### Tarefas
 - `GET/POST /api/brands/{id}/tasks` - Listar/Criar
@@ -202,16 +218,32 @@ LaBrand é uma plataforma completa de gestão de marca (Brand OS) que permite di
 ## Credenciais de Teste
 
 ```
-Email: teste@labrand.com
-Senha: senha123
+Email: demo@labrand.com
+Senha: demo123
 Role: estrategista
+Marca de teste: Minha Marca Demo (brand_92bcc15a44fb)
 ```
 
 ---
 
 ## Próximos Passos
 
-1. Implementar integração real com Google APIs
-2. Adicionar sistema de permissões cliente/estrategista
-3. Criar exportação de relatórios em PDF
-4. Integrar com ferramentas de gestão (Monday/Trello)
+1. ~~Implementar Brand Valuation~~ ✅ Concluído
+2. Implementar integração real com Google APIs (Analytics, Search Console, Drive)
+3. Adicionar sistema de permissões cliente/estrategista
+4. Criar exportação de relatórios em PDF
+5. Módulo de Planejamento interno (sem Monday/Trello - por escolha do usuário)
+
+---
+
+## Changelog
+
+### 2026-02-10
+- ✅ Adicionada funcionalidade de **Brand Valuation** (Avaliação de Marca)
+  - Página frontend com 4 tabs
+  - Endpoints backend GET/PUT /api/brands/{id}/pillars/valuation
+  - Integração com IA para recomendações estratégicas
+  - Metodologia Interbrand completa implementada
+- ✅ Corrigida navegação para incluir "Avaliação de Marca" no menu lateral
+- ✅ Adicionada rota /valuation no App.js
+- ✅ Testes completos passando (100% backend, 100% frontend)
