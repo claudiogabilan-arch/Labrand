@@ -1,34 +1,42 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+/* LaBrand - Brand OS Custom Styles */
+
+/* Remove default App header styles */
+.App {
+  min-height: 100vh;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+/* Focus visible for accessibility */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
 }
 
-.App-link {
-    color: #61dafb;
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+/* Custom selection color */
+::selection {
+  background-color: hsl(var(--primary) / 0.2);
+  color: hsl(var(--primary));
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }
