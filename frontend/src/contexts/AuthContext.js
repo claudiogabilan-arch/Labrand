@@ -86,6 +86,23 @@ export const AuthProvider = ({ children }) => {
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
+  // Permission helpers
+  const isEstrategista = user?.role === 'estrategista';
+  const isCliente = user?.role === 'cliente';
+  
+  const canEdit = (resource) => {
+    if (isEstrategista) return true;
+    // Cliente só pode visualizar
+    return false;
+  };
+
+  const canAccess = (page) => {
+    if (isEstrategista) return true;
+    // Páginas permitidas para cliente
+    const clientPages = ['/dashboard', '/intelligence', '/narratives', '/reports'];
+    return clientPages.some(p => page.startsWith(p));
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -97,7 +114,11 @@ export const AuthProvider = ({ children }) => {
       processOAuthSession,
       logout,
       getAuthHeaders,
-      checkAuth
+      checkAuth,
+      isEstrategista,
+      isCliente,
+      canEdit,
+      canAccess
     }}>
       {children}
     </AuthContext.Provider>

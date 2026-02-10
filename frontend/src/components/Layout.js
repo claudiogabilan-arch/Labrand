@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Progress } from './ui/progress';
+import { Badge } from './ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,11 +62,18 @@ const navigationItems = [
 export const Sidebar = ({ collapsed, setCollapsed }) => {
   const location = useLocation();
   const { metrics } = useBrand();
+  const { isCliente, canAccess } = useAuth();
 
   const getPillarProgress = (pillar) => {
     if (!metrics?.pillars) return 0;
     return metrics.pillars[pillar] || 0;
   };
+
+  // Filter navigation items based on user role
+  const filteredNavItems = navigationItems.filter(item => {
+    if (item.type === 'divider') return true;
+    return !isCliente || canAccess(item.href);
+  });
 
   return (
     <aside
@@ -100,7 +108,7 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
         {/* Navigation */}
         <ScrollArea className="flex-1 py-4">
           <nav className="px-2 space-y-1">
-            {navigationItems.map((item, index) => {
+            {filteredNavItems.map((item, index) => {
               if (item.type === 'divider') {
                 return (
                   <div key={index} className={`pt-4 pb-2 ${collapsed ? 'hidden' : ''}`}>
@@ -149,7 +157,7 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
 };
 
 export const Header = ({ collapsed }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, isEstrategista } = useAuth();
   const { currentBrand, brands, setCurrentBrand } = useBrand();
   const navigate = useNavigate();
 
@@ -221,9 +229,9 @@ export const Header = ({ collapsed }) => {
               <div className="px-2 py-1.5">
                 <p className="text-sm font-medium">{user?.name}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
-                <p className="text-xs text-muted-foreground capitalize mt-1">
+                <Badge variant={isEstrategista ? "default" : "secondary"} className="mt-1 text-xs">
                   {user?.role === 'estrategista' ? 'Estrategista' : 'Cliente'}
-                </p>
+                </Badge>
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/settings')} data-testid="settings-btn">
