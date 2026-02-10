@@ -1,52 +1,231 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { Toaster } from "sonner";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { BrandProvider } from "./contexts/BrandContext";
+import { MainLayout } from "./components/Layout";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AuthCallback } from "./components/AuthCallback";
+import LoginPage from "./components/LoginPage";
+import Dashboard from "./pages/Dashboard";
+import NewBrand from "./pages/NewBrand";
+import PillarStart from "./pages/PillarStart";
+import PillarValues from "./pages/PillarValues";
+import PillarPurpose from "./pages/PillarPurpose";
+import PillarPromise from "./pages/PillarPromise";
+import PillarPositioning from "./pages/PillarPositioning";
+import PillarPersonality from "./pages/PillarPersonality";
+import PillarUniversality from "./pages/PillarUniversality";
+import Planning from "./pages/Planning";
+import Scorecard from "./pages/Scorecard";
+import Narratives from "./pages/Narratives";
+import Intelligence from "./pages/Intelligence";
+import "./App.css";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+// Router wrapper to handle auth callback
+function AppRouter() {
+  const location = useLocation();
+  
+  // Check URL fragment for session_id (OAuth callback)
+  if (location.hash?.includes('session_id=')) {
+    return <AuthCallback />;
+  }
 
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <Dashboard />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/brands/new"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <NewBrand />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pillars/start"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <PillarStart />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pillars/values"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <PillarValues />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pillars/purpose"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <PillarPurpose />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pillars/promise"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <PillarPromise />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pillars/positioning"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <PillarPositioning />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pillars/personality"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <PillarPersonality />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pillars/universality"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <PillarUniversality />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/intelligence"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <Intelligence />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/planning"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <Planning />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/scorecard"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <Scorecard />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/narratives"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <Narratives />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <div className="text-center py-12">
+                  <h1 className="font-heading text-2xl font-bold">Configurações</h1>
+                  <p className="text-muted-foreground mt-2">Em desenvolvimento</p>
+                </div>
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
   );
-};
+}
 
 function App() {
   return (
     <div className="App">
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
+        <AuthProvider>
+          <AppRouter />
+        </AuthProvider>
       </BrowserRouter>
+      <Toaster 
+        position="bottom-right" 
+        richColors 
+        closeButton
+        toastOptions={{
+          className: 'font-sans'
+        }}
+      />
     </div>
   );
 }
