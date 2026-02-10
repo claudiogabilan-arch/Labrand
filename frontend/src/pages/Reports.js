@@ -22,11 +22,12 @@ import {
   CheckCircle2,
   Clock,
   FileSpreadsheet,
-  FilePdf,
+  File,
   Mail,
   Loader2,
   Eye,
-  Share2
+  Share2,
+  Plus
 } from 'lucide-react';
 
 export const Reports = () => {
