@@ -32,7 +32,8 @@ import {
   LogOut,
   Plus,
   Building2,
-  Menu
+  Menu,
+  FileText
 } from 'lucide-react';
 
 const navigationItems = [
@@ -50,6 +51,9 @@ const navigationItems = [
   { name: 'Planejamento', href: '/planning', icon: ListTodo },
   { name: 'Decisões', href: '/scorecard', icon: ClipboardCheck },
   { name: 'Narrativas', href: '/narratives', icon: BookOpen },
+  { name: 'Relatórios', href: '/reports', icon: FileText },
+  { type: 'divider', label: 'Sistema' },
+  { name: 'Configurações', href: '/settings', icon: Settings },
 ];
 
 export const Sidebar = ({ collapsed, setCollapsed }) => {
