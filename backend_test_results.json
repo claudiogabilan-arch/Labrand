@@ -1,0 +1,88 @@
+{
+  "summary": {
+    "total_tests": 13,
+    "passed_tests": 13,
+    "success_rate": 100.0,
+    "timestamp": "2026-02-10T20:47:43.487124"
+  },
+  "test_results": [
+    {
+      "test": "Root API Endpoint",
+      "success": true,
+      "details": "Status: 200, Response: {\n  \"message\": \"LaBrand - Brand OS API\",\n  \"version\": \"1.0.0\"\n}...",
+      "timestamp": "2026-02-10T20:47:17.637566"
+    },
+    {
+      "test": "User Registration",
+      "success": true,
+      "details": "Status: 200, Response: {\n  \"user_id\": \"user_8b7ceb98c926\",\n  \"email\": \"teste_204717@labrand.com\",\n  \"name\": \"Teste User\",\n  \"role\": \"estrategista\",\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoidXNlcl84Yj...",
+      "timestamp": "2026-02-10T20:47:17.939075"
+    },
+    {
+      "test": "Get Current User",
+      "success": true,
+      "details": "Status: 200, Response: {\n  \"user_id\": \"user_8b7ceb98c926\",\n  \"email\": \"teste_204717@labrand.com\",\n  \"name\": \"Teste User\",\n  \"role\": \"estrategista\",\n  \"picture\": null\n}...",
+      "timestamp": "2026-02-10T20:47:17.978102"
+    },
+    {
+      "test": "Create Brand",
+      "success": true,
+      "details": "Status: 200, Response: {\n  \"brand_id\": \"brand_249071065084\",\n  \"owner_id\": \"user_8b7ceb98c926\",\n  \"name\": \"Marca Teste 204717\",\n  \"description\": \"Uma marca de teste para valida\\u00e7\\u00e3o da API\",\n  \"industry\": \"Tecnologi...",
+      "timestamp": "2026-02-10T20:47:18.055780"
+    },
+    {
+      "test": "Get Brands List",
+      "success": true,
+      "details": "Status: 200, Response: [\n  {\n    \"brand_id\": \"brand_249071065084\",\n    \"owner_id\": \"user_8b7ceb98c926\",\n    \"name\": \"Marca Teste 204717\",\n    \"description\": \"Uma marca de teste para valida\\u00e7\\u00e3o da API\",\n    \"industr...",
+      "timestamp": "2026-02-10T20:47:18.093253"
+    },
+    {
+      "test": "Get Brand Metrics",
+      "success": true,
+      "details": "Status: 200, Response: {\n  \"pillars\": {\n    \"start\": 0,\n    \"values\": 0,\n    \"purpose\": 0,\n    \"promise\": 0,\n    \"positioning\": 0,\n    \"personality\": 0,\n    \"universality\": 0\n  },\n  \"tasks\": {\n    \"total\": 0,\n    \"backlog\":...",
+      "timestamp": "2026-02-10T20:47:18.141417"
+    },
+    {
+      "test": "Get Pillar Start",
+      "success": true,
+      "details": "Status: 200, Response: {}...",
+      "timestamp": "2026-02-10T20:47:18.177094"
+    },
+    {
+      "test": "Update Pillar Start",
+      "success": true,
+      "details": "Status: 200, Response: {\n  \"desafio\": \"Teste de desafio da marca\",\n  \"background\": \"Background da marca teste\",\n  \"urgencia\": \"Alta urg\\u00eancia para posicionamento\",\n  \"brand_id\": \"brand_249071065084\",\n  \"updated_at\": \"20...",
+      "timestamp": "2026-02-10T20:47:18.226968"
+    },
+    {
+      "test": "Get Tasks",
+      "success": true,
+      "details": "Status: 200, Response: []...",
+      "timestamp": "2026-02-10T20:47:18.265665"
+    },
+    {
+      "test": "Create Task",
+      "success": true,
+      "details": "Status: 200, Response: {\n  \"task_id\": \"task_931e31cf5619\",\n  \"brand_id\": \"brand_249071065084\",\n  \"title\": \"Tarefa de teste\",\n  \"description\": \"Descri\\u00e7\\u00e3o da tarefa de teste\",\n  \"status\": \"backlog\",\n  \"priority\": \"h...",
+      "timestamp": "2026-02-10T20:47:18.363097"
+    },
+    {
+      "test": "Get Decisions",
+      "success": true,
+      "details": "Status: 200, Response: []...",
+      "timestamp": "2026-02-10T20:47:18.397207"
+    },
+    {
+      "test": "Create Decision",
+      "success": true,
+      "details": "Status: 200, Response: {\n  \"decision_id\": \"decision_549ece1d5598\",\n  \"brand_id\": \"brand_249071065084\",\n  \"title\": \"Decis\\u00e3o de teste\",\n  \"contexto\": \"Contexto da decis\\u00e3o de teste\",\n  \"hipoteses\": [\n    \"Hip\\u00f3te...",
+      "timestamp": "2026-02-10T20:47:18.445931"
+    },
+    {
+      "test": "Generate AI Insights",
+      "success": true,
+      "details": "Status: 200, Response: {\n  \"insight\": \"Para conseguir gerar insights estrat\\u00e9gicos realmente acion\\u00e1veis, eu preciso de um pouco mais de insumo (no momento, voc\\u00ea s\\u00f3 trouxe \\u201cMarca Teste\\u201d e um cont...",
+      "timestamp": "2026-02-10T20:47:43.486150"
+    }
+  ]
+}
