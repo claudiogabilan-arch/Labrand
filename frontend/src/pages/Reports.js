@@ -169,7 +169,7 @@ export const Reports = () => {
             <SelectContent>
               <SelectItem value="pdf">
                 <div className="flex items-center gap-2">
-                  <FilePdf className="h-4 w-4 text-rose-500" />
+                  <File className="h-4 w-4 text-rose-500" />
                   PDF
                 </div>
               </SelectItem>
