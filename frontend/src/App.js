@@ -19,6 +19,8 @@ import Planning from "./pages/Planning";
 import Scorecard from "./pages/Scorecard";
 import Narratives from "./pages/Narratives";
 import Intelligence from "./pages/Intelligence";
+import Settings from "./pages/Settings";
+import Reports from "./pages/Reports";
 import "./App.css";
 
 // Router wrapper to handle auth callback
