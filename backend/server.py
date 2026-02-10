@@ -571,6 +571,15 @@ async def get_pillar_universality(brand_id: str, user: dict = Depends(get_curren
 async def update_pillar_universality(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
     return await upsert_pillar("pillar_universality", brand_id, data, user)
 
+# Valuation Pillar
+@api_router.get("/brands/{brand_id}/pillars/valuation")
+async def get_pillar_valuation(brand_id: str, user: dict = Depends(get_current_user)):
+    return await get_pillar("pillar_valuation", brand_id, user) or {}
+
+@api_router.put("/brands/{brand_id}/pillars/valuation")
+async def update_pillar_valuation(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
+    return await upsert_pillar("pillar_valuation", brand_id, data, user)
+
 # ==================== TASKS ROUTES ====================
 
 @api_router.get("/brands/{brand_id}/tasks")
