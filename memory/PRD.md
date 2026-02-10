@@ -252,3 +252,8 @@ Marca de teste: Minha Marca Demo (brand_92bcc15a44fb)
   - Estrategista: acesso total
   - Cliente: acesso apenas a Dashboard, Intelligence, Narrativas, Relatórios
   - Badge de role no header do usuário
+- ✅ Implementada integração com Google APIs (Analytics, Search Console, Drive)
+  - OAuth 2.0 configurado com credenciais do projeto GG26
+  - Nova tab "Integrações" em Configurações
+  - Endpoints para conectar/desconectar Google
+  - Endpoints para buscar dados de Analytics, Search Console e Drive
