@@ -31,7 +31,7 @@ const pillarInfo = [
   { key: 'promise', name: 'Promessa', icon: Star, color: 'bg-purple-500', href: '/pillars/promise', description: 'Promessa da marca' },
   { key: 'positioning', name: 'Posicionamento', icon: Crosshair, color: 'bg-emerald-500', href: '/pillars/positioning', description: 'Posição no mercado' },
   { key: 'personality', name: 'Personalidade', icon: Users, color: 'bg-orange-500', href: '/pillars/personality', description: 'Arquétipos e atributos' },
-  { key: 'universality', name: 'Universalidade', icon: Globe, color: 'bg-cyan-500', href: '/pillars/universality', description: 'Acessibilidade e inclusão' },
+  { key: 'universality', name: 'Universal', icon: Globe, color: 'bg-cyan-500', href: '/pillars/universality', description: 'Acessibilidade e inclusão' },
 ];
 
 export const Dashboard = () => {
