@@ -49,58 +49,15 @@ export const LoginPage = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Branding */}
-      <div 
-        className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
-        style={{
-          backgroundImage: 'url(https://images.unsplash.com/photo-1770368437389-86bde15fcb33?crop=entropy&cs=srgb&fm=jpg&q=85)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      >
-        <div className="absolute inset-0 bg-primary/80" />
-        <div className="relative z-10 flex flex-col justify-between p-12 text-primary-foreground">
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <span className="font-bold text-xl">LB</span>
-              </div>
-              <span className="font-heading font-bold text-2xl">LaBrand</span>
+      <div className="hidden lg:flex lg:w-1/2 bg-black items-center justify-center">
+        <div className="text-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-20 h-20 rounded-2xl bg-white/10 flex items-center justify-center">
+              <span className="font-bold text-3xl text-white">LB</span>
             </div>
-            <p className="text-lg text-primary-foreground/80">Brand OS</p>
+            <h1 className="font-heading font-bold text-5xl text-white tracking-tight">LaBrand</h1>
+            <p className="text-white/60 text-sm mt-8">desenvolvido por Claudio Gabilan</p>
           </div>
-          
-          <div className="space-y-8">
-            <blockquote className="font-editorial text-2xl italic leading-relaxed">
-              "Uma marca forte é construída com propósito, consistência e conexão genuína com seu público."
-            </blockquote>
-            <div className="space-y-4">
-              <h2 className="font-heading text-xl font-semibold">
-                Gerencie sua marca de ponta a ponta
-              </h2>
-              <ul className="space-y-2 text-primary-foreground/80">
-                <li className="flex items-center gap-2">
-                  <ArrowRight className="h-4 w-4" />
-                  Diagnóstico e estratégia de marca
-                </li>
-                <li className="flex items-center gap-2">
-                  <ArrowRight className="h-4 w-4" />
-                  Pilares de branding estruturados
-                </li>
-                <li className="flex items-center gap-2">
-                  <ArrowRight className="h-4 w-4" />
-                  Insights com inteligência artificial
-                </li>
-                <li className="flex items-center gap-2">
-                  <ArrowRight className="h-4 w-4" />
-                  Gestão de tarefas e decisões
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <p className="text-sm text-primary-foreground/60">
-            © 2024 LaBrand. Todos os direitos reservados.
-          </p>
         </div>
       </div>
 
