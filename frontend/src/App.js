@@ -192,15 +192,24 @@ function AppRouter() {
         }
       />
       <Route
+        path="/reports"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <Reports />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/settings"
         element={
           <ProtectedRoute>
             <BrandProvider>
               <MainLayout>
-                <div className="text-center py-12">
-                  <h1 className="font-heading text-2xl font-bold">Configurações</h1>
-                  <p className="text-muted-foreground mt-2">Em desenvolvimento</p>
-                </div>
+                <Settings />
               </MainLayout>
             </BrandProvider>
           </ProtectedRoute>
