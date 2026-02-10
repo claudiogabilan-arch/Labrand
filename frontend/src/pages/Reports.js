@@ -279,7 +279,7 @@ export const Reports = () => {
             <CardContent>
               <div className="flex flex-wrap gap-3">
                 <Button onClick={() => handleExport('pdf')} disabled={isGenerating} data-testid="export-pdf-btn">
-                  {isGenerating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FilePdf className="h-4 w-4 mr-2 text-rose-500" />}
+                  {isGenerating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <File className="h-4 w-4 mr-2 text-rose-500" />}
                   Exportar PDF
                 </Button>
                 <Button variant="outline" onClick={() => handleExport('xlsx')} disabled={isGenerating} data-testid="export-excel-btn">
