@@ -393,7 +393,7 @@ export const Reports = () => {
                   <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-3">
                       {report.format === 'PDF' ? (
-                        <FilePdf className="h-8 w-8 text-rose-500" />
+                        <File className="h-8 w-8 text-rose-500" />
                       ) : (
                         <FileSpreadsheet className="h-8 w-8 text-emerald-500" />
                       )}
