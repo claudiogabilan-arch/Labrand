@@ -247,3 +247,8 @@ Marca de teste: Minha Marca Demo (brand_92bcc15a44fb)
 - ✅ Corrigida navegação para incluir "Avaliação de Marca" no menu lateral
 - ✅ Adicionada rota /valuation no App.js
 - ✅ Testes completos passando (100% backend, 100% frontend)
+- ✅ Renomeado "Universalidade" para "Universal" no menu e dashboard
+- ✅ Implementado sistema de permissões Estrategista/Cliente
+  - Estrategista: acesso total
+  - Cliente: acesso apenas a Dashboard, Intelligence, Narrativas, Relatórios
+  - Badge de role no header do usuário
