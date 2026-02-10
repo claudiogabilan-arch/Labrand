@@ -21,6 +21,7 @@ import Narratives from "./pages/Narratives";
 import Intelligence from "./pages/Intelligence";
 import Settings from "./pages/Settings";
 import Reports from "./pages/Reports";
+import Valuation from "./pages/Valuation";
 import "./App.css";
 
 // Router wrapper to handle auth callback
@@ -210,6 +211,18 @@ function AppRouter() {
             <BrandProvider>
               <MainLayout>
                 <Settings />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/valuation"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <Valuation />
               </MainLayout>
             </BrandProvider>
           </ProtectedRoute>

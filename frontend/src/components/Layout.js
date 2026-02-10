@@ -33,7 +33,8 @@ import {
   Plus,
   Building2,
   Menu,
-  FileText
+  FileText,
+  DollarSign
 } from 'lucide-react';
 
 const navigationItems = [
@@ -52,6 +53,7 @@ const navigationItems = [
   { name: 'Decisões', href: '/scorecard', icon: ClipboardCheck },
   { name: 'Narrativas', href: '/narratives', icon: BookOpen },
   { name: 'Relatórios', href: '/reports', icon: FileText },
+  { name: 'Avaliação de Marca', href: '/valuation', icon: DollarSign },
   { type: 'divider', label: 'Sistema' },
   { name: 'Configurações', href: '/settings', icon: Settings },
 ];
