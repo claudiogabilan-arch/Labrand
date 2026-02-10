@@ -779,6 +779,237 @@ async def get_metrics(brand_id: str, user: dict = Depends(get_current_user)):
 async def root():
     return {"message": "LaBrand - Brand OS API", "version": "1.0.0"}
 
+# ==================== GOOGLE INTEGRATION ====================
+
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = "https://branding-sys.preview.emergentagent.com/api/auth/google/callback"
+GOOGLE_SCOPES = [
+    "openid",
+    "email",
+    "profile",
+    "https://www.googleapis.com/auth/analytics.readonly",
+    "https://www.googleapis.com/auth/webmasters.readonly",
+    "https://www.googleapis.com/auth/drive.readonly"
+]
+
+@api_router.get("/auth/google/init")
+async def google_auth_init(brand_id: str, user: dict = Depends(get_current_user)):
+    """Initiate Google OAuth flow for connecting Google services"""
+    from urllib.parse import urlencode
+    
+    state = f"{user['user_id']}:{brand_id}"
+    
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "response_type": "code",
+        "scope": " ".join(GOOGLE_SCOPES),
+        "access_type": "offline",
+        "prompt": "consent",
+        "state": state
+    }
+    
+    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
+    return {"auth_url": auth_url}
+
+@api_router.get("/auth/google/callback")
+async def google_auth_callback(code: str = None, state: str = None, error: str = None):
+    """Handle Google OAuth callback"""
+    from fastapi.responses import RedirectResponse
+    
+    if error:
+        return RedirectResponse(url=f"https://branding-sys.preview.emergentagent.com/settings?error={error}")
+    
+    if not code or not state:
+        return RedirectResponse(url="https://branding-sys.preview.emergentagent.com/settings?error=missing_params")
+    
+    try:
+        user_id, brand_id = state.split(":")
+    except:
+        return RedirectResponse(url="https://branding-sys.preview.emergentagent.com/settings?error=invalid_state")
+    
+    # Exchange code for tokens
+    async with httpx.AsyncClient() as client:
+        token_response = await client.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "client_id": GOOGLE_CLIENT_ID,
+                "client_secret": GOOGLE_CLIENT_SECRET,
+                "code": code,
+                "grant_type": "authorization_code",
+                "redirect_uri": GOOGLE_REDIRECT_URI
+            }
+        )
+        
+        if token_response.status_code != 200:
+            logger.error(f"Token exchange failed: {token_response.text}")
+            return RedirectResponse(url="https://branding-sys.preview.emergentagent.com/settings?error=token_exchange_failed")
+        
+        tokens = token_response.json()
+    
+    # Store tokens in database
+    await db.google_connections.update_one(
+        {"user_id": user_id, "brand_id": brand_id},
+        {"$set": {
+            "user_id": user_id,
+            "brand_id": brand_id,
+            "access_token": tokens.get("access_token"),
+            "refresh_token": tokens.get("refresh_token"),
+            "expires_at": (datetime.now(timezone.utc) + timedelta(seconds=tokens.get("expires_in", 3600))).isoformat(),
+            "connected_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    
+    return RedirectResponse(url="https://branding-sys.preview.emergentagent.com/settings?google=connected")
+
+async def get_valid_google_token(user_id: str, brand_id: str) -> str:
+    """Get valid access token, refreshing if needed"""
+    connection = await db.google_connections.find_one(
+        {"user_id": user_id, "brand_id": brand_id},
+        {"_id": 0}
+    )
+    
+    if not connection:
+        raise HTTPException(status_code=400, detail="Google não conectado")
+    
+    expires_at = datetime.fromisoformat(connection["expires_at"])
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    
+    # Refresh if expired
+    if expires_at <= datetime.now(timezone.utc):
+        async with httpx.AsyncClient() as client:
+            refresh_response = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "client_id": GOOGLE_CLIENT_ID,
+                    "client_secret": GOOGLE_CLIENT_SECRET,
+                    "refresh_token": connection["refresh_token"],
+                    "grant_type": "refresh_token"
+                }
+            )
+            
+            if refresh_response.status_code != 200:
+                raise HTTPException(status_code=401, detail="Token refresh falhou")
+            
+            tokens = refresh_response.json()
+            
+            await db.google_connections.update_one(
+                {"user_id": user_id, "brand_id": brand_id},
+                {"$set": {
+                    "access_token": tokens.get("access_token"),
+                    "expires_at": (datetime.now(timezone.utc) + timedelta(seconds=tokens.get("expires_in", 3600))).isoformat()
+                }}
+            )
+            
+            return tokens.get("access_token")
+    
+    return connection["access_token"]
+
+@api_router.get("/brands/{brand_id}/google/status")
+async def get_google_status(brand_id: str, user: dict = Depends(get_current_user)):
+    """Check if Google is connected for this brand"""
+    connection = await db.google_connections.find_one(
+        {"user_id": user["user_id"], "brand_id": brand_id},
+        {"_id": 0}
+    )
+    
+    return {
+        "connected": connection is not None,
+        "connected_at": connection.get("connected_at") if connection else None
+    }
+
+@api_router.delete("/brands/{brand_id}/google/disconnect")
+async def disconnect_google(brand_id: str, user: dict = Depends(get_current_user)):
+    """Disconnect Google from this brand"""
+    await db.google_connections.delete_one({"user_id": user["user_id"], "brand_id": brand_id})
+    return {"message": "Google desconectado"}
+
+@api_router.get("/brands/{brand_id}/google/analytics")
+async def get_google_analytics(brand_id: str, user: dict = Depends(get_current_user)):
+    """Fetch Google Analytics data"""
+    try:
+        token = await get_valid_google_token(user["user_id"], brand_id)
+    except HTTPException:
+        return {"error": "Google não conectado", "data": None}
+    
+    async with httpx.AsyncClient() as client:
+        # Get list of GA4 properties
+        props_response = await client.get(
+            "https://analyticsadmin.googleapis.com/v1beta/accountSummaries",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        
+        if props_response.status_code != 200:
+            return {"error": "Falha ao buscar propriedades", "data": None}
+        
+        properties = props_response.json().get("accountSummaries", [])
+        
+        return {
+            "connected": True,
+            "properties": properties,
+            "message": "Dados do Analytics obtidos com sucesso"
+        }
+
+@api_router.get("/brands/{brand_id}/google/search-console")
+async def get_search_console(brand_id: str, user: dict = Depends(get_current_user)):
+    """Fetch Google Search Console data"""
+    try:
+        token = await get_valid_google_token(user["user_id"], brand_id)
+    except HTTPException:
+        return {"error": "Google não conectado", "data": None}
+    
+    async with httpx.AsyncClient() as client:
+        # Get list of sites
+        sites_response = await client.get(
+            "https://www.googleapis.com/webmasters/v3/sites",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        
+        if sites_response.status_code != 200:
+            return {"error": "Falha ao buscar sites", "data": None}
+        
+        sites = sites_response.json().get("siteEntry", [])
+        
+        return {
+            "connected": True,
+            "sites": sites,
+            "message": "Dados do Search Console obtidos com sucesso"
+        }
+
+@api_router.get("/brands/{brand_id}/google/drive")
+async def get_google_drive(brand_id: str, user: dict = Depends(get_current_user)):
+    """Fetch Google Drive files"""
+    try:
+        token = await get_valid_google_token(user["user_id"], brand_id)
+    except HTTPException:
+        return {"error": "Google não conectado", "data": None}
+    
+    async with httpx.AsyncClient() as client:
+        # Get recent files
+        files_response = await client.get(
+            "https://www.googleapis.com/drive/v3/files",
+            params={
+                "pageSize": 20,
+                "fields": "files(id,name,mimeType,modifiedTime,webViewLink)",
+                "orderBy": "modifiedTime desc"
+            },
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        
+        if files_response.status_code != 200:
+            return {"error": "Falha ao buscar arquivos", "data": None}
+        
+        files = files_response.json().get("files", [])
+        
+        return {
+            "connected": True,
+            "files": files,
+            "message": "Arquivos do Drive obtidos com sucesso"
+        }
+
 # Include the router in the main app
 app.include_router(api_router)
 
