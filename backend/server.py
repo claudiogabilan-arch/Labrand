@@ -1193,15 +1193,15 @@ async def google_auth_callback(code: str = None, state: str = None, error: str =
     from fastapi.responses import RedirectResponse
     
     if error:
-        return RedirectResponse(url=f"https://branding-sys.preview.emergentagent.com/settings?error={error}")
+        return RedirectResponse(url=f"{FRONTEND_URL}/settings?error={error}")
     
     if not code or not state:
-        return RedirectResponse(url="https://branding-sys.preview.emergentagent.com/settings?error=missing_params")
+        return RedirectResponse(url=f"{FRONTEND_URL}/settings?error=missing_params")
     
     try:
         user_id, brand_id = state.split(":")
     except:
-        return RedirectResponse(url="https://branding-sys.preview.emergentagent.com/settings?error=invalid_state")
+        return RedirectResponse(url=f"{FRONTEND_URL}/settings?error=invalid_state")
     
     # Exchange code for tokens
     async with httpx.AsyncClient() as client:
@@ -1218,7 +1218,7 @@ async def google_auth_callback(code: str = None, state: str = None, error: str =
         
         if token_response.status_code != 200:
             logger.error(f"Token exchange failed: {token_response.text}")
-            return RedirectResponse(url="https://branding-sys.preview.emergentagent.com/settings?error=token_exchange_failed")
+            return RedirectResponse(url=f"{FRONTEND_URL}/settings?error=token_exchange_failed")
         
         tokens = token_response.json()
     
@@ -1236,7 +1236,7 @@ async def google_auth_callback(code: str = None, state: str = None, error: str =
         upsert=True
     )
     
-    return RedirectResponse(url="https://branding-sys.preview.emergentagent.com/settings?google=connected")
+    return RedirectResponse(url=f"{FRONTEND_URL}/settings?google=connected")
 
 async def get_valid_google_token(user_id: str, brand_id: str) -> str:
     """Get valid access token, refreshing if needed"""
