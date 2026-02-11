@@ -733,36 +733,91 @@ async def update_narrative(brand_id: str, narrative_id: str, narrative_data: dic
 # ==================== AI INSIGHTS ROUTE ====================
 
 @api_router.post("/ai/insights")
-async def generate_insights(request: AIInsightRequest, user: dict = Depends(get_current_user)):
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
-    
-    api_key = os.environ.get("EMERGENT_LLM_KEY")
-    if not api_key:
-        raise HTTPException(status_code=500, detail="Chave de API não configurada")
-    
-    system_prompts = {
-        "values": "Você é um especialista em branding e estratégia de marca. Analise os valores e necessidades fornecidos e gere insights estratégicos sobre como a marca pode conectar seus valores com as necessidades dos públicos. Responda em português do Brasil de forma clara e acionável.",
-        "purpose": "Você é um especialista em propósito de marca. Com base nas habilidades, curiosidades, paixões e impactos fornecidos, gere uma declaração de propósito inspiradora e autêntica. Responda em português do Brasil.",
-        "positioning": "Você é um especialista em posicionamento de marca. Com base no contexto competitivo fornecido, gere uma declaração de posicionamento clara e diferenciadora. Responda em português do Brasil.",
-        "personality": "Você é um especialista em personalidade de marca e arquétipos. Com base nos atributos fornecidos, desenvolva uma narrativa de humanização da marca. Responda em português do Brasil.",
-        "valuation": "Você é um especialista em brand valuation e avaliação de marcas, com profundo conhecimento da metodologia Interbrand. Com base nos dados de Brand Strength, Role of Brand Index e performance financeira fornecidos, gere recomendações estratégicas para aumentar o valor da marca. Foque em ações específicas para melhorar os fatores mais fracos e capitalizar nos pontos fortes. Responda em português do Brasil de forma clara e acionável.",
-        "default": "Você é um especialista em branding e estratégia de marca. Analise o contexto fornecido e gere insights acionáveis. Responda em português do Brasil."
-    }
-    
-    system_message = system_prompts.get(request.pillar, system_prompts["default"])
-    
-    chat = LlmChat(
-        api_key=api_key,
-        session_id=f"labrand_{uuid.uuid4().hex[:8]}",
-        system_message=system_message
-    ).with_model("openai", "gpt-5.2")
-    
-    prompt = f"Marca: {request.brand_name or 'Não especificada'}\n\nContexto:\n{request.context}"
-    
-    user_message = UserMessage(text=prompt)
-    response = await chat.send_message(user_message)
-    
-    return {"insight": response}
+async def generate_ai_insight(data: dict, user: dict = Depends(get_current_user)):
+    try:
+        from emergentintegrations.llm.chat import chat, LlmModel
+        
+        context = data.get("context", "")
+        pillar = data.get("pillar", "default")
+        brand_name = data.get("brand_name", "Marca")
+        
+        system_prompts = {
+            "values": "Você é um especialista em branding e estratégia de marca. Analise os valores e necessidades fornecidos e gere insights estratégicos sobre como a marca pode conectar seus valores com as necessidades dos públicos. Responda em português do Brasil de forma clara e acionável.",
+            "purpose": "Você é um especialista em propósito de marca. Com base nas habilidades, curiosidades, paixões e impactos fornecidos, gere uma declaração de propósito inspiradora e autêntica. Responda em português do Brasil.",
+            "positioning": "Você é um especialista em posicionamento de marca. Com base no contexto competitivo fornecido, gere uma declaração de posicionamento clara e diferenciadora. Responda em português do Brasil.",
+            "personality": "Você é um especialista em personalidade de marca e arquétipos de Jung. Com base nos atributos fornecidos, desenvolva uma narrativa de humanização da marca. Responda em português do Brasil.",
+            "valuation": "Você é um especialista em brand valuation e avaliação de marcas, com profundo conhecimento da metodologia Interbrand. Com base nos dados de Brand Strength, Role of Brand Index e performance financeira fornecidos, gere recomendações estratégicas para aumentar o valor da marca. Foque em ações específicas para melhorar os fatores mais fracos e capitalizar nos pontos fortes. Responda em português do Brasil de forma clara e acionável.",
+            "audience": "Você é um especialista em análise de audiência e marketing de influência. Analise o perfil da marca e sugira estratégias de engajamento. Responda em português do Brasil.",
+            "default": "Você é um especialista em branding e estratégia de marca. Analise o contexto fornecido e gere insights acionáveis. Responda em português do Brasil."
+        }
+        
+        system_prompt = system_prompts.get(pillar, system_prompts["default"])
+        
+        response = await chat(
+            api_key=os.environ.get("EMERGENT_LLM_KEY"),
+            model=LlmModel.GEMINI_2_0_FLASH,
+            system_prompt=system_prompt,
+            user_prompt=f"Marca: {brand_name}\n\nContexto:\n{context}\n\nGere insights estratégicos e acionáveis:"
+        )
+        
+        return {"insight": response}
+    except Exception as e:
+        logger.error(f"AI insight error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/ai/mentor")
+async def generate_mentor_insights(data: dict, user: dict = Depends(get_current_user)):
+    try:
+        from emergentintegrations.llm.chat import chat, LlmModel
+        
+        brand_id = data.get("brand_id")
+        brand_name = data.get("brand_name", "Marca")
+        industry = data.get("industry", "")
+        
+        # Fetch brand data
+        pillars_data = {}
+        for pillar in ['start', 'values', 'purpose', 'positioning', 'personality', 'valuation']:
+            pdata = await db[f"pillar_{pillar}"].find_one({"brand_id": brand_id}, {"_id": 0})
+            if pdata:
+                pillars_data[pillar] = pdata
+        
+        context_parts = [f"Marca: {brand_name}", f"Setor: {industry}"]
+        if 'purpose' in pillars_data:
+            context_parts.append(f"Propósito: {pillars_data['purpose'].get('declaracao_proposito', 'N/A')}")
+        if 'positioning' in pillars_data:
+            context_parts.append(f"Posicionamento: {pillars_data['positioning'].get('declaracao_posicionamento', 'N/A')}")
+        if 'personality' in pillars_data:
+            context_parts.append(f"Arquétipo: {pillars_data['personality'].get('arquetipo_principal', 'N/A')}")
+        if 'values' in pillars_data:
+            vals = pillars_data['values'].get('valores_marca', [])
+            if vals:
+                context_parts.append(f"Valores: {', '.join(vals[:5])}")
+        
+        context = "\n".join(context_parts)
+        
+        system_prompt = """Você é um mentor estratégico de marcas com expertise em branding, marketing, finanças e inovação.
+        
+Analise os dados da marca e forneça insights em 5 categorias:
+
+1. **🎯 Ação Imediata**: Uma ação prática que a marca pode fazer esta semana
+2. **📈 Oportunidade de Mercado**: Uma tendência ou oportunidade no setor
+3. **💡 Ideia de Produto/Serviço**: Sugestão de novo produto ou serviço alinhado à marca
+4. **⚠️ Ponto de Atenção**: Algo que a marca deve monitorar ou evitar
+5. **🚀 Visão de Futuro**: Uma recomendação estratégica para os próximos 6 meses
+
+Seja específico, prático e cite exemplos quando possível. Responda em português do Brasil."""
+
+        response = await chat(
+            api_key=os.environ.get("EMERGENT_LLM_KEY"),
+            model=LlmModel.GEMINI_2_0_FLASH,
+            system_prompt=system_prompt,
+            user_prompt=f"Dados da marca:\n{context}\n\nGere insights de mentor:"
+        )
+        
+        return {"insights": response}
+    except Exception as e:
+        logger.error(f"Mentor error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ==================== DASHBOARD METRICS ====================
 
