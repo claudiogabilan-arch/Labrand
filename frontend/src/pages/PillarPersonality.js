@@ -298,66 +298,164 @@ export const PillarPersonality = () => {
         </TabsList>
 
         <TabsContent value="arquetipos" className="space-y-6">
+          {/* Arquétipo Principal */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Biblioteca de Arquétipos</CardTitle>
-              <CardDescription>Selecione o arquétipo principal e secundário da marca</CardDescription>
+              <CardTitle className="text-lg">Arquétipo Principal</CardTitle>
+              <CardDescription>Selecione a classe e o arquétipo que melhor representa a essência da marca</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <Label className="mb-3 block">Arquétipo Principal</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {archetypes.map((arch) => {
-                      const Icon = arch.icon;
-                      const isSelected = data.arquetipo_principal === arch.id;
-                      return (
-                        <div
-                          key={arch.id}
-                          onClick={() => selectArchetype(arch.id, true)}
-                          className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                            isSelected ? 'border-primary bg-primary/5' : 'border-transparent bg-muted/50 hover:bg-muted'
-                          }`}
-                          data-testid={`archetype-primary-${arch.id}`}
-                        >
-                          <div className={`w-10 h-10 rounded-lg ${arch.color} flex items-center justify-center mb-2`}>
-                            <Icon className="h-5 w-5 text-white" />
-                          </div>
-                          <p className="font-medium text-sm">{arch.name}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{arch.desc}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div>
-                  <Label className="mb-3 block">Arquétipo Secundário (opcional)</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {archetypes.map((arch) => {
-                      const Icon = arch.icon;
-                      const isSelected = data.arquetipo_secundario === arch.id;
-                      const isPrimary = data.arquetipo_principal === arch.id;
-                      return (
-                        <div
-                          key={arch.id}
-                          onClick={() => !isPrimary && selectArchetype(arch.id, false)}
-                          className={`p-4 border-2 rounded-xl transition-all ${
-                            isPrimary ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
-                          } ${
-                            isSelected ? 'border-primary bg-primary/5' : 'border-transparent bg-muted/50 hover:bg-muted'
-                          }`}
-                          data-testid={`archetype-secondary-${arch.id}`}
-                        >
-                          <div className={`w-10 h-10 rounded-lg ${arch.color} flex items-center justify-center mb-2`}>
-                            <Icon className="h-5 w-5 text-white" />
-                          </div>
-                          <p className="font-medium text-sm">{arch.name}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+            <CardContent className="space-y-6">
+              {/* Classes */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {archetypeClasses.map((cls) => {
+                  const isSelected = data.classe_principal === cls.id;
+                  return (
+                    <div
+                      key={cls.id}
+                      onClick={() => {
+                        if (data.classe_principal !== cls.id) {
+                          setData(prev => ({ ...prev, classe_principal: cls.id, arquetipo_principal: '' }));
+                        }
+                      }}
+                      className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                        isSelected ? `${cls.borderColor} ${cls.bgLight}` : 'border-transparent bg-muted/50 hover:bg-muted'
+                      }`}
+                    >
+                      <div className={`w-full h-2 rounded-full ${cls.color} mb-3`} />
+                      <p className="font-bold">{cls.name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{cls.description}</p>
+                    </div>
+                  );
+                })}
               </div>
+
+              {/* Arquétipos da Classe Selecionada */}
+              {data.classe_principal && (
+                <div className="space-y-4">
+                  {(() => {
+                    const selectedClass = archetypeClasses.find(c => c.id === data.classe_principal);
+                    const groups = [...new Set(selectedClass.archetypes.map(a => a.group))];
+                    return groups.map(group => (
+                      <div key={group}>
+                        <Label className="text-sm text-muted-foreground mb-2 block">{group}</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedClass.archetypes.filter(a => a.group === group).map(arch => {
+                            const isSelected = data.arquetipo_principal === arch.id;
+                            return (
+                              <Badge
+                                key={arch.id}
+                                variant={isSelected ? "default" : "outline"}
+                                className={`cursor-pointer px-4 py-2 text-sm transition-all ${
+                                  isSelected ? `${selectedClass.color} text-white` : 'hover:bg-muted'
+                                }`}
+                                onClick={() => selectArchetype(selectedClass.id, arch.id, true)}
+                              >
+                                {isSelected && <Check className="h-3 w-3 mr-1" />}
+                                {arch.name}
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              )}
+
+              {/* Selected Summary */}
+              {data.arquetipo_principal && (
+                <div className={`p-4 rounded-lg ${archetypeClasses.find(c => c.id === data.classe_principal)?.bgLight}`}>
+                  <p className="text-sm font-medium">Selecionado:</p>
+                  <p className={`text-lg font-bold ${archetypeClasses.find(c => c.id === data.classe_principal)?.textColor}`}>
+                    {allArchetypes.find(a => a.id === data.arquetipo_principal)?.name} 
+                    <span className="font-normal text-sm ml-2">
+                      ({archetypeClasses.find(c => c.id === data.classe_principal)?.name})
+                    </span>
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Arquétipo Secundário */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Arquétipo Secundário (opcional)</CardTitle>
+              <CardDescription>Um segundo arquétipo que complementa o principal</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Classes */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {archetypeClasses.map((cls) => {
+                  const isSelected = data.classe_secundaria === cls.id;
+                  return (
+                    <div
+                      key={cls.id}
+                      onClick={() => {
+                        if (data.classe_secundaria !== cls.id) {
+                          setData(prev => ({ ...prev, classe_secundaria: cls.id, arquetipo_secundario: '' }));
+                        }
+                      }}
+                      className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                        isSelected ? `${cls.borderColor} ${cls.bgLight}` : 'border-transparent bg-muted/50 hover:bg-muted'
+                      }`}
+                    >
+                      <div className={`w-full h-2 rounded-full ${cls.color} mb-3`} />
+                      <p className="font-bold">{cls.name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{cls.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Arquétipos da Classe Selecionada */}
+              {data.classe_secundaria && (
+                <div className="space-y-4">
+                  {(() => {
+                    const selectedClass = archetypeClasses.find(c => c.id === data.classe_secundaria);
+                    const groups = [...new Set(selectedClass.archetypes.map(a => a.group))];
+                    return groups.map(group => (
+                      <div key={group}>
+                        <Label className="text-sm text-muted-foreground mb-2 block">{group}</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedClass.archetypes.filter(a => a.group === group).map(arch => {
+                            const isSelected = data.arquetipo_secundario === arch.id;
+                            const isPrimary = data.arquetipo_principal === arch.id;
+                            return (
+                              <Badge
+                                key={arch.id}
+                                variant={isSelected ? "default" : "outline"}
+                                className={`cursor-pointer px-4 py-2 text-sm transition-all ${
+                                  isPrimary ? 'opacity-40 cursor-not-allowed' : ''
+                                } ${
+                                  isSelected ? `${selectedClass.color} text-white` : 'hover:bg-muted'
+                                }`}
+                                onClick={() => !isPrimary && selectArchetype(selectedClass.id, arch.id, false)}
+                              >
+                                {isSelected && <Check className="h-3 w-3 mr-1" />}
+                                {arch.name}
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              )}
+
+              {/* Selected Summary */}
+              {data.arquetipo_secundario && (
+                <div className={`p-4 rounded-lg ${archetypeClasses.find(c => c.id === data.classe_secundaria)?.bgLight}`}>
+                  <p className="text-sm font-medium">Selecionado:</p>
+                  <p className={`text-lg font-bold ${archetypeClasses.find(c => c.id === data.classe_secundaria)?.textColor}`}>
+                    {allArchetypes.find(a => a.id === data.arquetipo_secundario)?.name} 
+                    <span className="font-normal text-sm ml-2">
+                      ({archetypeClasses.find(c => c.id === data.classe_secundaria)?.name})
+                    </span>
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
