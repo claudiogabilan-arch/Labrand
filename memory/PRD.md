@@ -257,3 +257,16 @@ Marca de teste: Minha Marca Demo (brand_92bcc15a44fb)
   - Nova tab "Integrações" em Configurações
   - Endpoints para conectar/desconectar Google
   - Endpoints para buscar dados de Analytics, Search Console e Drive
+- ✅ Botão de excluir marca com confirmação
+- ✅ Arquitetura de marca (Monolítica, Endossada, Submarca, Híbrida, House of Brands)
+- ✅ Seletor de cor para marcas
+- ✅ Modo Dark implementado com toggle em Configurações > Personalização
+- ✅ Nova página Inteligência de Audiência
+  - Segmentos de audiência com estatísticas
+  - Sugestão de influenciadores por plataforma
+  - Métricas de alcance e engajamento
+  - Geração de insights com IA
+- ✅ Nova página Calendário de Campanhas
+  - Calendário mensal visual
+  - CRUD de campanhas com tipo, orçamento e datas
+  - Estatísticas de campanhas ativas
