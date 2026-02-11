@@ -35,7 +35,9 @@ import {
   Building2,
   Menu,
   FileText,
-  DollarSign
+  DollarSign,
+  Calendar,
+  UserCheck
 } from 'lucide-react';
 
 const navigationItems = [
@@ -50,7 +52,9 @@ const navigationItems = [
   { name: 'Universal', href: '/pillars/universality', icon: Globe, pillar: 'universality' },
   { type: 'divider', label: 'Gestão' },
   { name: 'Intelligence', href: '/intelligence', icon: BarChart3 },
+  { name: 'Audiência', href: '/audience', icon: UserCheck },
   { name: 'Planejamento', href: '/planning', icon: ListTodo },
+  { name: 'Campanhas', href: '/campaigns', icon: Calendar },
   { name: 'Decisões', href: '/scorecard', icon: ClipboardCheck },
   { name: 'Narrativas', href: '/narratives', icon: BookOpen },
   { name: 'Relatórios', href: '/reports', icon: FileText },
