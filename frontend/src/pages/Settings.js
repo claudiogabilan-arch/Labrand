@@ -933,26 +933,28 @@ export const Settings = () => {
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <Label>Tema</Label>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   {[
                     { value: 'light', label: 'Claro', icon: Sun },
-                    { value: 'dark', label: 'Escuro', icon: Moon },
-                    { value: 'system', label: 'Sistema', icon: Monitor }
-                  ].map(theme => {
-                    const Icon = theme.icon;
+                    { value: 'dark', label: 'Escuro', icon: Moon }
+                  ].map(themeOption => {
+                    const Icon = themeOption.icon;
                     return (
                       <div
-                        key={theme.value}
-                        onClick={() => setPersonalization(prev => ({ ...prev, theme: theme.value }))}
+                        key={themeOption.value}
+                        onClick={() => {
+                          setTheme(themeOption.value);
+                          setPersonalization(prev => ({ ...prev, theme: themeOption.value }));
+                        }}
                         className={`flex flex-col items-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                          personalization.theme === theme.value
+                          theme === themeOption.value
                             ? 'border-primary bg-primary/5'
                             : 'border-transparent bg-muted/50 hover:bg-muted'
                         }`}
-                        data-testid={`theme-${theme.value}`}
+                        data-testid={`theme-${themeOption.value}`}
                       >
                         <Icon className="h-6 w-6" />
-                        <span className="text-sm font-medium">{theme.label}</span>
+                        <span className="text-sm font-medium">{themeOption.label}</span>
                       </div>
                     );
                   })}
