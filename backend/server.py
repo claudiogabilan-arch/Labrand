@@ -848,6 +848,137 @@ async def delete_campaign(brand_id: str, campaign_id: str, user: dict = Depends(
     await db.campaigns.delete_one({"campaign_id": campaign_id, "brand_id": brand_id})
     return {"message": "Campanha removida"}
 
+# ==================== REPORTS & FILE UPLOAD ====================
+
+from fastapi import UploadFile, File as FastAPIFile
+from fastapi.responses import StreamingResponse
+import io
+import os as os_module
+
+UPLOAD_DIR = "/app/uploads"
+os_module.makedirs(UPLOAD_DIR, exist_ok=True)
+
+@api_router.post("/brands/{brand_id}/logo")
+async def upload_logo(brand_id: str, file: UploadFile = FastAPIFile(...), user: dict = Depends(get_current_user)):
+    brand = await db.brands.find_one({"brand_id": brand_id, "owner_id": user["user_id"]})
+    if not brand:
+        raise HTTPException(status_code=404, detail="Marca não encontrada")
+    
+    ext = file.filename.split('.')[-1].lower()
+    if ext not in ['png', 'jpg', 'jpeg', 'svg', 'webp']:
+        raise HTTPException(status_code=400, detail="Formato inválido")
+    
+    filename = f"{brand_id}_logo.{ext}"
+    filepath = os_module.path.join(UPLOAD_DIR, filename)
+    
+    with open(filepath, "wb") as f:
+        content = await file.read()
+        f.write(content)
+    
+    logo_url = f"/api/uploads/{filename}"
+    await db.brands.update_one({"brand_id": brand_id}, {"$set": {"logo_url": logo_url}})
+    
+    return {"logo_url": logo_url}
+
+@api_router.get("/uploads/{filename}")
+async def get_upload(filename: str):
+    filepath = os_module.path.join(UPLOAD_DIR, filename)
+    if not os_module.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="Arquivo não encontrado")
+    
+    ext = filename.split('.')[-1].lower()
+    media_types = {'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'svg': 'image/svg+xml', 'webp': 'image/webp'}
+    
+    with open(filepath, "rb") as f:
+        return StreamingResponse(io.BytesIO(f.read()), media_type=media_types.get(ext, 'application/octet-stream'))
+
+@api_router.get("/brands/{brand_id}/reports/{report_type}")
+async def generate_report(brand_id: str, report_type: str, format: str = "pdf", user: dict = Depends(get_current_user)):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    
+    brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
+    if not brand:
+        raise HTTPException(status_code=404, detail="Marca não encontrada")
+    
+    # Fetch pillar data
+    pillars_data = {}
+    for pillar in ['start', 'values', 'purpose', 'promise', 'positioning', 'personality', 'universality', 'valuation']:
+        data = await db[f"pillar_{pillar}"].find_one({"brand_id": brand_id}, {"_id": 0})
+        if data:
+            pillars_data[pillar] = data
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=50, bottomMargin=50)
+    styles = getSampleStyleSheet()
+    
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=24, spaceAfter=30, textColor=colors.HexColor('#1e3a5f'))
+    heading_style = ParagraphStyle('Heading', parent=styles['Heading2'], fontSize=16, spaceAfter=12, textColor=colors.HexColor('#f97316'))
+    normal_style = ParagraphStyle('Normal', parent=styles['Normal'], fontSize=11, spaceAfter=8)
+    
+    story = []
+    story.append(Paragraph(f"Relatório de Marca: {brand.get('name', 'N/A')}", title_style))
+    story.append(Paragraph(f"Setor: {brand.get('industry', 'N/A')} | Tipo: {brand.get('brand_type', 'Monolítica')}", normal_style))
+    story.append(Spacer(1, 20))
+    
+    if report_type in ['brand', 'full']:
+        # Purpose
+        if 'purpose' in pillars_data:
+            story.append(Paragraph("Propósito", heading_style))
+            story.append(Paragraph(pillars_data['purpose'].get('declaracao_proposito', 'Não definido'), normal_style))
+            story.append(Spacer(1, 15))
+        
+        # Values
+        if 'values' in pillars_data:
+            story.append(Paragraph("Valores", heading_style))
+            values = pillars_data['values'].get('valores_marca', [])
+            for v in values[:5]:
+                story.append(Paragraph(f"• {v}", normal_style))
+            story.append(Spacer(1, 15))
+        
+        # Positioning
+        if 'positioning' in pillars_data:
+            story.append(Paragraph("Posicionamento", heading_style))
+            story.append(Paragraph(pillars_data['positioning'].get('declaracao_posicionamento', 'Não definido'), normal_style))
+            story.append(Spacer(1, 15))
+        
+        # Personality
+        if 'personality' in pillars_data:
+            story.append(Paragraph("Personalidade", heading_style))
+            arch = pillars_data['personality'].get('arquetipo_principal', 'Não definido')
+            story.append(Paragraph(f"Arquétipo Principal: {arch}", normal_style))
+            story.append(Spacer(1, 15))
+    
+    if report_type in ['valuation', 'full']:
+        if 'valuation' in pillars_data:
+            story.append(Paragraph("Avaliação de Marca", heading_style))
+            val = pillars_data['valuation']
+            data_table = [
+                ['Métrica', 'Valor'],
+                ['Receita Anual', val.get('receita_anual', 'N/A')],
+                ['Lucro Operacional', val.get('lucro_operacional', 'N/A')],
+                ['Role of Brand', f"{val.get('role_of_brand', 'N/A')}%"],
+            ]
+            t = Table(data_table, colWidths=[200, 200])
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a5f')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ]))
+            story.append(t)
+    
+    doc.build(story)
+    buffer.seek(0)
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={brand.get('name', 'marca')}_relatorio.pdf"}
+    )
+
 # ==================== ROOT ====================
 
 @api_router.get("/")
