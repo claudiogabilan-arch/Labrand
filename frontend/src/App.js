@@ -22,6 +22,8 @@ import Intelligence from "./pages/Intelligence";
 import Settings from "./pages/Settings";
 import Reports from "./pages/Reports";
 import Valuation from "./pages/Valuation";
+import Audience from "./pages/Audience";
+import Campaigns from "./pages/Campaigns";
 import "./App.css";
 
 // Router wrapper to handle auth callback
