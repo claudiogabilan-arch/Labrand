@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Progress } from '../components/ui/progress';
 import { Badge } from '../components/ui/badge';
+import { Tutorial } from '../components/Tutorial';
 import {
   Target,
   Heart,
@@ -21,8 +22,15 @@ import {
   Clock,
   AlertCircle,
   Sparkles,
-  Plus
+  Plus,
+  Lightbulb,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'sonner';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const pillarInfo = [
   { key: 'start', name: 'Start', icon: Target, color: 'bg-blue-500', href: '/pillars/start', description: 'Diagnóstico inicial e cenários' },
