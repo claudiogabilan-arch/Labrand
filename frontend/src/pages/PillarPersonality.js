@@ -109,29 +109,29 @@ export const PillarPersonality = () => {
     autoSave(newData);
   };
 
-  const selectArchetype = (classId, archetypeId, isPrimary) => {
-    const classField = isPrimary ? 'classe_principal' : 'classe_secundaria';
-    const archField = isPrimary ? 'arquetipo_principal' : 'arquetipo_secundario';
-    
-    const newData = { 
-      ...data, 
-      [classField]: classId,
-      [archField]: data[archField] === archetypeId ? '' : archetypeId
-    };
+  const selectArchetype = (archetypeId, isPrimary) => {
+    const field = isPrimary ? 'arquetipo_principal' : 'arquetipo_secundario';
+    const newData = { ...data, [field]: data[field] === archetypeId ? '' : archetypeId };
     setData(newData);
     autoSave(newData);
+  };
+
+  const applyCombination = (combo) => {
+    const newData = { ...data, arquetipo_principal: combo.primary, arquetipo_secundario: combo.secondary };
+    setData(newData);
+    autoSave(newData);
+    toast.success(`Combinação "${combo.name}" aplicada!`);
   };
 
   const handleGenerateNarrative = async () => {
     setIsGenerating(true);
     try {
-      const primaryArch = allArchetypes.find(a => a.id === data.arquetipo_principal);
-      const secondaryArch = allArchetypes.find(a => a.id === data.arquetipo_secundario);
+      const primaryArch = jungArchetypes.find(a => a.id === data.arquetipo_principal);
+      const secondaryArch = jungArchetypes.find(a => a.id === data.arquetipo_secundario);
       const context = `
-        Classe arquetípica principal: ${primaryArch?.className || 'Não definida'}
-        Arquétipo principal: ${primaryArch?.name || 'Não definido'}
-        Classe arquetípica secundária: ${secondaryArch?.className || 'Não definida'}
-        Arquétipo secundário: ${secondaryArch?.name || 'Não definido'}
+        Arquétipo principal: ${primaryArch?.name || 'Não definido'} - ${primaryArch?.desc || ''}
+        Arquétipo secundário: ${secondaryArch?.name || 'Não definido'} - ${secondaryArch?.desc || ''}
+        Personalidade customizada: ${data.personalidade_customizada || 'Não definida'}
         Atributos desejados: ${data.atributos_desejados.join(', ')}
         Atributos indesejados: ${data.atributos_indesejados.join(', ')}
       `;
