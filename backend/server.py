@@ -36,6 +36,11 @@ app = FastAPI(title="LaBrand - Brand OS API")
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Health check endpoint
+@api_router.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "labrand-api"}
+
 # ==================== MODELS ====================
 
 class UserBase(BaseModel):
