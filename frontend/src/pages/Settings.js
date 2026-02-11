@@ -706,47 +706,97 @@ export const Settings = () => {
               {/* Brands List */}
               <div className="space-y-3">
                 <h4 className="font-medium">Suas Marcas</h4>
-                {brands.map(brand => (
-                  <div 
-                    key={brand.brand_id} 
-                    className={`flex items-center justify-between p-4 border rounded-lg ${
-                      currentBrand?.brand_id === brand.brand_id ? 'border-primary bg-primary/5' : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Building2 className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{brand.name}</p>
-                        <div className="flex items-center gap-2">
-                          {brand.industry && (
-                            <Badge variant="outline" className="text-xs">{brand.industry}</Badge>
-                          )}
-                          {currentBrand?.brand_id === brand.brand_id && (
-                            <Badge className="text-xs">Ativa</Badge>
-                          )}
+                {brands.map(brand => {
+                  const parentBrand = brands.find(b => b.brand_id === brand.parent_brand_id);
+                  const brandType = brandTypes.find(t => t.value === brand.brand_type);
+                  return (
+                    <div 
+                      key={brand.brand_id} 
+                      className={`flex items-center justify-between p-4 border rounded-lg ${
+                        currentBrand?.brand_id === brand.brand_id ? 'border-primary bg-primary/5' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-10 h-10 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: brand.brand_color || '#3B82F6' }}
+                        >
+                          <Building2 className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{brand.name}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {brand.industry && (
+                              <Badge variant="outline" className="text-xs">{brand.industry}</Badge>
+                            )}
+                            {brandType && (
+                              <Badge variant="secondary" className="text-xs">{brandType.label}</Badge>
+                            )}
+                            {parentBrand && (
+                              <Badge variant="outline" className="text-xs bg-amber-50">
+                                Mãe: {parentBrand.name}
+                              </Badge>
+                            )}
+                            {currentBrand?.brand_id === brand.brand_id && (
+                              <Badge className="text-xs">Ativa</Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleEditBrand(brand)}
+                          data-testid={`edit-brand-${brand.brand_id}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setDeletingBrand(brand)}
+                          data-testid={`delete-brand-${brand.brand_id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleEditBrand(brand)}
-                        data-testid={`edit-brand-${brand.brand_id}`}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {brands.length === 0 && (
                   <p className="text-center text-muted-foreground py-8">
                     Nenhuma marca cadastrada
                   </p>
                 )}
               </div>
+
+              {/* Delete Confirmation Dialog */}
+              {deletingBrand && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                  <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4 space-y-4">
+                    <h3 className="font-bold text-lg">Excluir Marca</h3>
+                    <p className="text-muted-foreground">
+                      Tem certeza que deseja excluir <strong>{deletingBrand.name}</strong>? 
+                      Esta ação não pode ser desfeita e todos os dados da marca serão perdidos.
+                    </p>
+                    <div className="flex gap-3 justify-end">
+                      <Button variant="outline" onClick={() => setDeletingBrand(null)}>
+                        Cancelar
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        onClick={() => handleDeleteBrand(deletingBrand)}
+                        data-testid="confirm-delete-brand"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Excluir
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
