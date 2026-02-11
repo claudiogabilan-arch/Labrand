@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-route
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { BrandProvider } from "./contexts/BrandContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import { MainLayout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AuthCallback } from "./components/AuthCallback";
