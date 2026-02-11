@@ -59,6 +59,42 @@ class User(UserBase):
     user_id: str
     created_at: datetime
 
+# ==================== PLAN DEFINITIONS ====================
+PLANS = {
+    "free": {
+        "name": "Free",
+        "price": 0,
+        "max_brands": 1,
+        "features": ["1 marca", "7 pilares básicos", "Dashboard"],
+        "ai_requests_month": 5,
+        "export_pdf": False,
+        "google_integration": False,
+        "mentor": False
+    },
+    "pro": {
+        "name": "Pro",
+        "price": 97,
+        "max_brands": 5,
+        "features": ["5 marcas", "Todos os pilares", "Exportação PDF", "Integração Google", "Mentor IA", "50 requisições IA/mês"],
+        "ai_requests_month": 50,
+        "export_pdf": True,
+        "google_integration": True,
+        "mentor": True
+    },
+    "enterprise": {
+        "name": "Enterprise",
+        "price": 297,
+        "max_brands": -1,  # unlimited
+        "features": ["Marcas ilimitadas", "Todas as funcionalidades", "Requisições IA ilimitadas", "Suporte prioritário", "API access"],
+        "ai_requests_month": -1,  # unlimited
+        "export_pdf": True,
+        "google_integration": True,
+        "mentor": True
+    }
+}
+
+TRIAL_DAYS = 15
+
 class BrandBase(BaseModel):
     name: str
     description: Optional[str] = None
