@@ -748,12 +748,20 @@ export const Settings = () => {
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div 
-                          className="w-10 h-10 rounded-lg flex items-center justify-center"
-                          style={{ backgroundColor: brand.brand_color || '#3B82F6' }}
-                        >
-                          <Building2 className="h-5 w-5 text-white" />
-                        </div>
+                        {brand.logo_url ? (
+                          <img 
+                            src={`${process.env.REACT_APP_BACKEND_URL}${brand.logo_url}`}
+                            alt={brand.name}
+                            className="w-10 h-10 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div 
+                            className="w-10 h-10 rounded-lg flex items-center justify-center"
+                            style={{ backgroundColor: brand.brand_color || '#3B82F6' }}
+                          >
+                            <Building2 className="h-5 w-5 text-white" />
+                          </div>
+                        )}
                         <div>
                           <p className="font-medium">{brand.name}</p>
                           <div className="flex items-center gap-2 flex-wrap">
