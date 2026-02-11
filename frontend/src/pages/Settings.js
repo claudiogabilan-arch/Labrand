@@ -47,6 +47,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 export const Settings = () => {
   const { user, getAuthHeaders } = useAuth();
   const { brands, currentBrand, updateBrand, createBrand } = useBrand();
+  const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
