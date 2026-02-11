@@ -200,18 +200,28 @@ export const PillarPersonality = () => {
     autoSave(newData);
   };
 
-  const selectArchetype = (id, isPrimary) => {
-    const field = isPrimary ? 'arquetipo_principal' : 'arquetipo_secundario';
-    handleFieldChange(field, data[field] === id ? '' : id);
+  const selectArchetype = (classId, archetypeId, isPrimary) => {
+    const classField = isPrimary ? 'classe_principal' : 'classe_secundaria';
+    const archField = isPrimary ? 'arquetipo_principal' : 'arquetipo_secundario';
+    
+    const newData = { 
+      ...data, 
+      [classField]: classId,
+      [archField]: data[archField] === archetypeId ? '' : archetypeId
+    };
+    setData(newData);
+    autoSave(newData);
   };
 
   const handleGenerateNarrative = async () => {
     setIsGenerating(true);
     try {
-      const primaryArch = archetypes.find(a => a.id === data.arquetipo_principal);
-      const secondaryArch = archetypes.find(a => a.id === data.arquetipo_secundario);
+      const primaryArch = allArchetypes.find(a => a.id === data.arquetipo_principal);
+      const secondaryArch = allArchetypes.find(a => a.id === data.arquetipo_secundario);
       const context = `
+        Classe arquetípica principal: ${primaryArch?.className || 'Não definida'}
         Arquétipo principal: ${primaryArch?.name || 'Não definido'}
+        Classe arquetípica secundária: ${secondaryArch?.className || 'Não definida'}
         Arquétipo secundário: ${secondaryArch?.name || 'Não definido'}
         Atributos desejados: ${data.atributos_desejados.join(', ')}
         Atributos indesejados: ${data.atributos_indesejados.join(', ')}
