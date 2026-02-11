@@ -159,12 +159,36 @@ function AppRouter() {
         }
       />
       <Route
+        path="/audience"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <Audience />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/planning"
         element={
           <ProtectedRoute>
             <BrandProvider>
               <MainLayout>
                 <Planning />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/campaigns"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <Campaigns />
               </MainLayout>
             </BrandProvider>
           </ProtectedRoute>
