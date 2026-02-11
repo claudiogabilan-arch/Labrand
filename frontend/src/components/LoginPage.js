@@ -52,10 +52,11 @@ export const LoginPage = () => {
       <div className="hidden lg:flex lg:w-1/2 bg-black items-center justify-center">
         <div className="text-center">
           <div className="flex flex-col items-center gap-4">
-            <div className="w-20 h-20 rounded-2xl bg-white/10 flex items-center justify-center">
-              <span className="font-bold text-3xl text-white">LB</span>
-            </div>
-            <h1 className="font-heading font-bold text-5xl text-white tracking-tight">LaBrand</h1>
+            <img 
+              src="/logo-white.png" 
+              alt="LABrand" 
+              className="h-24 w-auto"
+            />
             <p className="text-white/60 text-sm mt-8">desenvolvido por Claudio Gabilan</p>
           </div>
         </div>
@@ -66,10 +67,11 @@ export const LoginPage = () => {
         <div className="w-full max-w-md space-y-8">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold">LB</span>
-            </div>
-            <span className="font-heading font-bold text-xl">LaBrand</span>
+            <img 
+              src="/logo-black.png" 
+              alt="LABrand" 
+              className="h-12 w-auto"
+            />
           </div>
 
           <Card className="border-0 shadow-lg" data-testid="auth-card">
