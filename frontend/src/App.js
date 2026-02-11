@@ -264,19 +264,21 @@ function AppRouter() {
 function App() {
   return (
     <div className="App">
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRouter />
-        </AuthProvider>
-      </BrowserRouter>
-      <Toaster 
-        position="bottom-right" 
-        richColors 
-        closeButton
-        toastOptions={{
-          className: 'font-sans'
-        }}
-      />
+      <ThemeProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <AppRouter />
+          </AuthProvider>
+        </BrowserRouter>
+        <Toaster 
+          position="bottom-right" 
+          richColors 
+          closeButton
+          toastOptions={{
+            className: 'font-sans'
+          }}
+        />
+      </ThemeProvider>
     </div>
   );
 }
