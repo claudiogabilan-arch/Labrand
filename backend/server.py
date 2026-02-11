@@ -338,6 +338,10 @@ async def register(user_data: UserCreate):
         "password": hashed_password,
         "role": user_data.role,
         "picture": None,
+        "plan": "free",
+        "trial_ends_at": (datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS)).isoformat(),
+        "ai_requests_used": 0,
+        "ai_requests_reset_at": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -350,6 +354,8 @@ async def register(user_data: UserCreate):
         "email": user_data.email,
         "name": user_data.name,
         "role": user_data.role,
+        "plan": "free",
+        "trial_ends_at": user_doc["trial_ends_at"],
         "token": token
     }
 
