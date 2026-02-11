@@ -40,15 +40,12 @@ const suggestedCombinations = [
 export const PillarPersonality = () => {
   const { currentBrand, fetchPillar, updatePillar, generateInsight } = useBrand();
   const [data, setData] = useState({
-    classe_principal: '',
     arquetipo_principal: '',
-    classe_secundaria: '',
     arquetipo_secundario: '',
+    personalidade_customizada: '',
     atributos_desejados: [],
     atributos_indesejados: [],
-    narrativa_individual: '',
-    narrativa_grupal: '',
-    narrativa_societal: ''
+    narrativa_individual: ''
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
