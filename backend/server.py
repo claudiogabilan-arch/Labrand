@@ -64,6 +64,8 @@ class BrandBase(BaseModel):
     description: Optional[str] = None
     industry: Optional[str] = None
     logo_url: Optional[str] = None
+    brand_type: Optional[str] = "monolitica"  # monolitica, endossada, submarca, hibrida, house_of_brands
+    parent_brand_id: Optional[str] = None
 
 class BrandCreate(BrandBase):
     pass
@@ -446,6 +448,8 @@ async def create_brand(brand_data: BrandCreate, user: dict = Depends(get_current
         "description": brand_data.description,
         "industry": brand_data.industry,
         "logo_url": brand_data.logo_url,
+        "brand_type": brand_data.brand_type,
+        "parent_brand_id": brand_data.parent_brand_id,
         "team_members": [user["user_id"]],
         "onboarding_complete": False,
         "created_at": now,
@@ -485,6 +489,35 @@ async def update_brand(brand_id: str, brand_data: dict, user: dict = Depends(get
     
     updated = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
     return updated
+
+@api_router.delete("/brands/{brand_id}")
+async def delete_brand(brand_id: str, user: dict = Depends(get_current_user)):
+    brand = await db.brands.find_one({"brand_id": brand_id, "owner_id": user["user_id"]}, {"_id": 0})
+    if not brand:
+        raise HTTPException(status_code=404, detail="Marca não encontrada")
+    
+    # Delete brand and all related data
+    await db.brands.delete_one({"brand_id": brand_id})
+    await db.pillar_start.delete_many({"brand_id": brand_id})
+    await db.pillar_values.delete_many({"brand_id": brand_id})
+    await db.pillar_purpose.delete_many({"brand_id": brand_id})
+    await db.pillar_promise.delete_many({"brand_id": brand_id})
+    await db.pillar_positioning.delete_many({"brand_id": brand_id})
+    await db.pillar_personality.delete_many({"brand_id": brand_id})
+    await db.pillar_universality.delete_many({"brand_id": brand_id})
+    await db.pillar_valuation.delete_many({"brand_id": brand_id})
+    await db.tasks.delete_many({"brand_id": brand_id})
+    await db.decisions.delete_many({"brand_id": brand_id})
+    await db.narratives.delete_many({"brand_id": brand_id})
+    await db.google_connections.delete_many({"brand_id": brand_id})
+    
+    # Update child brands if this was a parent
+    await db.brands.update_many(
+        {"parent_brand_id": brand_id},
+        {"$set": {"parent_brand_id": None, "brand_type": "monolitica"}}
+    )
+    
+    return {"message": "Marca excluída com sucesso"}
 
 # ==================== PILLAR ROUTES ====================
 
