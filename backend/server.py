@@ -1156,7 +1156,8 @@ async def root():
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
-GOOGLE_REDIRECT_URI = "https://branding-sys.preview.emergentagent.com/api/auth/google/callback"
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://labrand.com.br")
+GOOGLE_REDIRECT_URI = f"{FRONTEND_URL}/api/auth/google/callback"
 GOOGLE_SCOPES = [
     "openid",
     "email",
