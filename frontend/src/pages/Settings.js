@@ -605,7 +605,75 @@ export const Settings = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  
+                  {/* Brand Type */}
                   <div className="space-y-2 md:col-span-2">
+                    <Label>Arquitetura de Marca *</Label>
+                    <Select 
+                      value={brandForm.brand_type} 
+                      onValueChange={(v) => setBrandForm(prev => ({ ...prev, brand_type: v, parent_brand_id: v === 'submarca' || v === 'endossada' ? prev.parent_brand_id : '' }))}
+                    >
+                      <SelectTrigger data-testid="brand-form-type">
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {brandTypes.map(type => (
+                          <SelectItem key={type.value} value={type.value}>
+                            <div>
+                              <span className="font-medium">{type.label}</span>
+                              <span className="text-xs text-muted-foreground ml-2">- {type.desc}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Parent Brand (for submarca/endossada) */}
+                  {(brandForm.brand_type === 'submarca' || brandForm.brand_type === 'endossada') && (
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Marca Mãe *</Label>
+                      <Select 
+                        value={brandForm.parent_brand_id} 
+                        onValueChange={(v) => setBrandForm(prev => ({ ...prev, parent_brand_id: v }))}
+                      >
+                        <SelectTrigger data-testid="brand-form-parent">
+                          <SelectValue placeholder="Selecione a marca mãe" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {parentBrandOptions.map(brand => (
+                            <SelectItem key={brand.brand_id} value={brand.brand_id}>
+                              {brand.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {parentBrandOptions.length === 0 && (
+                        <p className="text-xs text-amber-600">Crie uma marca principal primeiro</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Brand Color */}
+                  <div className="space-y-2">
+                    <Label>Cor da Marca</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {brandColors.map(color => (
+                        <button
+                          key={color}
+                          type="button"
+                          onClick={() => setBrandForm(prev => ({ ...prev, brand_color: color }))}
+                          className={`w-8 h-8 rounded-lg transition-all ${
+                            brandForm.brand_color === color ? 'ring-2 ring-offset-2 ring-primary scale-110' : ''
+                          }`}
+                          style={{ backgroundColor: color }}
+                          data-testid={`color-${color}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label>Descrição</Label>
                     <Textarea
                       value={brandForm.description}
@@ -626,7 +694,7 @@ export const Settings = () => {
                       variant="outline" 
                       onClick={() => {
                         setEditingBrand(null);
-                        setBrandForm({ name: '', description: '', industry: '' });
+                        setBrandForm({ name: '', description: '', industry: '', brand_type: 'monolitica', parent_brand_id: '', brand_color: '#3B82F6' });
                       }}
                     >
                       Cancelar
