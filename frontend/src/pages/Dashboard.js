@@ -44,14 +44,45 @@ const pillarInfo = [
 
 export const Dashboard = () => {
   const { currentBrand, metrics, fetchMetrics } = useBrand();
-  const { user } = useAuth();
+  const { user, getAuthHeaders } = useAuth();
   const navigate = useNavigate();
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [mentorInsights, setMentorInsights] = useState(null);
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false);
+
+  useEffect(() => {
+    // Show tutorial on first visit
+    const tutorialComplete = localStorage.getItem('labrand_tutorial_complete');
+    if (!tutorialComplete) {
+      setShowTutorial(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (currentBrand?.brand_id) {
       fetchMetrics(currentBrand.brand_id);
     }
   }, [currentBrand?.brand_id, fetchMetrics]);
+
+  const generateMentorInsights = async () => {
+    if (!currentBrand?.brand_id) return;
+    setIsLoadingInsights(true);
+    try {
+      const response = await axios.post(`${API}/ai/mentor`, {
+        brand_id: currentBrand.brand_id,
+        brand_name: currentBrand.name,
+        industry: currentBrand.industry
+      }, {
+        headers: getAuthHeaders(),
+        withCredentials: true
+      });
+      setMentorInsights(response.data.insights);
+    } catch (error) {
+      toast.error('Erro ao gerar insights');
+    } finally {
+      setIsLoadingInsights(false);
+    }
+  };
 
   if (!currentBrand) {
     return (
