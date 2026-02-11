@@ -270,6 +270,30 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/identity"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <BrandIdentity />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/investment"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <InvestmentMatch />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
