@@ -1,272 +1,133 @@
 # LaBrand – Brand OS
 
-## Product Requirements Document
+## Problema Original
+Criar uma aplicação web para facilitar a gestão de marcas para empresas, cobrindo diagnóstico, criação de estratégia, execução e medição de resultados.
 
-### Data de Criação: 2024-02-10
+## Requisitos do Produto
+- **Onboarding:** Registro de clientes, conexão com Google Analytics/Search Console, importação de documentos do Google Drive.
+- **Pilares Core:** Módulos para desenvolvimento estratégico de marca (Start, Valores, Propósito, Promessa, Posicionamento, Personalidade, Universal).
+- **Dashboards & Ferramentas:** Dashboard de Inteligência, módulo de Planejamento & Execução, Scorecard, Histórias & Narrativas, Avaliação de Marca, Inteligência de Audiência, Calendário de Campanhas, Identidade Visual, Investment Match.
+- **Usuários & Permissões:** Dois papéis - "Estrategista" (acesso total) e "Cliente" (somente leitura).
+- **Design:** Interface moderna, responsiva, acessível com dark mode. Branding personalizado. Português brasileiro.
+- **Modelo SaaS:** Planos gratuito e pagos com período de trial de 15 dias.
+- **Integrações:** APIs do Google (Analytics, Drive, Search Console), OpenAI para insights, gateway de pagamento (Treeal).
 
----
-
-## Visão Geral
-LaBrand é uma plataforma completa de gestão de marca (Brand OS) que permite diagnóstico, criação de estratégia, execução de ações e mensuração de resultados de branding.
-
----
-
-## Arquitetura
-
-### Stack Tecnológica
-- **Frontend**: React + Tailwind CSS + Shadcn/UI
-- **Backend**: FastAPI (Python)
-- **Banco de Dados**: MongoDB
-- **Autenticação**: JWT + Google OAuth (Emergent Auth)
-- **IA**: OpenAI GPT-5.2 via Emergent LLM Key
-
-### Estrutura de Arquivos
+## Arquitetura Técnica
 ```
 /app/
 ├── backend/
-│   ├── server.py          # API principal
-│   └── .env               # Variáveis de ambiente
+│   ├── .env
+│   ├── requirements.txt
+│   └── server.py (monolítico - precisa refatorar)
 ├── frontend/
 │   ├── src/
-│   │   ├── App.js         # Roteamento principal
-│   │   ├── contexts/      # AuthContext, BrandContext
-│   │   ├── components/    # Layout, Login, ProtectedRoute
-│   │   └── pages/         # Dashboard, Pilares, Planning, etc.
-│   └── .env
+│   │   ├── components/
+│   │   ├── contexts/
+│   │   ├── hooks/
+│   │   └── pages/
+│   └── public/
 └── memory/
-    └── PRD.md             # Este documento
+    └── PRD.md
 ```
 
----
+## O que foi Implementado
 
-## Personas de Usuário
+### Autenticação & Usuários
+- [x] JWT Authentication
+- [x] Google OAuth 2.0
+- [x] Papéis: Estrategista / Cliente
+- [x] Hook usePermissions
 
-### 1. Estrategista
-- Acesso total a todos os módulos
-- Pode criar, editar e gerenciar marcas
-- Acessa dashboards e métricas completas
-- Gerencia permissões de clientes
-
-### 2. Cliente
-- Acesso de leitura a dashboards
-- Visualiza narrativas e histórico
-- Input apenas em campos liberados pelo estrategista
-
----
-
-## Funcionalidades Implementadas ✅
-
-### Autenticação
-- [x] Login com email/senha (JWT)
-- [x] Login com Google OAuth (Emergent Auth)
-- [x] Registro de novos usuários
-- [x] Logout e gestão de sessão
-
-### Gestão de Marcas
-- [x] Criar nova marca
-- [x] Listar marcas do usuário
-- [x] Selecionar marca ativa
-- [x] Métricas de progresso
-
-### 7 Pilares de Branding
-1. **Start** ✅
-   - Canvas digital (desafio, background, urgência)
-   - Cenário competitivo
-   - Players, tendências, públicos
-   - Cenários futuros (C1-C4)
-   - Incertezas
-
-2. **Values** ✅
-   - Valores da marca
-   - Necessidades dos públicos
-   - Cruzamento valores x necessidades
-   - Insights com IA
-
-3. **Purpose** ✅
-   - Quadrantes Ikigai (habilidades, curiosidade, paixão, impacto)
-   - Declaração de propósito (geração com IA)
-   - Gráfico de impacto (curto, médio, longo prazo)
-
-4. **Promise** ✅
-   - Matriz de promessa (6 dimensões)
-   - Malha de experiência
-   - Parcerias estratégicas
-
-5. **Positioning** ✅
-   - Campos de declaração
-   - Mapa de diferenciação
-   - Análise de substitutos
-   - Geração com IA
-
-6. **Personality** ✅
-   - Biblioteca de 8 arquétipos
-   - Atributos desejados/indesejados
-   - Narrativas de humanização (individual, grupal, societal)
-
-7. **Universality** ✅
-   - Checklist de acessibilidade
-   - Checklist de inclusão
-   - Planejamento de crises
-   - Viabilidade universal
+### Pilares de Marca
+- [x] Start, Valores, Propósito, Promessa
+- [x] Posicionamento, Personalidade (12 arquétipos)
+- [x] Universal
 
 ### Gestão
-- [x] Intelligence Dashboard (métricas MOCK)
-- [x] Planejamento & Execução (Kanban interno)
-- [x] Scorecard & Decisões
-- [x] Narrativas e História da Marca
-- [x] Relatórios (página adicionada)
-- [x] Configurações (página adicionada)
-- [x] **Brand Valuation** (metodologia Interbrand) ✅ NOVO
+- [x] Dashboard com métricas
+- [x] Avaliação de Marca (valuation completo)
+- [x] Relatórios em PDF
+- [x] Planejamento, Decisões, Narrativas
 
-### Brand Valuation (Avaliação de Marca)
-- [x] Análise Financeira (Receita, Lucro Operacional, Margem, Custo de Capital)
-- [x] Role of Brand Index (RBI) - slider 0-100%
-- [x] Brand Strength Score (10 fatores Interbrand)
-  - Clareza, Comprometimento, Governança, Responsividade
-  - Autenticidade, Relevância, Diferenciação, Consistência
-  - Presença, Engajamento
-- [x] Cálculo automático do Valor da Marca
-- [x] Categorias P/E (Overperformer/Underperformer Consistente/Inconsistente)
-- [x] Geração de recomendações estratégicas com IA
-- [x] Autosave de dados
+### Ferramentas (NOVO - 11/02/2026)
+- [x] **Identidade Visual** - Sugestões de cores, tipografia e estilo baseadas no arquétipo
+- [x] **Investment Match** - Base de VCs brasileiros + oportunidades de investimento
 
-### Interface
-- [x] Sidebar colapsável
-- [x] Header com seletor de marca
-- [x] Progress bars por pilar
-- [x] Autosave
-- [x] Toasts de feedback
-- [x] Design responsivo
-- [x] Acessibilidade (skip links, ARIA)
-
----
-
-## Funcionalidades MOCK (Aguardando Integração)
-
-### Google Analytics
-- Dados de share of search simulados
-- Tráfego direto simulado
-- Menções simuladas
-
-### Google Search Console
-- Dados de busca simulados
-
-### Google Drive
-- Importação de documentos não implementada
-
----
-
-## Backlog de Funcionalidades (Futuras)
-
-### P0 - Críticas
-- [ ] Integração real com Google Analytics
-- [ ] Integração real com Google Search Console
-- [ ] Exportação de relatórios (PDF)
-
-### P1 - Importantes
-- [ ] Importação de documentos do Google Drive
-- [ ] Gerador de briefings para designers/copywriters
-- [ ] Integração com Monday/Trello (webhooks)
-- [ ] Sistema de permissões granular (Estrategista x Cliente)
-
-### P2 - Desejáveis
-- [ ] Modo dark
-- [ ] Múltiplos idiomas
-- [ ] Histórico de versões (versionamento de pilares)
-- [ ] Comentários e colaboração em tempo real
-- [ ] Templates de marca pré-configurados
-
----
+### Sistema
+- [x] Planos SaaS (Free, Pro, Enterprise)
+- [x] Trial de 15 dias
+- [x] Dark mode
+- [x] Upload de logo
+- [x] Branding LABrand
 
 ## Endpoints da API
 
-### Autenticação
-- `POST /api/auth/register` - Registro
-- `POST /api/auth/login` - Login
-- `POST /api/auth/session` - OAuth callback
-- `GET /api/auth/me` - Usuário atual
-- `POST /api/auth/logout` - Logout
+### Auth
+- POST /api/auth/register
+- POST /api/auth/login
+- GET /api/auth/me
+- GET /api/auth/google/init
+- GET /api/auth/google/callback
 
-### Marcas
-- `GET /api/brands` - Listar marcas
-- `POST /api/brands` - Criar marca
-- `GET /api/brands/{id}` - Detalhes da marca
-- `PUT /api/brands/{id}` - Atualizar marca
-- `GET /api/brands/{id}/metrics` - Métricas
+### Brands
+- GET/POST /api/brands
+- GET/PUT/DELETE /api/brands/{brand_id}
+- POST /api/brands/{brand_id}/logo
+- GET /api/brands/{brand_id}/report
 
-### Pilares
-- `GET/PUT /api/brands/{id}/pillars/{pillar_name}` - CRUD de pilares
-  - Pilares: start, values, purpose, promise, positioning, personality, universality, **valuation**
+### Pillars
+- GET/PUT /api/brands/{brand_id}/pillars
 
-### Tarefas
-- `GET/POST /api/brands/{id}/tasks` - Listar/Criar
-- `PUT/DELETE /api/brands/{id}/tasks/{task_id}` - Atualizar/Deletar
+### Valuation
+- GET/POST /api/brands/{brand_id}/valuation
 
-### Decisões
-- `GET/POST /api/brands/{id}/decisions` - Listar/Criar
-- `PUT /api/brands/{id}/decisions/{decision_id}` - Atualizar
+### Identity (NOVO)
+- GET /api/brands/{brand_id}/identity
+- POST /api/brands/{brand_id}/identity/generate
 
-### Narrativas
-- `GET/POST /api/brands/{id}/narratives` - Listar/Criar
-- `PUT /api/brands/{id}/narratives/{narrative_id}` - Atualizar
+### Investment (NOVO)
+- GET /api/investment/investors
+- GET /api/investment/opportunities
 
-### IA
-- `POST /api/ai/insights` - Gerar insights com GPT-5.2
+### Campaigns
+- GET/POST /api/campaigns
+- PUT/DELETE /api/campaigns/{campaign_id}
 
----
+## Pendências
+
+### P0 (Crítico)
+- [ ] Integrar Treeal para pagamentos (aguardando credenciais)
+
+### P1 (Alta)
+- [ ] Implementar AI Mentor com insights reais
+- [ ] Completar módulo Audiência
+- [ ] Completar módulo Campanhas
+- [ ] Buscar dados do Google Analytics/Search Console
+
+### P2 (Média)
+- [ ] Refatorar backend/server.py em routers separados
+- [ ] Importação de arquivos do Google Drive
+- [ ] Conteúdo do Tutorial de onboarding
+- [ ] Base real de VCs para Investment Match
+
+### P3 (Backlog)
+- [ ] Integração com Canva
+- [ ] Melhorar geração de relatórios PDF
+- [ ] Análise de PDFs grandes
 
 ## Credenciais de Teste
+- **Estrategista:** demo@labrand.com / password123
+- **Cliente:** cliente@labrand.com / password123
 
-```
-Email: demo@labrand.com
-Senha: demo123
-Role: estrategista
-Marca de teste: Minha Marca Demo (brand_92bcc15a44fb)
-```
+## Integrações de Terceiros
+| Serviço | Status | Chave |
+|---------|--------|-------|
+| Google OAuth | ✅ Configurado | User-provided |
+| OpenAI | ✅ Configurado | Emergent LLM Key |
+| Treeal | ⏳ Aguardando | Pendente |
 
----
-
-## Próximos Passos
-
-1. ~~Implementar Brand Valuation~~ ✅ Concluído
-2. Implementar integração real com Google APIs (Analytics, Search Console, Drive)
-3. Adicionar sistema de permissões cliente/estrategista
-4. Criar exportação de relatórios em PDF
-5. Módulo de Planejamento interno (sem Monday/Trello - por escolha do usuário)
-
----
-
-## Changelog
-
-### 2026-02-10
-- ✅ Adicionada funcionalidade de **Brand Valuation** (Avaliação de Marca)
-  - Página frontend com 4 tabs
-  - Endpoints backend GET/PUT /api/brands/{id}/pillars/valuation
-  - Integração com IA para recomendações estratégicas
-  - Metodologia Interbrand completa implementada
-- ✅ Corrigida navegação para incluir "Avaliação de Marca" no menu lateral
-- ✅ Adicionada rota /valuation no App.js
-- ✅ Testes completos passando (100% backend, 100% frontend)
-- ✅ Renomeado "Universalidade" para "Universal" no menu e dashboard
-- ✅ Implementado sistema de permissões Estrategista/Cliente
-  - Estrategista: acesso total
-  - Cliente: acesso apenas a Dashboard, Intelligence, Narrativas, Relatórios
-  - Badge de role no header do usuário
-- ✅ Implementada integração com Google APIs (Analytics, Search Console, Drive)
-  - OAuth 2.0 configurado com credenciais do projeto GG26
-  - Nova tab "Integrações" em Configurações
-  - Endpoints para conectar/desconectar Google
-  - Endpoints para buscar dados de Analytics, Search Console e Drive
-- ✅ Botão de excluir marca com confirmação
-- ✅ Arquitetura de marca (Monolítica, Endossada, Submarca, Híbrida, House of Brands)
-- ✅ Seletor de cor para marcas
-- ✅ Modo Dark implementado com toggle em Configurações > Personalização
-- ✅ Nova página Inteligência de Audiência
-  - Segmentos de audiência com estatísticas
-  - Sugestão de influenciadores por plataforma
-  - Métricas de alcance e engajamento
-  - Geração de insights com IA
-- ✅ Nova página Calendário de Campanhas
-  - Calendário mensal visual
-  - CRUD de campanhas com tipo, orçamento e datas
-  - Estatísticas de campanhas ativas
+## Notas Técnicas
+- MongoDB para persistência
+- bcrypt 4.0.1 para hashing
+- reportlab para PDFs
+- Dados de VCs são MOCK (pode evoluir para API real)
