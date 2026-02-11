@@ -26,6 +26,8 @@ import Valuation from "./pages/Valuation";
 import Audience from "./pages/Audience";
 import Campaigns from "./pages/Campaigns";
 import Plans from "./pages/Plans";
+import BrandIdentity from "./pages/BrandIdentity";
+import InvestmentMatch from "./pages/InvestmentMatch";
 import "./App.css";
 
 // Router wrapper to handle auth callback
