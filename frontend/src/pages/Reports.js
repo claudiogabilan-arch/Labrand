@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useBrand } from '../contexts/BrandContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -30,8 +31,11 @@ import {
   Plus
 } from 'lucide-react';
 
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
 export const Reports = () => {
   const { currentBrand, metrics, fetchMetrics } = useBrand();
+  const { getAuthHeaders } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [isGenerating, setIsGenerating] = useState(false);
   const [dateRange, setDateRange] = useState({
@@ -47,11 +51,24 @@ export const Reports = () => {
   }, [currentBrand?.brand_id, fetchMetrics]);
 
   const handleGenerateReport = async (reportType) => {
+    if (!currentBrand?.brand_id) {
+      toast.error('Selecione uma marca primeiro');
+      return;
+    }
     setIsGenerating(true);
     try {
-      // Simulate report generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.success(`Relatório de ${reportType} gerado com sucesso!`);
+      const response = await fetch(`${API}/brands/${currentBrand.brand_id}/reports/${reportType}?format=${selectedFormat}`, {
+        headers: getAuthHeaders()
+      });
+      if (!response.ok) throw new Error('Erro ao gerar');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentBrand.name}_${reportType}_${format(new Date(), 'yyyy-MM-dd')}.${selectedFormat}`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success(`Relatório exportado!`);
     } catch (error) {
       toast.error('Erro ao gerar relatório');
     } finally {
