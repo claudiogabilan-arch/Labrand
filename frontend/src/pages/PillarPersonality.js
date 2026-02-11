@@ -8,122 +8,34 @@ import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
-import { Users, Plus, X, Loader2, Save, Sparkles, Check } from 'lucide-react';
+import { Users, Plus, X, Loader2, Save, Sparkles, Check, Lightbulb } from 'lucide-react';
 
-// Classes Arquetípicas com seus arquétipos
-const archetypeClasses = [
-  {
-    id: 'singularidade',
-    name: 'Singularidade',
-    color: 'bg-blue-500',
-    borderColor: 'border-blue-500',
-    bgLight: 'bg-blue-50 dark:bg-blue-950',
-    textColor: 'text-blue-700 dark:text-blue-300',
-    description: 'Foco no indivíduo, realização pessoal e destaque',
-    archetypes: [
-      { id: 'alquimista', name: 'Alquimista', group: 'Agentes' },
-      { id: 'cientista', name: 'Cientista', group: 'Agentes' },
-      { id: 'futurista', name: 'Futurista', group: 'Agentes' },
-      { id: 'ilusionista', name: 'Ilusionista', group: 'Agentes' },
-      { id: 'xama', name: 'Xamã', group: 'Agentes' },
-      { id: 'valente', name: 'Valente', group: 'Valente' },
-      { id: 'atleta', name: 'Atleta', group: 'Valente' },
-      { id: 'combatente', name: 'Combatente', group: 'Valente' },
-      { id: 'martir', name: 'Mártir', group: 'Valente' },
-      { id: 'protagonista', name: 'Protagonista', group: 'Valente' },
-      { id: 'artista', name: 'Artista', group: 'Artista' },
-      { id: 'designer', name: 'Designer', group: 'Artista' },
-      { id: 'especialista', name: 'Especialista', group: 'Artista' },
-      { id: 'porta-voz', name: 'Porta-voz', group: 'Artista' },
-      { id: 'vanguardista', name: 'Vanguardista', group: 'Artista' },
-    ]
-  },
-  {
-    id: 'liberdade',
-    name: 'Liberdade',
-    color: 'bg-emerald-500',
-    borderColor: 'border-emerald-500',
-    bgLight: 'bg-emerald-50 dark:bg-emerald-950',
-    textColor: 'text-emerald-700 dark:text-emerald-300',
-    description: 'Busca por autonomia, aventura e quebra de padrões',
-    archetypes: [
-      { id: 'caminhante', name: 'Caminhante', group: 'Caminhante' },
-      { id: 'cosmopolita', name: 'Cosmopolita', group: 'Caminhante' },
-      { id: 'desafiante', name: 'Desafiante', group: 'Caminhante' },
-      { id: 'nomade', name: 'Nômade', group: 'Caminhante' },
-      { id: 'viajante', name: 'Viajante', group: 'Caminhante' },
-      { id: 'rebelde', name: 'Rebelde', group: 'Rebelde' },
-      { id: 'anarquista', name: 'Anarquista', group: 'Rebelde' },
-      { id: 'ativista', name: 'Ativista', group: 'Rebelde' },
-      { id: 'iconoclasta', name: 'Iconoclasta', group: 'Rebelde' },
-      { id: 'pirata', name: 'Pirata', group: 'Rebelde' },
-      { id: 'comediante', name: 'Comediante', group: 'Comediante' },
-      { id: 'crianca', name: 'Criança', group: 'Comediante' },
-      { id: 'farrista', name: 'Farrista', group: 'Comediante' },
-      { id: 'multiforme', name: 'Multiforme', group: 'Comediante' },
-      { id: 'piadista', name: 'Piadista', group: 'Comediante' },
-    ]
-  },
-  {
-    id: 'coletividade',
-    name: 'Coletividade',
-    color: 'bg-pink-500',
-    borderColor: 'border-pink-500',
-    bgLight: 'bg-pink-50 dark:bg-pink-950',
-    textColor: 'text-pink-700 dark:text-pink-300',
-    description: 'Conexão com outros, pertencimento e comunidade',
-    archetypes: [
-      { id: 'entusiasta', name: 'Entusiasta', group: 'Entusiasta' },
-      { id: 'hedonista', name: 'Hedonista', group: 'Entusiasta' },
-      { id: 'naturalista', name: 'Naturalista', group: 'Entusiasta' },
-      { id: 'patriota', name: 'Patriota', group: 'Entusiasta' },
-      { id: 'sensualista', name: 'Sensualista', group: 'Entusiasta' },
-      { id: 'altruista', name: 'Altruísta', group: 'Altruísta' },
-      { id: 'empata', name: 'Empata', group: 'Altruísta' },
-      { id: 'interprete', name: 'Intérprete', group: 'Altruísta' },
-      { id: 'terapeuta', name: 'Terapeuta', group: 'Altruísta' },
-      { id: 'vigilante', name: 'Vigilante', group: 'Altruísta' },
-      { id: 'habitante', name: 'Habitante', group: 'Habitante' },
-      { id: 'democrata', name: 'Democrata', group: 'Habitante' },
-      { id: 'realista', name: 'Realista', group: 'Habitante' },
-      { id: 'servical', name: 'Serviçal', group: 'Habitante' },
-      { id: 'sociavel', name: 'Sociável', group: 'Habitante' },
-    ]
-  },
-  {
-    id: 'regularidade',
-    name: 'Regularidade',
-    color: 'bg-purple-500',
-    borderColor: 'border-purple-500',
-    bgLight: 'bg-purple-50 dark:bg-purple-950',
-    textColor: 'text-purple-700 dark:text-purple-300',
-    description: 'Ordem, tradição, estabilidade e estrutura',
-    archetypes: [
-      { id: 'idealista', name: 'Idealista', group: 'Idealista' },
-      { id: 'crente', name: 'Crente', group: 'Idealista' },
-      { id: 'iniciante', name: 'Iniciante', group: 'Idealista' },
-      { id: 'otimista', name: 'Otimista', group: 'Idealista' },
-      { id: 'perfeccionista', name: 'Perfeccionista', group: 'Idealista' },
-      { id: 'regente', name: 'Regente', group: 'Regente' },
-      { id: 'aristocrata', name: 'Aristocrata', group: 'Regente' },
-      { id: 'diplomata', name: 'Diplomata', group: 'Regente' },
-      { id: 'estrategista', name: 'Estrategista', group: 'Regente' },
-      { id: 'lider', name: 'Líder', group: 'Regente' },
-      { id: 'sapiente', name: 'Sapiente', group: 'Sapiente' },
-      { id: 'detetive', name: 'Detetive', group: 'Sapiente' },
-      { id: 'eremita', name: 'Eremita', group: 'Sapiente' },
-      { id: 'guru', name: 'Guru', group: 'Sapiente' },
-      { id: 'intelectual', name: 'Intelectual', group: 'Sapiente' },
-    ]
-  }
+// 12 Arquétipos de Jung
+const jungArchetypes = [
+  { id: 'inocente', name: 'Inocente', emoji: '😇', desc: 'Otimismo, pureza, simplicidade', traits: ['Otimista', 'Puro', 'Honesto'], brands: ['Coca-Cola', 'Disney', 'Dove'] },
+  { id: 'explorador', name: 'Explorador', emoji: '🧭', desc: 'Liberdade, aventura, descoberta', traits: ['Aventureiro', 'Independente', 'Curioso'], brands: ['Jeep', 'The North Face', 'Starbucks'] },
+  { id: 'sabio', name: 'Sábio', emoji: '🦉', desc: 'Conhecimento, verdade, sabedoria', traits: ['Analítico', 'Inteligente', 'Confiável'], brands: ['Google', 'BBC', 'TED'] },
+  { id: 'heroi', name: 'Herói', emoji: '🦸', desc: 'Coragem, determinação, vitória', traits: ['Corajoso', 'Determinado', 'Inspirador'], brands: ['Nike', 'Adidas', 'FedEx'] },
+  { id: 'fora-da-lei', name: 'Fora-da-Lei', emoji: '🏴‍☠️', desc: 'Rebeldia, revolução, liberdade', traits: ['Rebelde', 'Disruptivo', 'Ousado'], brands: ['Harley-Davidson', 'Virgin', 'Diesel'] },
+  { id: 'mago', name: 'Mago', emoji: '🪄', desc: 'Transformação, visão, inovação', traits: ['Visionário', 'Carismático', 'Transformador'], brands: ['Apple', 'Tesla', 'Dyson'] },
+  { id: 'cara-comum', name: 'Cara Comum', emoji: '👤', desc: 'Pertencimento, autenticidade, igualdade', traits: ['Acessível', 'Autêntico', 'Democrático'], brands: ['IKEA', 'Havaianas', 'Volkswagen'] },
+  { id: 'amante', name: 'Amante', emoji: '❤️', desc: 'Paixão, prazer, intimidade', traits: ['Sensual', 'Apaixonado', 'Elegante'], brands: ['Chanel', 'Victoria\'s Secret', 'Godiva'] },
+  { id: 'bobo', name: 'Bobo da Corte', emoji: '🃏', desc: 'Diversão, humor, espontaneidade', traits: ['Divertido', 'Espontâneo', 'Irreverente'], brands: ['M&M\'s', 'Old Spice', 'Fanta'] },
+  { id: 'cuidador', name: 'Cuidador', emoji: '🤗', desc: 'Proteção, compaixão, serviço', traits: ['Generoso', 'Protetor', 'Empático'], brands: ['Johnson & Johnson', 'Volvo', 'WWF'] },
+  { id: 'criador', name: 'Criador', emoji: '🎨', desc: 'Inovação, expressão, imaginação', traits: ['Criativo', 'Inovador', 'Original'], brands: ['Lego', 'Adobe', 'Pinterest'] },
+  { id: 'governante', name: 'Governante', emoji: '👑', desc: 'Liderança, poder, controle', traits: ['Líder', 'Responsável', 'Organizado'], brands: ['Mercedes-Benz', 'Rolex', 'Microsoft'] },
 ];
 
-// Flatten all archetypes for easy lookup
-const allArchetypes = archetypeClasses.flatMap(c => 
-  c.archetypes.map(a => ({ ...a, classId: c.id, className: c.name, classColor: c.color }))
-);
+// Combinações sugeridas
+const suggestedCombinations = [
+  { primary: 'heroi', secondary: 'explorador', name: 'Aventureiro Corajoso', desc: 'Marcas que inspiram conquistas através de experiências' },
+  { primary: 'mago', secondary: 'criador', name: 'Inovador Visionário', desc: 'Marcas que transformam mercados com criatividade' },
+  { primary: 'sabio', secondary: 'cuidador', name: 'Mentor Confiável', desc: 'Marcas que educam e protegem seus clientes' },
+  { primary: 'fora-da-lei', secondary: 'bobo', name: 'Rebelde Divertido', desc: 'Marcas que desafiam normas com humor' },
+  { primary: 'amante', secondary: 'criador', name: 'Artista Apaixonado', desc: 'Marcas que criam experiências sensoriais únicas' },
+  { primary: 'governante', secondary: 'heroi', name: 'Líder Inspirador', desc: 'Marcas que comandam com propósito' },
+];
 
 export const PillarPersonality = () => {
   const { currentBrand, fetchPillar, updatePillar, generateInsight } = useBrand();
