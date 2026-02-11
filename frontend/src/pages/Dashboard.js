@@ -247,6 +247,51 @@ export const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Mentor / AI Insights */}
+      <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center">
+                <Lightbulb className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Mentor de Marca</CardTitle>
+                <CardDescription>Insights personalizados para {currentBrand?.name}</CardDescription>
+              </div>
+            </div>
+            <Button 
+              onClick={generateMentorInsights} 
+              disabled={isLoadingInsights}
+              variant="outline"
+              className="border-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900"
+            >
+              {isLoadingInsights ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Gerar Insights
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {mentorInsights ? (
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <div className="whitespace-pre-wrap text-sm">{mentorInsights}</div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Clique em "Gerar Insights" para receber recomendações de melhorias, ações de marca, 
+              oportunidades de mercado e sugestões de novos produtos baseados nos dados da sua marca.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Tutorial */}
+      {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
     </div>
   );
 };
