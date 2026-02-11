@@ -68,6 +68,7 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
   const location = useLocation();
   const { metrics } = useBrand();
   const { isCliente, canAccess } = useAuth();
+  const { theme } = useTheme();
 
   const getPillarProgress = (pillar) => {
     if (!metrics?.pillars) return 0;
@@ -92,23 +93,50 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
         <div className={`flex items-center h-16 px-4 border-b ${collapsed ? 'justify-center' : 'justify-between'}`}>
           {!collapsed && (
             <Link to="/dashboard" className="flex items-center gap-2" data-testid="logo-link">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">LB</span>
-              </div>
-              <span className="font-heading font-bold text-lg">LaBrand</span>
+              <img 
+                src={theme === 'dark' ? '/logo-white.png' : '/logo-black.png'} 
+                alt="LABrand" 
+                className="h-8 w-auto"
+              />
             </Link>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setCollapsed(!collapsed)}
-            className="h-8 w-8"
-            data-testid="toggle-sidebar-btn"
-            aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
-          >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
+          {collapsed && (
+            <Link to="/dashboard" data-testid="logo-link">
+              <img 
+                src={theme === 'dark' ? '/icon-skull-white.png' : '/icon-skull-black.png'} 
+                alt="LABrand" 
+                className="h-8 w-8"
+              />
+            </Link>
+          )}
+          {!collapsed && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCollapsed(!collapsed)}
+              className="h-8 w-8"
+              data-testid="toggle-sidebar-btn"
+              aria-label="Recolher menu"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          )}
         </div>
+
+        {collapsed && (
+          <div className="flex justify-center py-2 border-b">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCollapsed(!collapsed)}
+              className="h-8 w-8"
+              data-testid="toggle-sidebar-btn"
+              aria-label="Expandir menu"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
 
         {/* Navigation */}
         <ScrollArea className="flex-1 py-4">
