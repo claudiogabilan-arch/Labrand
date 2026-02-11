@@ -38,7 +38,9 @@ import {
   FileText,
   DollarSign,
   Calendar,
-  UserCheck
+  UserCheck,
+  Palette,
+  TrendingUp
 } from 'lucide-react';
 
 const navigationItems = [
@@ -60,6 +62,9 @@ const navigationItems = [
   { name: 'Narrativas', href: '/narratives', icon: BookOpen },
   { name: 'Relatórios', href: '/reports', icon: FileText },
   { name: 'Avaliação de Marca', href: '/valuation', icon: DollarSign },
+  { type: 'divider', label: 'Ferramentas' },
+  { name: 'Identidade Visual', href: '/identity', icon: Palette },
+  { name: 'Investment Match', href: '/investment', icon: TrendingUp },
   { type: 'divider', label: 'Sistema' },
   { name: 'Planos', href: '/plans', icon: Star },
   { name: 'Configurações', href: '/settings', icon: Settings },
