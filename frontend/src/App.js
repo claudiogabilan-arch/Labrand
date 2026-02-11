@@ -25,6 +25,7 @@ import Reports from "./pages/Reports";
 import Valuation from "./pages/Valuation";
 import Audience from "./pages/Audience";
 import Campaigns from "./pages/Campaigns";
+import Plans from "./pages/Plans";
 import "./App.css";
 
 // Router wrapper to handle auth callback
