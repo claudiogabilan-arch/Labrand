@@ -806,6 +806,48 @@ async def get_metrics(brand_id: str, user: dict = Depends(get_current_user)):
         "overall_completion": int(sum(pillar_status.values()) / len(pillars))
     }
 
+# ==================== CAMPAIGNS ROUTES ====================
+
+@api_router.get("/brands/{brand_id}/campaigns")
+async def get_campaigns(brand_id: str, user: dict = Depends(get_current_user)):
+    campaigns = await db.campaigns.find({"brand_id": brand_id}, {"_id": 0}).to_list(500)
+    return campaigns
+
+@api_router.post("/brands/{brand_id}/campaigns")
+async def create_campaign(brand_id: str, campaign_data: dict, user: dict = Depends(get_current_user)):
+    campaign_id = f"campaign_{uuid.uuid4().hex[:12]}"
+    now = datetime.now(timezone.utc).isoformat()
+    
+    campaign_doc = {
+        "campaign_id": campaign_id,
+        "brand_id": brand_id,
+        "title": campaign_data.get("title", ""),
+        "description": campaign_data.get("description"),
+        "type": campaign_data.get("type", "awareness"),
+        "start_date": campaign_data.get("start_date"),
+        "end_date": campaign_data.get("end_date"),
+        "budget": campaign_data.get("budget", 0),
+        "goals": campaign_data.get("goals"),
+        "created_at": now,
+        "updated_at": now
+    }
+    
+    await db.campaigns.insert_one(campaign_doc)
+    campaign_doc.pop("_id", None)
+    return campaign_doc
+
+@api_router.put("/brands/{brand_id}/campaigns/{campaign_id}")
+async def update_campaign(brand_id: str, campaign_id: str, campaign_data: dict, user: dict = Depends(get_current_user)):
+    campaign_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.campaigns.update_one({"campaign_id": campaign_id, "brand_id": brand_id}, {"$set": campaign_data})
+    updated = await db.campaigns.find_one({"campaign_id": campaign_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/brands/{brand_id}/campaigns/{campaign_id}")
+async def delete_campaign(brand_id: str, campaign_id: str, user: dict = Depends(get_current_user)):
+    await db.campaigns.delete_one({"campaign_id": campaign_id, "brand_id": brand_id})
+    return {"message": "Campanha removida"}
+
 # ==================== ROOT ====================
 
 @api_router.get("/")
