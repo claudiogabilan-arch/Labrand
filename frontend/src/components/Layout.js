@@ -61,6 +61,7 @@ const navigationItems = [
   { name: 'Relatórios', href: '/reports', icon: FileText },
   { name: 'Avaliação de Marca', href: '/valuation', icon: DollarSign },
   { type: 'divider', label: 'Sistema' },
+  { name: 'Planos', href: '/plans', icon: Star },
   { name: 'Configurações', href: '/settings', icon: Settings },
 ];
 
