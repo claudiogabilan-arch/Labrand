@@ -1384,6 +1384,119 @@ async def get_google_drive(brand_id: str, user: dict = Depends(get_current_user)
             "message": "Arquivos do Drive obtidos com sucesso"
         }
 
+# ==================== BRAND IDENTITY ====================
+
+@api_router.get("/brands/{brand_id}/identity")
+async def get_brand_identity(brand_id: str, user: dict = Depends(get_current_user)):
+    identity = await db.brand_identities.find_one({"brand_id": brand_id}, {"_id": 0})
+    return identity or {}
+
+@api_router.post("/brands/{brand_id}/identity/generate")
+async def generate_brand_identity(brand_id: str, user: dict = Depends(get_current_user)):
+    brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
+    if not brand:
+        raise HTTPException(status_code=404, detail="Marca não encontrada")
+    
+    pillars = await db.pillars.find_one({"brand_id": brand_id}, {"_id": 0})
+    archetype = pillars.get("personality", {}).get("archetype", "Sábio") if pillars else "Sábio"
+    values = pillars.get("values", {}).get("core_values", []) if pillars else []
+    personality_traits = pillars.get("personality", {}).get("traits", []) if pillars else []
+    
+    archetype_palettes = {
+        'Inocente': {'colors': ['#FDFCFB', '#E8F5E9', '#FFF9C4', '#E3F2FD'], 'style': 'Leve, puro, minimalista'},
+        'Explorador': {'colors': ['#5D4037', '#FF6F00', '#1B5E20', '#37474F'], 'style': 'Rústico, aventureiro, natural'},
+        'Sábio': {'colors': ['#1A237E', '#0D47A1', '#263238', '#FFC107'], 'style': 'Sofisticado, intelectual, clean'},
+        'Herói': {'colors': ['#B71C1C', '#212121', '#FF6F00', '#1565C0'], 'style': 'Bold, impactante, poderoso'},
+        'Fora-da-lei': {'colors': ['#212121', '#B71C1C', '#4A148C', '#1B1B1B'], 'style': 'Rebelde, disruptivo, dark'},
+        'Mago': {'colors': ['#4A148C', '#1A237E', '#880E4F', '#FF6F00'], 'style': 'Místico, transformador, vibrante'},
+        'Cara Comum': {'colors': ['#5D4037', '#455A64', '#3E2723', '#607D8B'], 'style': 'Acessível, honesto, simples'},
+        'Amante': {'colors': ['#880E4F', '#AD1457', '#C62828', '#4E342E'], 'style': 'Sensual, elegante, luxuoso'},
+        'Bobo': {'colors': ['#FF6F00', '#FFEB3B', '#00BCD4', '#E91E63'], 'style': 'Divertido, colorido, irreverente'},
+        'Cuidador': {'colors': ['#1B5E20', '#0097A7', '#2E7D32', '#00695C'], 'style': 'Acolhedor, sereno, natural'},
+        'Criador': {'colors': ['#FF5722', '#795548', '#FF9800', '#3E2723'], 'style': 'Artístico, expressivo, único'},
+        'Governante': {'colors': ['#0D47A1', '#212121', '#BF360C', '#1B1B1B'], 'style': 'Premium, autoritário, clássico'}
+    }
+    
+    archetype_fonts = {
+        'Inocente': ['Quicksand', 'Nunito', 'Poppins'],
+        'Explorador': ['Montserrat', 'Oswald', 'Roboto Condensed'],
+        'Sábio': ['Merriweather', 'Playfair Display', 'Lora'],
+        'Herói': ['Bebas Neue', 'Anton', 'Roboto'],
+        'Fora-da-lei': ['Rock Salt', 'Permanent Marker', 'Roboto'],
+        'Mago': ['Cinzel', 'Cormorant', 'Spectral'],
+        'Cara Comum': ['Open Sans', 'Roboto', 'Source Sans Pro'],
+        'Amante': ['Playfair Display', 'Cormorant Garamond', 'Lora'],
+        'Bobo': ['Fredoka One', 'Baloo 2', 'Comic Neue'],
+        'Cuidador': ['Cabin', 'Nunito', 'Catamaran'],
+        'Criador': ['Abril Fatface', 'Amatic SC', 'Caveat'],
+        'Governante': ['Cinzel', 'Trajan Pro', 'Cormorant']
+    }
+    
+    base = archetype_palettes.get(archetype, archetype_palettes['Sábio'])
+    fonts = archetype_fonts.get(archetype, archetype_fonts['Sábio'])
+    
+    identity = {
+        "brand_id": brand_id,
+        "archetype": archetype,
+        "colors": base['colors'],
+        "fonts": fonts,
+        "style": base['style'],
+        "elements": f"Elementos visuais que transmitem {', '.join(personality_traits[:3]) if personality_traits else 'sofisticação e confiança'}",
+        "photography": f"Imagens que refletem os valores de {', '.join(values[:2]) if values else 'autenticidade e qualidade'}",
+        "moodboard": f"Referências visuais inspiradas no arquétipo {archetype}: {base['style'].lower()}. Busque inspiração em marcas que transmitem essa mesma essência.",
+        "generated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.brand_identities.update_one(
+        {"brand_id": brand_id},
+        {"$set": identity},
+        upsert=True
+    )
+    
+    return identity
+
+# ==================== INVESTMENT MATCH ====================
+
+MOCK_INVESTORS = [
+    {"name": "Kaszek Ventures", "type": "Venture Capital", "ticket_min": 1000000, "ticket_max": 50000000, "stages": ["Seed", "Series A", "Series B"], "sectors": ["Fintech", "E-commerce", "SaaS", "Marketplace"], "website": "https://www.kaszek.com"},
+    {"name": "Valor Capital", "type": "Venture Capital", "ticket_min": 5000000, "ticket_max": 100000000, "stages": ["Series A", "Series B", "Growth"], "sectors": ["Fintech", "Healthtech", "Edtech", "Logística"], "website": "https://valorcapitalgroup.com"},
+    {"name": "Canary", "type": "Venture Capital", "ticket_min": 500000, "ticket_max": 10000000, "stages": ["Pre-Seed", "Seed", "Series A"], "sectors": ["SaaS", "Fintech", "Marketplace", "B2B"], "website": "https://canary.com.vc"},
+    {"name": "Softbank Latin America", "type": "Venture Capital", "ticket_min": 10000000, "ticket_max": 500000000, "stages": ["Series B", "Growth"], "sectors": ["Fintech", "E-commerce", "Delivery", "Mobilidade"], "website": "https://softbank.com"},
+    {"name": "MAYA Capital", "type": "Venture Capital", "ticket_min": 1000000, "ticket_max": 20000000, "stages": ["Seed", "Series A"], "sectors": ["SaaS", "Fintech", "Infraestrutura", "B2B"], "website": "https://maya.capital"},
+    {"name": "Astella Investimentos", "type": "Venture Capital", "ticket_min": 2000000, "ticket_max": 30000000, "stages": ["Seed", "Series A", "Series B"], "sectors": ["SaaS", "Healthtech", "Agtech", "Edtech"], "website": "https://astella.com.br"},
+    {"name": "Monashees", "type": "Venture Capital", "ticket_min": 5000000, "ticket_max": 50000000, "stages": ["Series A", "Series B"], "sectors": ["Fintech", "Healthtech", "Edtech", "E-commerce"], "website": "https://monashees.com.br"},
+    {"name": "Upload Ventures", "type": "Venture Capital", "ticket_min": 500000, "ticket_max": 5000000, "stages": ["Pre-Seed", "Seed"], "sectors": ["Deep Tech", "SaaS", "Climate Tech", "Biotech"], "website": "https://upload.vc"},
+]
+
+MOCK_OPPORTUNITIES = [
+    {"name": "TechFlow", "sector": "SaaS", "stage": "Seed", "valuation": 5000000, "seeking": 1000000, "description": "Plataforma de automação de workflows para PMEs"},
+    {"name": "GreenLogix", "sector": "Logística", "stage": "Series A", "valuation": 25000000, "seeking": 5000000, "description": "Logística sustentável com frota elétrica"},
+    {"name": "HealthAI", "sector": "Healthtech", "stage": "Pre-Seed", "valuation": 2000000, "seeking": 500000, "description": "Diagnóstico por IA para clínicas"},
+    {"name": "EduPlus", "sector": "Edtech", "stage": "Seed", "valuation": 8000000, "seeking": 2000000, "description": "Plataforma de ensino personalizado com IA"},
+]
+
+@api_router.get("/investment/investors")
+async def get_investors(brand_id: str = None, user: dict = Depends(get_current_user)):
+    investors = MOCK_INVESTORS.copy()
+    
+    if brand_id:
+        brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
+        valuation = await db.valuations.find_one({"brand_id": brand_id}, {"_id": 0})
+        
+        if valuation and valuation.get("total_value"):
+            val = valuation["total_value"]
+            for inv in investors:
+                if inv["ticket_min"] <= val <= inv["ticket_max"] * 10:
+                    inv["match_score"] = min(95, 60 + (len(inv["sectors"]) * 5))
+                else:
+                    inv["match_score"] = 30
+    
+    return sorted(investors, key=lambda x: x.get("match_score", 0), reverse=True)
+
+@api_router.get("/investment/opportunities")
+async def get_opportunities(user: dict = Depends(get_current_user)):
+    return MOCK_OPPORTUNITIES
+
 # Include the router in the main app
 app.include_router(api_router)
 
