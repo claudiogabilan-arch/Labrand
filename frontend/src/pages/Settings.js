@@ -138,8 +138,12 @@ export const Settings = () => {
   const [brandForm, setBrandForm] = useState({
     name: '',
     description: '',
-    industry: ''
+    industry: '',
+    brand_type: 'monolitica',
+    parent_brand_id: '',
+    brand_color: '#3B82F6'
   });
+  const [deletingBrand, setDeletingBrand] = useState(null);
 
   // Personalization state
   const [personalization, setPersonalization] = useState({
@@ -228,8 +232,25 @@ export const Settings = () => {
     setBrandForm({
       name: brand.name,
       description: brand.description || '',
-      industry: brand.industry || ''
+      industry: brand.industry || '',
+      brand_type: brand.brand_type || 'monolitica',
+      parent_brand_id: brand.parent_brand_id || '',
+      brand_color: brand.brand_color || '#3B82F6'
     });
+  };
+
+  const handleDeleteBrand = async (brand) => {
+    try {
+      await axios.delete(`${API}/brands/${brand.brand_id}`, {
+        headers: getAuthHeaders(),
+        withCredentials: true
+      });
+      toast.success('Marca excluída com sucesso!');
+      setDeletingBrand(null);
+      window.location.reload();
+    } catch (error) {
+      toast.error('Erro ao excluir marca');
+    }
   };
 
   const handleSavePersonalization = async () => {
@@ -255,6 +276,25 @@ export const Settings = () => {
     'Moda', 'Serviços Financeiros', 'Entretenimento', 'Imobiliário',
     'Consultoria', 'Marketing', 'Indústria', 'Outro'
   ];
+
+  const brandTypes = [
+    { value: 'monolitica', label: 'Monolítica', desc: 'Marca única para todos os produtos/serviços' },
+    { value: 'endossada', label: 'Endossada', desc: 'Submarca com endosso da marca mãe' },
+    { value: 'submarca', label: 'Submarca', desc: 'Marca filha vinculada a uma marca mãe' },
+    { value: 'hibrida', label: 'Híbrida', desc: 'Combinação de diferentes estratégias' },
+    { value: 'house_of_brands', label: 'House of Brands', desc: 'Grupo de marcas independentes' }
+  ];
+
+  const brandColors = [
+    '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
+    '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
+  ];
+
+  // Get potential parent brands (exclude current brand if editing)
+  const parentBrandOptions = brands.filter(b => 
+    b.brand_id !== editingBrand?.brand_id && 
+    (b.brand_type === 'monolitica' || b.brand_type === 'house_of_brands' || b.brand_type === 'hibrida')
+  );
 
   return (
     <div className="space-y-6" data-testid="settings-page">
