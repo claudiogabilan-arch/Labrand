@@ -128,7 +128,9 @@ const allArchetypes = archetypeClasses.flatMap(c =>
 export const PillarPersonality = () => {
   const { currentBrand, fetchPillar, updatePillar, generateInsight } = useBrand();
   const [data, setData] = useState({
+    classe_principal: '',
     arquetipo_principal: '',
+    classe_secundaria: '',
     arquetipo_secundario: '',
     atributos_desejados: [],
     atributos_indesejados: [],
