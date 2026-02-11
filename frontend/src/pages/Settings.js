@@ -675,6 +675,35 @@ export const Settings = () => {
                     </div>
                   </div>
 
+                  {/* Logo Upload */}
+                  <div className="space-y-2">
+                    <Label>Logo da Marca</Label>
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file || !editingBrand) return;
+                          const formData = new FormData();
+                          formData.append('file', file);
+                          try {
+                            const res = await axios.post(`${API}/brands/${editingBrand.brand_id}/logo`, formData, {
+                              headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' }
+                            });
+                            toast.success('Logo enviado!');
+                            window.location.reload();
+                          } catch (err) {
+                            toast.error('Erro ao enviar logo');
+                          }
+                        }}
+                        className="text-sm"
+                        disabled={!editingBrand}
+                      />
+                      {!editingBrand && <span className="text-xs text-muted-foreground">Salve a marca primeiro</span>}
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label>Descrição</Label>
                     <Textarea
