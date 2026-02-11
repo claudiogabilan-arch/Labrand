@@ -370,12 +370,25 @@ async def login(user_data: UserLogin, response: Response):
     
     token = create_jwt_token(user["user_id"], user["email"], user.get("role", "cliente"))
     
+    # Check trial status
+    plan = user.get("plan", "free")
+    trial_ends_at = user.get("trial_ends_at")
+    is_trial_active = False
+    if trial_ends_at:
+        trial_dt = datetime.fromisoformat(trial_ends_at) if isinstance(trial_ends_at, str) else trial_ends_at
+        if trial_dt.tzinfo is None:
+            trial_dt = trial_dt.replace(tzinfo=timezone.utc)
+        is_trial_active = trial_dt > datetime.now(timezone.utc)
+    
     return {
         "user_id": user["user_id"],
         "email": user["email"],
         "name": user["name"],
         "role": user.get("role", "cliente"),
         "picture": user.get("picture"),
+        "plan": plan,
+        "trial_ends_at": trial_ends_at,
+        "is_trial_active": is_trial_active,
         "token": token
     }
 
