@@ -504,8 +504,9 @@ resend.api_key = os.environ.get("RESEND_API_KEY")
 async def send_email(to: str, subject: str, html: str):
     """Enviar email via Resend"""
     try:
+        # Usar email de teste do Resend até verificar o domínio labrand.com.br
         params = {
-            "from": "LABrand <noreply@labrand.com.br>",
+            "from": "LABrand <onboarding@resend.dev>",
             "to": [to],
             "subject": subject,
             "html": html
