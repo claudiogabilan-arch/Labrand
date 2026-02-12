@@ -457,11 +457,29 @@ async def login(user_data: UserLogin, response: Response):
 class ForgotPasswordRequest(BaseModel):
     email: str
 
+# Resend email configuration
+import resend
+resend.api_key = os.environ.get("RESEND_API_KEY")
+
+async def send_email(to: str, subject: str, html: str):
+    """Enviar email via Resend"""
+    try:
+        params = {
+            "from": "LABrand <noreply@labrand.com.br>",
+            "to": [to],
+            "subject": subject,
+            "html": html
+        }
+        resend.Emails.send(params)
+        return True
+    except Exception as e:
+        logging.error(f"Erro ao enviar email: {e}")
+        return False
+
 @api_router.post("/auth/forgot-password")
 async def forgot_password(data: ForgotPasswordRequest):
     user = await db.users.find_one({"email": data.email}, {"_id": 0})
     if not user:
-        # Por segurança, não revelamos se o email existe ou não
         return {"message": "Se o email existir, você receberá instruções de recuperação"}
     
     # Gerar token de reset
@@ -479,9 +497,27 @@ async def forgot_password(data: ForgotPasswordRequest):
         upsert=True
     )
     
-    # TODO: Integrar com serviço de email (Resend, SendGrid, etc.)
-    # Por enquanto, apenas loga o token para teste
-    logging.info(f"Password reset token for {data.email}: {reset_token}")
+    # Enviar email de recuperação
+    frontend_url = os.environ.get("FRONTEND_URL", "https://labrand.com.br")
+    reset_link = f"{frontend_url}/reset-password?token={reset_token}"
+    
+    html = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1a1a1a;">Recuperação de Senha - LABrand</h2>
+        <p>Olá {user.get('name', '')},</p>
+        <p>Recebemos uma solicitação para redefinir sua senha.</p>
+        <p>Clique no botão abaixo para criar uma nova senha:</p>
+        <a href="{reset_link}" style="display: inline-block; background: #1a1a1a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+            Redefinir Senha
+        </a>
+        <p style="color: #666; font-size: 14px;">Este link expira em 1 hora.</p>
+        <p style="color: #666; font-size: 14px;">Se você não solicitou esta alteração, ignore este email.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
+        <p style="color: #999; font-size: 12px;">LABrand - Brand OS</p>
+    </div>
+    """
+    
+    await send_email(data.email, "Recuperação de Senha - LABrand", html)
     
     return {"message": "Se o email existir, você receberá instruções de recuperação"}
 
