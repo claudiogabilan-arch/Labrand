@@ -35,6 +35,19 @@ import "./App.css";
 // Router wrapper to handle auth callback
 function AppRouter() {
   const location = useLocation();
+  const { setUser, setToken } = useAuth();
+  
+  // Check URL for token from Google OAuth callback
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    if (token) {
+      localStorage.setItem('labrand_token', token);
+      setToken(token);
+      // Remove token from URL
+      window.history.replaceState({}, '', location.pathname);
+    }
+  }, [location]);
   
   // Check URL fragment for session_id (OAuth callback)
   if (location.hash?.includes('session_id=')) {
