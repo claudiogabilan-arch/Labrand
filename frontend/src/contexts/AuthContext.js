@@ -57,8 +57,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithGoogle = () => {
-    // Usar o Google OAuth configurado no backend
-    window.location.href = `${API}/auth/google/init`;
+    // Usar o Google OAuth configurado no backend para login social
+    window.location.href = `${API}/auth/google/login`;
   };
 
   const processOAuthSession = async (sessionId) => {
