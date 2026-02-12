@@ -104,18 +104,6 @@ PLANS = {
         "price_monthly": 497
     }
 }
-    },
-    "enterprise": {
-        "name": "Enterprise",
-        "price": 297,
-        "max_brands": -1,  # unlimited
-        "features": ["Marcas ilimitadas", "Todas as funcionalidades", "Requisições IA ilimitadas", "Suporte prioritário", "API access"],
-        "ai_requests_month": -1,  # unlimited
-        "export_pdf": True,
-        "google_integration": True,
-        "mentor": True
-    }
-}
 
 TRIAL_DAYS = 15
 
