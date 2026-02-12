@@ -242,10 +242,23 @@ export const LoginPage = () => {
                         />
                       </div>
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="user-type">Tipo de Usuário</Label>
+                      <Select value={userType} onValueChange={setUserType} required>
+                        <SelectTrigger data-testid="user-type-select">
+                          <SelectValue placeholder="Selecione seu perfil" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="estrategista">Estrategista</SelectItem>
+                          <SelectItem value="agencia">Agência</SelectItem>
+                          <SelectItem value="grupo_empresarial">Grupo Empresarial</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <Button 
                       type="submit" 
                       className="w-full bg-primary hover:bg-primary/90" 
-                      disabled={isLoading}
+                      disabled={isLoading || !userType}
                       data-testid="register-submit-btn"
                     >
                       {isLoading ? (
