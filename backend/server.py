@@ -53,7 +53,8 @@ class UserCreate(BaseModel):
     email: str
     password: str
     name: str
-    role: str = "cliente"
+    role: str = "estrategista"
+    user_type: str = "estrategista"  # estrategista, agencia, grupo_empresarial
 
 class UserLogin(BaseModel):
     email: str
@@ -62,10 +63,32 @@ class UserLogin(BaseModel):
 class User(UserBase):
     model_config = ConfigDict(extra="ignore")
     user_id: str
+    user_type: str = "estrategista"
     created_at: datetime
 
 # ==================== PLAN DEFINITIONS ====================
 PLANS = {
+    "founder": {
+        "name": "Founder",
+        "max_brands": 1,
+        "ai_requests_per_month": 20,
+        "features": ["basic_pillars", "valuation_basic"],
+        "price_monthly": 0
+    },
+    "consultant": {
+        "name": "Consultant", 
+        "max_brands": 5,
+        "ai_requests_per_month": 50,
+        "features": ["all_pillars", "valuation", "benchmark", "pdf_export", "history"],
+        "price_monthly": 197
+    },
+    "enterprise": {
+        "name": "Enterprise",
+        "max_brands": -1,  # unlimited
+        "ai_requests_per_month": -1,  # unlimited
+        "features": ["all_pillars", "valuation", "benchmark", "pdf_export", "history", "executive_dashboard", "api_access", "white_label"],
+        "price_monthly": 497
+    },
     "free": {
         "name": "Free",
         "price": 0,
