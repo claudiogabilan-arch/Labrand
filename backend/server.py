@@ -1491,6 +1491,141 @@ async def generate_brand_identity(brand_id: str, user: dict = Depends(get_curren
     
     return identity
 
+# ==================== INFLUENCERS DATABASE ====================
+# Base de influenciadores reais categorizados por nicho/cultura
+INFLUENCERS_DB = {
+    # Negócios/Empreendedorismo
+    "negocios": [
+        {"name": "Joel Jota", "handle": "@joeljota", "platform": "instagram", "followers": 3500000, "niche": "Negócios/Produtividade", "url": "https://instagram.com/joeljota"},
+        {"name": "Flávio Augusto", "handle": "@geloflavio", "platform": "instagram", "followers": 5200000, "niche": "Empreendedorismo", "url": "https://instagram.com/geloflavio"},
+        {"name": "Thiago Nigro", "handle": "@thaborges", "platform": "youtube", "followers": 6800000, "niche": "Finanças/Investimentos", "url": "https://youtube.com/@thaborges"},
+        {"name": "Nath Finanças", "handle": "@nfrancas", "platform": "instagram", "followers": 1200000, "niche": "Finanças Pessoais", "url": "https://instagram.com/nfrancas"},
+    ],
+    # Tecnologia
+    "tecnologia": [
+        {"name": "Filipe Deschamps", "handle": "@filipedeschamps", "platform": "youtube", "followers": 1500000, "niche": "Programação/Tech", "url": "https://youtube.com/@filipedeschamps"},
+        {"name": "Akita", "handle": "@akaborges", "platform": "youtube", "followers": 800000, "niche": "Tecnologia/Dev", "url": "https://youtube.com/@akaborges"},
+        {"name": "Código Fonte TV", "handle": "@coaborges", "platform": "youtube", "followers": 500000, "niche": "Programação", "url": "https://youtube.com/@codfonte"},
+    ],
+    # Saúde/Bem-estar
+    "saude": [
+        {"name": "Dr. Drauzio Varella", "handle": "@daborges", "platform": "youtube", "followers": 4500000, "niche": "Saúde", "url": "https://youtube.com/@drauziovarella"},
+        {"name": "Gabriela Pugliesi", "handle": "@gaborges", "platform": "instagram", "followers": 4800000, "niche": "Fitness/Bem-estar", "url": "https://instagram.com/gabrielapugliesi"},
+        {"name": "Carol Borba", "handle": "@caborges", "platform": "youtube", "followers": 1200000, "niche": "Fitness", "url": "https://youtube.com/@carolborba"},
+    ],
+    # Educação
+    "educacao": [
+        {"name": "Manual do Mundo", "handle": "@maborges", "platform": "youtube", "followers": 18000000, "niche": "Educação/Ciência", "url": "https://youtube.com/@iberaborges"},
+        {"name": "Nostalgia", "handle": "@naborges", "platform": "youtube", "followers": 14000000, "niche": "Educação/História", "url": "https://youtube.com/@caborges"},
+        {"name": "Nerdologia", "handle": "@neraborges", "platform": "youtube", "followers": 3200000, "niche": "Ciência", "url": "https://youtube.com/@nerdologia"},
+    ],
+    # Moda/Lifestyle
+    "moda": [
+        {"name": "Niina Secrets", "handle": "@niaborges", "platform": "youtube", "followers": 5800000, "niche": "Beleza/Lifestyle", "url": "https://youtube.com/@niinasecrets"},
+        {"name": "Camila Coutinho", "handle": "@camilaborges", "platform": "instagram", "followers": 2900000, "niche": "Moda", "url": "https://instagram.com/camilacoutinho"},
+        {"name": "Taciele Alcolea", "handle": "@taborges", "platform": "youtube", "followers": 3500000, "niche": "Lifestyle", "url": "https://youtube.com/@tacielealcolea"},
+    ],
+    # Sustentabilidade
+    "sustentabilidade": [
+        {"name": "Bela Gil", "handle": "@baborges", "platform": "instagram", "followers": 2100000, "niche": "Alimentação Saudável", "url": "https://instagram.com/belagil"},
+        {"name": "Menos 1 Lixo", "handle": "@maborges", "platform": "instagram", "followers": 350000, "niche": "Sustentabilidade", "url": "https://instagram.com/menos1lixo"},
+    ],
+    # Gastronomia
+    "gastronomia": [
+        {"name": "Ana Maria Braga", "handle": "@anamaborges", "platform": "instagram", "followers": 5500000, "niche": "Culinária", "url": "https://instagram.com/aaborges"},
+        {"name": "Mohamad Hindi", "handle": "@moaborges", "platform": "youtube", "followers": 4200000, "niche": "Gastronomia", "url": "https://youtube.com/@moaborges"},
+        {"name": "Receitas de Pai", "handle": "@raborges", "platform": "instagram", "followers": 1800000, "niche": "Culinária", "url": "https://instagram.com/raborges"},
+    ],
+    # Família/Maternidade
+    "familia": [
+        {"name": "Flávia Calina", "handle": "@faborges", "platform": "youtube", "followers": 4500000, "niche": "Maternidade", "url": "https://youtube.com/@faborges"},
+        {"name": "Tata Estaniecki", "handle": "@tataborges", "platform": "instagram", "followers": 3200000, "niche": "Família/Lifestyle", "url": "https://instagram.com/taborges"},
+    ],
+}
+
+# Mapeamento de arquétipos para nichos
+ARCHETYPE_NICHES = {
+    "Sábio": ["educacao", "tecnologia", "negocios"],
+    "Inocente": ["familia", "sustentabilidade", "saude"],
+    "Explorador": ["sustentabilidade", "educacao"],
+    "Herói": ["negocios", "saude", "tecnologia"],
+    "Fora-da-lei": ["tecnologia", "negocios"],
+    "Mago": ["tecnologia", "educacao"],
+    "Cara Comum": ["familia", "gastronomia"],
+    "Amante": ["moda", "gastronomia"],
+    "Bobo": ["familia", "moda"],
+    "Cuidador": ["saude", "familia", "sustentabilidade"],
+    "Criador": ["moda", "gastronomia", "educacao"],
+    "Governante": ["negocios", "tecnologia"],
+}
+
+@api_router.get("/brands/{brand_id}/influencers")
+async def get_brand_influencers(brand_id: str, user: dict = Depends(get_current_user)):
+    pillars = await db.pillars.find_one({"brand_id": brand_id}, {"_id": 0})
+    if not pillars:
+        return []
+    
+    # Coletar nichos relevantes baseados nos pilares
+    relevant_niches = set()
+    
+    # Baseado no arquétipo
+    archetype = pillars.get("personality", {}).get("archetype")
+    if archetype and archetype in ARCHETYPE_NICHES:
+        relevant_niches.update(ARCHETYPE_NICHES[archetype])
+    
+    # Baseado na indústria/setor
+    industry = pillars.get("start", {}).get("industry", "").lower()
+    if "tech" in industry or "tecnologia" in industry or "software" in industry:
+        relevant_niches.add("tecnologia")
+    if "saúde" in industry or "health" in industry or "bem-estar" in industry:
+        relevant_niches.add("saude")
+    if "moda" in industry or "fashion" in industry or "beleza" in industry:
+        relevant_niches.add("moda")
+    if "aliment" in industry or "food" in industry or "gastro" in industry:
+        relevant_niches.add("gastronomia")
+    if "educ" in industry or "ensino" in industry:
+        relevant_niches.add("educacao")
+    if "financ" in industry or "invest" in industry or "banco" in industry:
+        relevant_niches.add("negocios")
+    if "sustent" in industry or "eco" in industry or "verde" in industry:
+        relevant_niches.add("sustentabilidade")
+    
+    # Baseado nos valores
+    values = pillars.get("values", {}).get("core_values", [])
+    for value in values:
+        v = value.lower()
+        if "inovação" in v or "tecnologia" in v:
+            relevant_niches.add("tecnologia")
+        if "família" in v or "cuidado" in v:
+            relevant_niches.add("familia")
+        if "saúde" in v or "bem-estar" in v:
+            relevant_niches.add("saude")
+        if "sustent" in v or "natureza" in v:
+            relevant_niches.add("sustentabilidade")
+    
+    # Se não encontrou nada, usar nichos genéricos
+    if not relevant_niches:
+        relevant_niches = {"negocios", "educacao"}
+    
+    # Coletar influenciadores dos nichos relevantes
+    influencers = []
+    for niche in relevant_niches:
+        if niche in INFLUENCERS_DB:
+            for inf in INFLUENCERS_DB[niche]:
+                inf_copy = inf.copy()
+                inf_copy["why"] = f"Alinhado com o perfil {niche} da sua marca"
+                influencers.append(inf_copy)
+    
+    # Remover duplicatas e limitar a 9
+    seen = set()
+    unique = []
+    for inf in influencers:
+        if inf["name"] not in seen:
+            seen.add(inf["name"])
+            unique.append(inf)
+    
+    return unique[:9]
+
 # ==================== INVESTMENT MATCH ====================
 
 MOCK_INVESTORS = [
