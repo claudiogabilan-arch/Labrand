@@ -454,6 +454,37 @@ async def login(user_data: UserLogin, response: Response):
         "token": token
     }
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+@api_router.post("/auth/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest):
+    user = await db.users.find_one({"email": data.email}, {"_id": 0})
+    if not user:
+        # Por segurança, não revelamos se o email existe ou não
+        return {"message": "Se o email existir, você receberá instruções de recuperação"}
+    
+    # Gerar token de reset
+    reset_token = f"reset_{uuid.uuid4().hex}"
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    
+    await db.password_resets.update_one(
+        {"email": data.email},
+        {"$set": {
+            "email": data.email,
+            "token": reset_token,
+            "expires_at": expires_at.isoformat(),
+            "used": False
+        }},
+        upsert=True
+    )
+    
+    # TODO: Integrar com serviço de email (Resend, SendGrid, etc.)
+    # Por enquanto, apenas loga o token para teste
+    logging.info(f"Password reset token for {data.email}: {reset_token}")
+    
+    return {"message": "Se o email existir, você receberá instruções de recuperação"}
+
 @api_router.post("/auth/session")
 async def process_session(request: Request, response: Response):
     """Process Emergent Auth session_id and create local session"""
