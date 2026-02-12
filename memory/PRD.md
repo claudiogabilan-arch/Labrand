@@ -38,6 +38,14 @@ Criar uma aplicação web para facilitar a gestão de marcas para empresas, cobr
 - [x] Papéis: Estrategista / Cliente
 - [x] Hook usePermissions
 - [x] **Esqueci minha senha** (12/02/2026)
+- [x] **Tipo de Usuário no cadastro** (12/02/2026) - Estrategista, Agência, Grupo Empresarial
+- [x] **Onboarding inteligente 5 etapas** (12/02/2026)
+- [x] **Fix bug passlib em produção** (12/02/2026)
+
+### Planos SaaS (Atualizado 12/02/2026)
+- [x] Founder: 1 marca, básico
+- [x] Consultant: 5 marcas, PDF, benchmark, 50 créditos IA
+- [x] Enterprise: Ilimitado, dashboard executivo, API
 
 ### Pilares de Marca
 - [x] Start, Valores, Propósito, Promessa
