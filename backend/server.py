@@ -521,6 +521,38 @@ async def forgot_password(data: ForgotPasswordRequest):
     
     return {"message": "Se o email existir, você receberá instruções de recuperação"}
 
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+@api_router.post("/auth/reset-password")
+async def reset_password(data: ResetPasswordRequest):
+    reset_doc = await db.password_resets.find_one({"token": data.token, "used": False}, {"_id": 0})
+    if not reset_doc:
+        raise HTTPException(status_code=400, detail="Token inválido ou expirado")
+    
+    expires_at = datetime.fromisoformat(reset_doc["expires_at"])
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    
+    if datetime.now(timezone.utc) > expires_at:
+        raise HTTPException(status_code=400, detail="Token expirado")
+    
+    # Atualizar senha
+    hashed = pwd_context.hash(data.new_password)
+    await db.users.update_one(
+        {"email": reset_doc["email"]},
+        {"$set": {"password": hashed}}
+    )
+    
+    # Marcar token como usado
+    await db.password_resets.update_one(
+        {"token": data.token},
+        {"$set": {"used": True}}
+    )
+    
+    return {"message": "Senha alterada com sucesso"}
+
 @api_router.post("/auth/session")
 async def process_session(request: Request, response: Response):
     """Process Emergent Auth session_id and create local session"""
