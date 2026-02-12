@@ -427,7 +427,18 @@ async def login(user_data: UserLogin, response: Response):
     if not user:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
     
-    if not pwd_context.verify(user_data.password, user.get("password", "")):
+    # Verificar senha com tratamento de erro para hashes inválidos
+    stored_password = user.get("password")
+    if not stored_password:
+        raise HTTPException(status_code=401, detail="Credenciais inválidas")
+    
+    try:
+        password_valid = pwd_context.verify(user_data.password, stored_password)
+    except Exception:
+        # Hash inválido ou corrompido - força recriar senha
+        raise HTTPException(status_code=401, detail="Credenciais inválidas. Por favor, redefina sua senha.")
+    
+    if not password_valid:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
     
     token = create_jwt_token(user["user_id"], user["email"], user.get("role", "cliente"))
@@ -447,6 +458,7 @@ async def login(user_data: UserLogin, response: Response):
         "email": user["email"],
         "name": user["name"],
         "role": user.get("role", "cliente"),
+        "user_type": user.get("user_type", "estrategista"),
         "picture": user.get("picture"),
         "plan": plan,
         "trial_ends_at": trial_ends_at,
