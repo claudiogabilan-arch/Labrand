@@ -125,6 +125,16 @@ export const LoginPage = () => {
                           data-testid="login-password-input"
                         />
                       </div>
+                      <div className="text-right">
+                        <button
+                          type="button"
+                          onClick={() => setShowForgotPassword(true)}
+                          className="text-sm text-primary hover:underline"
+                          data-testid="forgot-password-link"
+                        >
+                          Esqueci minha senha
+                        </button>
+                      </div>
                     </div>
                     <Button 
                       type="submit" 
