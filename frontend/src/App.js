@@ -45,6 +45,7 @@ function AppRouter() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
       <Route
         path="/dashboard"
         element={
