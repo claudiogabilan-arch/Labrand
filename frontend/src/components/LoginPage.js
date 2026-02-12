@@ -290,6 +290,41 @@ export const LoginPage = () => {
           </Card>
         </div>
       </div>
+
+      {/* Modal Esqueci a Senha */}
+      <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Recuperar senha</DialogTitle>
+            <DialogDescription>
+              Digite seu email e enviaremos instruções para redefinir sua senha.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleForgotPassword} className="space-y-4">
+            <div>
+              <Label htmlFor="reset-email">Email</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                placeholder="seu@email.com"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                data-testid="reset-email-input"
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={resetLoading}>
+              {resetLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                'Enviar email de recuperação'
+              )}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
