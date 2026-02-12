@@ -1372,12 +1372,17 @@ async def google_login_init(request: Request):
     return RedirectResponse(url=auth_url)
 
 @api_router.get("/auth/google/login/callback")
-async def google_login_callback(code: str = None, error: str = None):
+async def google_login_callback(request: Request, code: str = None, error: str = None):
     """Handle Google OAuth login callback"""
     from fastapi.responses import RedirectResponse
     
+    # Usar o host da requisição
+    host = request.headers.get("host", "")
+    scheme = "https" if "emergentagent.com" in host or "labrand.com" in host else "http"
+    base_url = f"{scheme}://{host}"
+    
     if error or not code:
-        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=google_auth_failed")
+        return RedirectResponse(url=f"{base_url}/login?error=google_auth_failed")
     
     try:
         async with httpx.AsyncClient() as client:
@@ -1388,12 +1393,13 @@ async def google_login_callback(code: str = None, error: str = None):
                     "client_id": GOOGLE_CLIENT_ID,
                     "client_secret": GOOGLE_CLIENT_SECRET,
                     "grant_type": "authorization_code",
-                    "redirect_uri": f"{FRONTEND_URL}/api/auth/google/login/callback"
+                    "redirect_uri": f"{base_url}/api/auth/google/login/callback"
                 }
             )
             
             if token_resp.status_code != 200:
-                return RedirectResponse(url=f"{FRONTEND_URL}/login?error=token_failed")
+                logging.error(f"Google token error: {token_resp.text}")
+                return RedirectResponse(url=f"{base_url}/login?error=token_failed")
             
             tokens = token_resp.json()
             
@@ -1404,7 +1410,7 @@ async def google_login_callback(code: str = None, error: str = None):
             )
             
             if user_resp.status_code != 200:
-                return RedirectResponse(url=f"{FRONTEND_URL}/login?error=userinfo_failed")
+                return RedirectResponse(url=f"{base_url}/login?error=userinfo_failed")
             
             google_user = user_resp.json()
         
