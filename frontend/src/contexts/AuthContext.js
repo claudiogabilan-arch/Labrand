@@ -47,8 +47,8 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
-  const register = async (email, password, name, role = 'estrategista') => {
-    const response = await axios.post(`${API}/auth/register`, { email, password, name, role });
+  const register = async (email, password, name, role = 'estrategista', user_type = 'estrategista') => {
+    const response = await axios.post(`${API}/auth/register`, { email, password, name, role, user_type });
     const { token: newToken, ...userData } = response.data;
     localStorage.setItem('labrand_token', newToken);
     setToken(newToken);
