@@ -593,6 +593,42 @@ async def reset_password(data: ResetPasswordRequest):
     
     return {"message": "Senha alterada com sucesso"}
 
+# ==================== ONBOARDING ====================
+
+class OnboardingData(BaseModel):
+    user_type: str  # estrategista, agencia, grupo_empresarial
+    sector: str
+    revenue_range: str  # ate_1m, 1m_10m, 10m_50m, 50m_plus
+    brand_maturity: str  # inicial, estruturada, avancada
+    main_objective: str  # valuation, estruturacao, captacao, governanca
+
+@api_router.post("/user/onboarding")
+async def complete_onboarding(data: OnboardingData, user: dict = Depends(get_current_user)):
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {
+            "user_type": data.user_type,
+            "onboarding_completed": True,
+            "onboarding_data": {
+                "sector": data.sector,
+                "revenue_range": data.revenue_range,
+                "brand_maturity": data.brand_maturity,
+                "main_objective": data.main_objective,
+                "completed_at": datetime.now(timezone.utc).isoformat()
+            }
+        }}
+    )
+    return {"message": "Onboarding concluído", "onboarding_completed": True}
+
+@api_router.get("/user/onboarding")
+async def get_onboarding_status(user: dict = Depends(get_current_user)):
+    user_data = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    return {
+        "onboarding_completed": user_data.get("onboarding_completed", False),
+        "onboarding_data": user_data.get("onboarding_data", {}),
+        "user_type": user_data.get("user_type", "estrategista")
+    }
+
 @api_router.post("/auth/session")
 async def process_session(request: Request, response: Response):
     """Process Emergent Auth session_id and create local session"""
