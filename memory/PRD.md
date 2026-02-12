@@ -37,6 +37,7 @@ Criar uma aplicação web para facilitar a gestão de marcas para empresas, cobr
 - [x] Google OAuth 2.0
 - [x] Papéis: Estrategista / Cliente
 - [x] Hook usePermissions
+- [x] **Esqueci minha senha** (12/02/2026)
 
 ### Pilares de Marca
 - [x] Start, Valores, Propósito, Promessa
@@ -49,9 +50,10 @@ Criar uma aplicação web para facilitar a gestão de marcas para empresas, cobr
 - [x] Relatórios em PDF
 - [x] Planejamento, Decisões, Narrativas
 
-### Ferramentas (NOVO - 11/02/2026)
+### Ferramentas
 - [x] **Identidade Visual** - Sugestões de cores, tipografia e estilo baseadas no arquétipo
-- [x] **Investment Match** - Base de VCs brasileiros + oportunidades de investimento
+- [x] **Investment Match** - VCs REAIS brasileiros (Kaszek, Valor Capital, Canary, etc.)
+- [x] **Audiência** - Influenciadores REAIS (Instagram + YouTube) com links clicáveis
 
 ### Sistema
 - [x] Planos SaaS (Free, Pro, Enterprise)
