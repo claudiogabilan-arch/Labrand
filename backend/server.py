@@ -68,46 +68,42 @@ class User(UserBase):
 
 # ==================== PLAN DEFINITIONS ====================
 PLANS = {
+    "free": {
+        "name": "Grátis",
+        "max_brands": 1,
+        "ai_requests_per_month": 5,
+        "features": ["1 marca", "7 pilares básicos", "Dashboard"],
+        "price_monthly": 0
+    },
     "founder": {
         "name": "Founder",
         "max_brands": 1,
         "ai_requests_per_month": 20,
-        "features": ["basic_pillars", "valuation_basic"],
-        "price_monthly": 0
+        "features": ["1 marca", "Todos os pilares", "Valuation básico", "20 requisições IA/mês"],
+        "price_monthly": 59.90
     },
-    "consultant": {
-        "name": "Consultant", 
-        "max_brands": 5,
+    "pro": {
+        "name": "Pro",
+        "max_brands": 3,
         "ai_requests_per_month": 50,
-        "features": ["all_pillars", "valuation", "benchmark", "pdf_export", "history"],
+        "features": ["3 marcas", "Todos os pilares", "Exportação PDF", "Integração Google", "50 requisições IA/mês"],
+        "price_monthly": 97
+    },
+    "consultor": {
+        "name": "Consultor", 
+        "max_brands": 5,
+        "ai_requests_per_month": 100,
+        "features": ["5 marcas", "Todos os pilares", "Valuation completo", "Benchmark setorial", "Exportação PDF", "100 requisições IA/mês"],
         "price_monthly": 197
     },
     "enterprise": {
         "name": "Enterprise",
-        "max_brands": -1,  # unlimited
-        "ai_requests_per_month": -1,  # unlimited
-        "features": ["all_pillars", "valuation", "benchmark", "pdf_export", "history", "executive_dashboard", "api_access", "white_label"],
+        "max_brands": -1,
+        "ai_requests_per_month": -1,
+        "features": ["Marcas ilimitadas", "Dashboard executivo", "API access", "Suporte prioritário", "White label", "IA ilimitada"],
         "price_monthly": 497
-    },
-    "free": {
-        "name": "Free",
-        "price": 0,
-        "max_brands": 1,
-        "features": ["1 marca", "7 pilares básicos", "Dashboard"],
-        "ai_requests_month": 5,
-        "export_pdf": False,
-        "google_integration": False,
-        "mentor": False
-    },
-    "pro": {
-        "name": "Pro",
-        "price": 97,
-        "max_brands": 5,
-        "features": ["5 marcas", "Todos os pilares", "Exportação PDF", "Integração Google", "Mentor IA", "50 requisições IA/mês"],
-        "ai_requests_month": 50,
-        "export_pdf": True,
-        "google_integration": True,
-        "mentor": True
+    }
+}
     },
     "enterprise": {
         "name": "Enterprise",
