@@ -1348,6 +1348,106 @@ GOOGLE_SCOPES = [
     "https://www.googleapis.com/auth/drive.readonly"
 ]
 
+@api_router.get("/auth/google/login")
+async def google_login_init():
+    """Initiate Google OAuth flow for social login"""
+    from urllib.parse import urlencode
+    
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": f"{FRONTEND_URL}/api/auth/google/login/callback",
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "consent"
+    }
+    
+    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url=auth_url)
+
+@api_router.get("/auth/google/login/callback")
+async def google_login_callback(code: str = None, error: str = None):
+    """Handle Google OAuth login callback"""
+    from fastapi.responses import RedirectResponse
+    
+    if error or not code:
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=google_auth_failed")
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            token_resp = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "code": code,
+                    "client_id": GOOGLE_CLIENT_ID,
+                    "client_secret": GOOGLE_CLIENT_SECRET,
+                    "grant_type": "authorization_code",
+                    "redirect_uri": f"{FRONTEND_URL}/api/auth/google/login/callback"
+                }
+            )
+            
+            if token_resp.status_code != 200:
+                return RedirectResponse(url=f"{FRONTEND_URL}/login?error=token_failed")
+            
+            tokens = token_resp.json()
+            
+            # Get user info
+            user_resp = await client.get(
+                "https://www.googleapis.com/oauth2/v2/userinfo",
+                headers={"Authorization": f"Bearer {tokens['access_token']}"}
+            )
+            
+            if user_resp.status_code != 200:
+                return RedirectResponse(url=f"{FRONTEND_URL}/login?error=userinfo_failed")
+            
+            google_user = user_resp.json()
+        
+        email = google_user.get("email")
+        name = google_user.get("name", email.split("@")[0])
+        picture = google_user.get("picture")
+        
+        # Check if user exists
+        user = await db.users.find_one({"email": email}, {"_id": 0})
+        
+        if not user:
+            # Create new user
+            user_id = f"user_{uuid.uuid4().hex[:12]}"
+            user = {
+                "user_id": user_id,
+                "email": email,
+                "name": name,
+                "password": None,  # Google users don't have password
+                "role": "estrategista",
+                "user_type": "estrategista",
+                "picture": picture,
+                "plan": "founder",
+                "trial_ends_at": (datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS)).isoformat(),
+                "ai_requests_used": 0,
+                "onboarding_completed": False,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.users.insert_one(user)
+        else:
+            user_id = user["user_id"]
+            # Update picture if changed
+            if picture and picture != user.get("picture"):
+                await db.users.update_one({"user_id": user_id}, {"$set": {"picture": picture}})
+        
+        # Create JWT token
+        token = create_jwt_token(user_id, email, user.get("role", "estrategista"))
+        
+        # Redirect to dashboard with token
+        redirect_url = f"{FRONTEND_URL}/dashboard?token={token}"
+        if not user.get("onboarding_completed"):
+            redirect_url = f"{FRONTEND_URL}/onboarding?token={token}"
+        
+        return RedirectResponse(url=redirect_url)
+        
+    except Exception as e:
+        logging.error(f"Google login error: {e}")
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=server_error")
+
 @api_router.get("/auth/google/init")
 async def google_auth_init(brand_id: str, user: dict = Depends(get_current_user)):
     """Initiate Google OAuth flow for connecting Google services"""
