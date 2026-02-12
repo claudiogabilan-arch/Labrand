@@ -23,6 +23,7 @@ import Intelligence from "./pages/Intelligence";
 import Settings from "./pages/Settings";
 import Reports from "./pages/Reports";
 import Valuation from "./pages/Valuation";
+import Onboarding from "./pages/Onboarding";
 import Audience from "./pages/Audience";
 import Campaigns from "./pages/Campaigns";
 import Plans from "./pages/Plans";
