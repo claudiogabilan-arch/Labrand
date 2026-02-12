@@ -1349,13 +1349,18 @@ GOOGLE_SCOPES = [
 ]
 
 @api_router.get("/auth/google/login")
-async def google_login_init():
+async def google_login_init(request: Request):
     """Initiate Google OAuth flow for social login"""
     from urllib.parse import urlencode
     
+    # Usar o host da requisição para determinar o redirect URI correto
+    host = request.headers.get("host", "")
+    scheme = "https" if "emergentagent.com" in host or "labrand.com" in host else "http"
+    base_url = f"{scheme}://{host}"
+    
     params = {
         "client_id": GOOGLE_CLIENT_ID,
-        "redirect_uri": f"{FRONTEND_URL}/api/auth/google/login/callback",
+        "redirect_uri": f"{base_url}/api/auth/google/login/callback",
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
