@@ -1449,15 +1449,15 @@ async def google_login_callback(request: Request, code: str = None, error: str =
         token = create_jwt_token(user_id, email, user.get("role", "estrategista"))
         
         # Redirect to dashboard with token
-        redirect_url = f"{FRONTEND_URL}/dashboard?token={token}"
+        redirect_url = f"{base_url}/dashboard?token={token}"
         if not user.get("onboarding_completed"):
-            redirect_url = f"{FRONTEND_URL}/onboarding?token={token}"
+            redirect_url = f"{base_url}/onboarding?token={token}"
         
         return RedirectResponse(url=redirect_url)
         
     except Exception as e:
         logging.error(f"Google login error: {e}")
-        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=server_error")
+        return RedirectResponse(url=f"{base_url}/login?error=server_error")
 
 @api_router.get("/auth/google/init")
 async def google_auth_init(brand_id: str, user: dict = Depends(get_current_user)):
