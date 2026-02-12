@@ -6,8 +6,12 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { toast } from 'sonner';
 import { Loader2, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import axios from 'axios';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,8 +19,30 @@ export const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [activeTab, setActiveTab] = useState('login');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
   const { login, register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!resetEmail) {
+      toast.error('Digite seu email');
+      return;
+    }
+    setResetLoading(true);
+    try {
+      await axios.post(`${API}/auth/forgot-password`, { email: resetEmail });
+      toast.success('Email de recuperação enviado! Verifique sua caixa de entrada.');
+      setShowForgotPassword(false);
+      setResetEmail('');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao enviar email de recuperação');
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
