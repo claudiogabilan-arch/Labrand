@@ -422,11 +422,14 @@ async def register(user_data: UserCreate):
         "name": user_data.name,
         "password": hashed_password,
         "role": user_data.role,
+        "user_type": user_data.user_type,
         "picture": None,
-        "plan": "free",
+        "plan": "founder",  # Novo plano inicial
         "trial_ends_at": (datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS)).isoformat(),
         "ai_requests_used": 0,
         "ai_requests_reset_at": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
+        "onboarding_completed": False,
+        "onboarding_data": {},
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -439,8 +442,10 @@ async def register(user_data: UserCreate):
         "email": user_data.email,
         "name": user_data.name,
         "role": user_data.role,
-        "plan": "free",
+        "user_type": user_data.user_type,
+        "plan": "founder",
         "trial_ends_at": user_doc["trial_ends_at"],
+        "onboarding_completed": False,
         "token": token
     }
 
