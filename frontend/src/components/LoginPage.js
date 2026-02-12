@@ -7,8 +7,9 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { toast } from 'sonner';
-import { Loader2, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Loader2, Mail, Lock, User, ArrowRight, Building2 } from 'lucide-react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -18,6 +19,7 @@ export const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [userType, setUserType] = useState('');
   const [activeTab, setActiveTab] = useState('login');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
@@ -48,9 +50,14 @@ export const LoginPage = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await login(email, password);
+      const userData = await login(email, password);
       toast.success('Login realizado com sucesso!');
-      navigate('/dashboard');
+      // Verificar se precisa de onboarding
+      if (!userData.onboarding_completed) {
+        navigate('/onboarding');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erro ao fazer login');
     } finally {
@@ -60,11 +67,15 @@ export const LoginPage = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    if (!userType) {
+      toast.error('Selecione o tipo de usuário');
+      return;
+    }
     setIsLoading(true);
     try {
-      await register(email, password, name);
+      await register(email, password, name, 'estrategista', userType);
       toast.success('Conta criada com sucesso!');
-      navigate('/dashboard');
+      navigate('/onboarding');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erro ao criar conta');
     } finally {
