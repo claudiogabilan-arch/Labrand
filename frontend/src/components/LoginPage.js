@@ -73,12 +73,14 @@ export const LoginPage = () => {
     }
     setIsLoading(true);
     try {
-      await register(email, password, name, 'estrategista', userType);
+      const userData = await register(email, password, name, 'estrategista', userType);
       toast.success('Conta criada com sucesso!');
-      navigate('/onboarding');
+      // Aguardar estado atualizar antes de redirecionar
+      setTimeout(() => {
+        window.location.href = '/onboarding';
+      }, 100);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erro ao criar conta');
-    } finally {
       setIsLoading(false);
     }
   };
