@@ -397,6 +397,10 @@ async def register(user_data: UserCreate):
     if existing:
         raise HTTPException(status_code=400, detail="Email já cadastrado")
     
+    # Gerar código de verificação
+    verification_code = f"{uuid.uuid4().hex[:6].upper()}"
+    
+    # Salvar usuário pendente (não ativado)
     user_id = f"user_{uuid.uuid4().hex[:12]}"
     hashed_password = pwd_context.hash(user_data.password)
     
@@ -408,26 +412,76 @@ async def register(user_data: UserCreate):
         "role": user_data.role,
         "user_type": user_data.user_type,
         "picture": None,
-        "plan": "founder",  # Novo plano inicial
+        "plan": "founder",
         "trial_ends_at": (datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS)).isoformat(),
         "ai_requests_used": 0,
         "ai_requests_reset_at": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
         "onboarding_completed": False,
         "onboarding_data": {},
+        "email_verified": False,
+        "verification_code": verification_code,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
     await db.users.insert_one(user_doc)
     
-    token = create_jwt_token(user_id, user_data.email, user_data.role)
+    # Enviar email de verificação
+    html = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1a1a1a;">Bem-vindo ao LABrand!</h2>
+        <p>Olá {user_data.name},</p>
+        <p>Seu código de verificação é:</p>
+        <div style="background: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1a1a1a;">{verification_code}</span>
+        </div>
+        <p>Digite este código na tela de verificação para ativar sua conta.</p>
+        <p style="color: #666; font-size: 14px;">Se você não criou esta conta, ignore este email.</p>
+    </div>
+    """
+    await send_email(user_data.email, "Código de Verificação - LABrand", html)
     
     return {
         "user_id": user_id,
         "email": user_data.email,
         "name": user_data.name,
-        "role": user_data.role,
-        "user_type": user_data.user_type,
-        "plan": "founder",
+        "requires_verification": True,
+        "message": "Código de verificação enviado para seu email"
+    }
+
+class VerifyEmailRequest(BaseModel):
+    email: str
+    code: str
+
+@api_router.post("/auth/verify-email")
+async def verify_email(data: VerifyEmailRequest):
+    user = await db.users.find_one({"email": data.email}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=400, detail="Email não encontrado")
+    
+    if user.get("email_verified"):
+        raise HTTPException(status_code=400, detail="Email já verificado")
+    
+    if user.get("verification_code") != data.code.upper():
+        raise HTTPException(status_code=400, detail="Código inválido")
+    
+    await db.users.update_one(
+        {"email": data.email},
+        {"$set": {"email_verified": True, "verification_code": None}}
+    )
+    
+    token = create_jwt_token(user["user_id"], user["email"], user.get("role", "estrategista"))
+    
+    return {
+        "user_id": user["user_id"],
+        "email": user["email"],
+        "name": user["name"],
+        "role": user.get("role", "cliente"),
+        "user_type": user.get("user_type", "estrategista"),
+        "plan": user.get("plan", "founder"),
+        "trial_ends_at": user.get("trial_ends_at"),
+        "onboarding_completed": False,
+        "token": token
+    }
         "trial_ends_at": user_doc["trial_ends_at"],
         "onboarding_completed": False,
         "token": token
