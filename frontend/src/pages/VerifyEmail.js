@@ -1,21 +1,21 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, Mail, CheckCircle } from 'lucide-react';
+import { Loader2, Mail, CheckCircle, RefreshCw } from 'lucide-react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { setUser, setToken } = useAuth();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   
   const email = searchParams.get('email') || '';
 
@@ -44,6 +44,18 @@ export default function VerifyEmail() {
     }
   };
 
+  const handleResend = async () => {
+    setResending(true);
+    try {
+      await axios.post(`${API}/auth/resend-code`, { email });
+      toast.success('Novo código enviado! Verifique seu email.');
+    } catch (error) {
+      toast.error('Erro ao reenviar código');
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -64,22 +76,18 @@ export default function VerifyEmail() {
               onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))}
               className="text-center text-2xl tracking-widest"
               maxLength={6}
-              data-testid="verification-code-input"
             />
             <Button type="submit" className="w-full" disabled={loading || code.length !== 6}>
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Verificar
-                </>
-              )}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle className="h-4 w-4 mr-2" />Verificar</>}
             </Button>
           </form>
-          <p className="text-center text-sm text-muted-foreground mt-4">
-            Não recebeu? Verifique sua caixa de spam.
-          </p>
+          <div className="mt-4 text-center">
+            <p className="text-sm text-muted-foreground mb-2">Não recebeu o código?</p>
+            <Button variant="ghost" size="sm" onClick={handleResend} disabled={resending}>
+              {resending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              Reenviar código
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
