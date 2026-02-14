@@ -280,6 +280,18 @@ function AppRouter() {
         }
       />
       <Route
+        path="/executive"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <ExecutiveDashboard />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/plans"
         element={
           <ProtectedRoute>
