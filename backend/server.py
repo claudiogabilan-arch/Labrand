@@ -482,10 +482,6 @@ async def verify_email(data: VerifyEmailRequest):
         "onboarding_completed": False,
         "token": token
     }
-        "trial_ends_at": user_doc["trial_ends_at"],
-        "onboarding_completed": False,
-        "token": token
-    }
 
 @api_router.post("/auth/login")
 async def login(user_data: UserLogin, response: Response):
