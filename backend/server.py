@@ -469,6 +469,31 @@ async def verify_email(data: VerifyEmailRequest):
         {"$set": {"email_verified": True, "verification_code": None}}
     )
     
+    # Enviar email de boas-vindas
+    welcome_html = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fafafa; padding: 40px 20px;">
+        <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h1 style="color: #1a1a1a; margin: 0 0 20px;">Bem-vindo ao LABrand! 🎉</h1>
+            <p style="color: #444; font-size: 16px; line-height: 1.6;">Olá <strong>{user['name']}</strong>,</p>
+            <p style="color: #444; font-size: 16px; line-height: 1.6;">Sua conta foi ativada com sucesso! Você agora tem acesso à plataforma de gestão estratégica de marca mais completa do mercado.</p>
+            <div style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%); border-radius: 8px; padding: 24px; margin: 24px 0;">
+                <p style="color: white; margin: 0; font-size: 14px;">Seu plano atual</p>
+                <p style="color: white; margin: 8px 0 0; font-size: 24px; font-weight: bold;">Founder + 15 dias grátis</p>
+            </div>
+            <p style="color: #444; font-size: 16px; line-height: 1.6;">Próximos passos:</p>
+            <ul style="color: #444; font-size: 16px; line-height: 1.8;">
+                <li>Complete seu onboarding</li>
+                <li>Crie sua primeira marca</li>
+                <li>Preencha os pilares estratégicos</li>
+                <li>Descubra o valor da sua marca</li>
+            </ul>
+            <a href="https://labrand.com.br/dashboard" style="display: inline-block; background: #1a1a1a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 16px;">Acessar Plataforma</a>
+        </div>
+        <p style="color: #999; font-size: 12px; text-align: center; margin-top: 24px;">LABrand - Brand OS | Transforme sua marca em ativo estratégico</p>
+    </div>
+    """
+    await send_email(data.email, "Bem-vindo ao LABrand! 🚀", welcome_html)
+    
     token = create_jwt_token(user["user_id"], user["email"], user.get("role", "estrategista"))
     
     return {
@@ -482,6 +507,41 @@ async def verify_email(data: VerifyEmailRequest):
         "onboarding_completed": False,
         "token": token
     }
+
+class ResendCodeRequest(BaseModel):
+    email: str
+
+@api_router.post("/auth/resend-code")
+async def resend_verification_code(data: ResendCodeRequest):
+    user = await db.users.find_one({"email": data.email}, {"_id": 0})
+    if not user:
+        return {"message": "Se o email existir, enviaremos um novo código"}
+    
+    if user.get("email_verified"):
+        raise HTTPException(status_code=400, detail="Email já verificado")
+    
+    # Gerar novo código
+    new_code = f"{uuid.uuid4().hex[:6].upper()}"
+    
+    await db.users.update_one(
+        {"email": data.email},
+        {"$set": {"verification_code": new_code}}
+    )
+    
+    html = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1a1a1a;">Novo Código de Verificação</h2>
+        <p>Olá {user['name']},</p>
+        <p>Seu novo código de verificação é:</p>
+        <div style="background: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1a1a1a;">{new_code}</span>
+        </div>
+        <p>Digite este código na tela de verificação.</p>
+    </div>
+    """
+    await send_email(data.email, "Novo Código - LABrand", html)
+    
+    return {"message": "Novo código enviado para seu email"}
 
 @api_router.post("/auth/login")
 async def login(user_data: UserLogin, response: Response):
