@@ -26,6 +26,7 @@ import Reports from "./pages/Reports";
 import Valuation from "./pages/Valuation";
 import Onboarding from "./pages/Onboarding";
 import VerifyEmail from "./pages/VerifyEmail";
+import ExecutiveDashboard from "./pages/ExecutiveDashboard";
 import Audience from "./pages/Audience";
 import Campaigns from "./pages/Campaigns";
 import Plans from "./pages/Plans";
