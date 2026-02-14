@@ -475,6 +475,7 @@ async def login(user_data: UserLogin, response: Response):
         "plan": plan,
         "trial_ends_at": trial_ends_at,
         "is_trial_active": is_trial_active,
+        "onboarding_completed": user.get("onboarding_completed", False),
         "token": token
     }
 
