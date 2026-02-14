@@ -52,15 +52,16 @@ export const LoginPage = () => {
     try {
       const userData = await login(email, password);
       toast.success('Login realizado com sucesso!');
-      // Verificar se precisa de onboarding
-      if (!userData.onboarding_completed) {
-        navigate('/onboarding');
-      } else {
-        navigate('/dashboard');
-      }
+      // Redirecionar baseado no status de onboarding
+      setTimeout(() => {
+        if (!userData.onboarding_completed) {
+          window.location.href = '/onboarding';
+        } else {
+          window.location.href = '/dashboard';
+        }
+      }, 100);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erro ao fazer login');
-    } finally {
       setIsLoading(false);
     }
   };
