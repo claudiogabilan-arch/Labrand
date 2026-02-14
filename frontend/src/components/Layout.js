@@ -40,11 +40,13 @@ import {
   Calendar,
   UserCheck,
   Palette,
-  TrendingUp
+  TrendingUp,
+  Briefcase
 } from 'lucide-react';
 
 const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Executivo', href: '/executive', icon: Briefcase },
   { type: 'divider', label: 'Pilares de Marca' },
   { name: 'Start', href: '/pillars/start', icon: Target, pillar: 'start' },
   { name: 'Valores', href: '/pillars/values', icon: Heart, pillar: 'values' },
