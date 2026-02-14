@@ -493,6 +493,10 @@ async def login(user_data: UserLogin, response: Response):
     if not user:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
     
+    # Verificar se email foi confirmado
+    if not user.get("email_verified", True):  # True para usuários antigos
+        raise HTTPException(status_code=403, detail="Email não verificado. Verifique sua caixa de entrada.")
+    
     # Verificar senha com tratamento de erro para hashes inválidos
     stored_password = user.get("password")
     if not stored_password:
@@ -501,7 +505,6 @@ async def login(user_data: UserLogin, response: Response):
     try:
         password_valid = pwd_context.verify(user_data.password, stored_password)
     except Exception:
-        # Hash inválido ou corrompido - força recriar senha
         raise HTTPException(status_code=401, detail="Credenciais inválidas. Por favor, redefina sua senha.")
     
     if not password_valid:
