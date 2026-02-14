@@ -74,12 +74,19 @@ export const LoginPage = () => {
     }
     setIsLoading(true);
     try {
-      const userData = await register(email, password, name, 'estrategista', userType);
-      toast.success('Conta criada com sucesso!');
-      // Aguardar estado atualizar antes de redirecionar
-      setTimeout(() => {
+      const response = await axios.post(`${API}/auth/register`, {
+        email, password, name, role: 'estrategista', user_type: userType
+      });
+      
+      if (response.data.requires_verification) {
+        toast.success('Código de verificação enviado para seu email!');
+        window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
+      } else {
+        // Fallback para usuários já verificados
+        const { token, ...userData } = response.data;
+        localStorage.setItem('labrand_token', token);
         window.location.href = '/onboarding';
-      }, 100);
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erro ao criar conta');
       setIsLoading(false);
