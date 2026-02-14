@@ -1048,6 +1048,64 @@ async def delete_task(brand_id: str, task_id: str, user: dict = Depends(get_curr
 
 # ==================== DECISIONS ROUTES ====================
 
+@api_router.get("/brands/{brand_id}/executive-summary")
+async def get_executive_summary(brand_id: str, user: dict = Depends(get_current_user)):
+    """Dashboard executivo com métricas simplificadas"""
+    brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
+    pillars = await db.pillars.find_one({"brand_id": brand_id}, {"_id": 0})
+    valuation = await db.valuations.find_one({"brand_id": brand_id}, {"_id": 0})
+    
+    # Calcular Brand Strength baseado nos pilares preenchidos
+    pillar_keys = ["start", "values", "purpose", "promise", "positioning", "personality", "universality"]
+    filled = sum(1 for k in pillar_keys if pillars and pillars.get(k) and len(pillars.get(k, {})) > 0)
+    brand_strength = int((filled / len(pillar_keys)) * 100) if pillars else 0
+    
+    # Role of Brand Index (simplificado)
+    rbi = valuation.get("role_of_brand", 50) if valuation else 50
+    
+    # Valor da marca
+    brand_value = valuation.get("total_value", 0) if valuation else 0
+    
+    # Identificar riscos e oportunidades baseados nos pilares
+    risks = []
+    opportunities = []
+    
+    if not pillars or not pillars.get("values"):
+        risks.append("Valores da marca não definidos - risco de inconsistência")
+    else:
+        opportunities.append("Valores bem definidos fortalecem cultura organizacional")
+    
+    if not pillars or not pillars.get("positioning"):
+        risks.append("Posicionamento não estruturado - dificuldade de diferenciação")
+    else:
+        opportunities.append("Posicionamento claro permite comunicação mais efetiva")
+    
+    if not pillars or not pillars.get("purpose"):
+        risks.append("Propósito não definido - engajamento limitado com stakeholders")
+    else:
+        opportunities.append("Propósito forte atrai talentos e clientes alinhados")
+    
+    if brand_strength < 50:
+        risks.append("Brand Strength abaixo de 50% - marca vulnerável a concorrentes")
+    elif brand_strength >= 80:
+        opportunities.append("Brand Strength alto - potencial para expansão de mercado")
+    
+    # Trend baseado em histórico (simplificado)
+    trend = "stable"
+    if brand_strength >= 70:
+        trend = "up"
+    elif brand_strength < 30:
+        trend = "down"
+    
+    return {
+        "brand_strength": brand_strength,
+        "role_of_brand": rbi,
+        "valuation": brand_value,
+        "trend": trend,
+        "risks": risks[:3],
+        "opportunities": opportunities[:3]
+    }
+
 @api_router.get("/brands/{brand_id}/decisions")
 async def get_decisions(brand_id: str, user: dict = Depends(get_current_user)):
     decisions = await db.decisions.find({"brand_id": brand_id}, {"_id": 0}).to_list(500)
