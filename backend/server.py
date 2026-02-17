@@ -1263,6 +1263,11 @@ async def generate_ai_insight(data: dict, user: dict = Depends(get_current_user)
 @api_router.post("/ai/mentor")
 async def generate_mentor_insights(data: dict, user: dict = Depends(get_current_user)):
     try:
+        # Check and deduct AI credits
+        success, result = await deduct_ai_credits(user["user_id"], "mentor_insight")
+        if not success:
+            raise HTTPException(status_code=402, detail=result)
+        
         brand_id = data.get("brand_id")
         brand_name = data.get("brand_name", "Marca")
         industry = data.get("industry", "")
