@@ -126,8 +126,8 @@ Web application for brand management covering diagnosis, strategy creation, exec
 - ✅ Google OAuth (login)
 - ✅ Resend (transactional emails)
 - ✅ Emergent LLM (Gemini 2.0 Flash)
-- ⚠️ Google Analytics (MOCKED)
-- ⚠️ Google Search Console (MOCKED)
+- ✅ Google Analytics Data API (GA4) - Real OAuth implementation
+- ✅ Google Search Console API - Real OAuth implementation
 - ❌ Treeal payments (not implemented)
 
 ## Test Reports
