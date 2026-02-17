@@ -58,9 +58,13 @@ export default function ConsistencyAlerts() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setAlertsData(response.data);
-      toast.success('Análise de consistência concluída!');
+      toast.success(`Análise de consistência concluída! (${response.data.credits_used || 5} créditos usados)`);
     } catch (error) {
-      toast.error('Erro ao analisar consistência');
+      if (error.response?.status === 402) {
+        toast.error('Créditos insuficientes. Adquira mais créditos em Configurações > Créditos IA.');
+      } else {
+        toast.error('Erro ao analisar consistência');
+      }
     } finally {
       setAnalyzing(false);
     }
