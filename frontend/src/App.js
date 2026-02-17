@@ -35,6 +35,7 @@ import Plans from "./pages/Plans";
 import BrandIdentity from "./pages/BrandIdentity";
 import InvestmentMatch from "./pages/InvestmentMatch";
 import ResetPassword from "./pages/ResetPassword";
+import BrandWay from "./pages/BrandWay";
 import "./App.css";
 
 // Router wrapper to handle auth callback
