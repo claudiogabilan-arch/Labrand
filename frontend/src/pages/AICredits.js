@@ -200,7 +200,7 @@ export default function AICredits() {
               {history.slice(0, 10).map((item, i) => (
                 <div key={i} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div>
-                    <p className="font-medium">{item.action}</p>
+                    <p className="font-medium">{ACTION_LABELS[item.action] || item.action}</p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(item.created_at).toLocaleString('pt-BR')}
                     </p>
