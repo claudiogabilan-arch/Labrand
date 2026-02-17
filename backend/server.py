@@ -1546,6 +1546,11 @@ async def get_consistency_alerts(brand_id: str, user: dict = Depends(get_current
 async def analyze_consistency(brand_id: str, user: dict = Depends(get_current_user)):
     """Analyze brand consistency using AI"""
     try:
+        # Check and deduct AI credits
+        success, result = await deduct_ai_credits(user["user_id"], "consistency_analysis")
+        if not success:
+            raise HTTPException(status_code=402, detail=result)
+        
         # Get all brand data
         brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
         brand_way = await db.brand_way.find_one({"brand_id": brand_id}, {"_id": 0})
@@ -1601,6 +1606,7 @@ async def analyze_consistency(brand_id: str, user: dict = Depends(get_current_us
         alerts_data = json.loads(clean_response)
         alerts_data["brand_id"] = brand_id
         alerts_data["analyzed_at"] = datetime.now(timezone.utc).isoformat()
+        alerts_data["credits_used"] = result
         
         # Save to DB
         await db.consistency_alerts.update_one(
@@ -1610,6 +1616,8 @@ async def analyze_consistency(brand_id: str, user: dict = Depends(get_current_us
         )
         
         return alerts_data
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(f"Consistency analysis error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
