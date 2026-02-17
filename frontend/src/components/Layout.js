@@ -83,6 +83,7 @@ const navigationItems = [
   { name: 'Créditos IA', href: '/ai-credits', icon: Star, featureId: 'ai_credits' },
   { name: 'Planos', href: '/plans', icon: DollarSign, featureId: 'plans' },
   { name: 'Configurações', href: '/settings', icon: Settings, featureId: 'settings' },
+  { name: 'Admin', href: '/admin', icon: Shield, featureId: 'admin', adminOnly: true },
 ];
 
 export const Sidebar = ({ collapsed, setCollapsed }) => {
