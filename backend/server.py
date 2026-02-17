@@ -1309,7 +1309,9 @@ Seja específico, prático e cite exemplos quando possível. Responda em portugu
         
         response = await call_llm(system_prompt, user_prompt)
         
-        return {"insights": response}
+        return {"insights": response, "credits_used": result}
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(f"Mentor error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
