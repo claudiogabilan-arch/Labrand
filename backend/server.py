@@ -1587,7 +1587,34 @@ async def analyze_consistency(brand_id: str, user: dict = Depends(get_current_us
         logging.error(f"Consistency analysis error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ==================== GOOGLE INTEGRATION ====================
+# ==================== GOOGLE INTEGRATION (REAL OAUTH) ====================
+
+from google_auth_oauthlib.flow import Flow
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+
+# Google OAuth scopes
+GOOGLE_ANALYTICS_SCOPES = [
+    'https://www.googleapis.com/auth/analytics.readonly'
+]
+GOOGLE_SEARCH_CONSOLE_SCOPES = [
+    'https://www.googleapis.com/auth/webmasters.readonly'
+]
+
+def get_google_oauth_flow(scopes: list, redirect_uri: str):
+    """Create Google OAuth flow"""
+    client_config = {
+        "web": {
+            "client_id": os.environ.get("GOOGLE_CLIENT_ID"),
+            "client_secret": os.environ.get("GOOGLE_CLIENT_SECRET"),
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "redirect_uris": [redirect_uri]
+        }
+    }
+    flow = Flow.from_client_config(client_config, scopes=scopes)
+    flow.redirect_uri = redirect_uri
+    return flow
 
 @api_router.get("/brands/{brand_id}/google-integration")
 async def get_google_integration(brand_id: str, user: dict = Depends(get_current_user)):
@@ -1601,78 +1628,318 @@ async def get_google_integration(brand_id: str, user: dict = Depends(get_current
             "property_id": "",
             "site_url": ""
         }
-    return data
+    # Remove sensitive token data from response
+    safe_data = {k: v for k, v in data.items() if k not in ['analytics_tokens', 'search_console_tokens']}
+    return safe_data
 
-@api_router.post("/brands/{brand_id}/google-integration/connect")
-async def connect_google_service(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
-    """Connect Google Analytics or Search Console"""
-    service = data.get("service")
+@api_router.post("/brands/{brand_id}/google-integration/init-oauth")
+async def init_google_oauth(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
+    """Initialize Google OAuth flow"""
+    service = data.get("service")  # 'analytics' or 'searchConsole'
     property_id = data.get("property_id", "")
     site_url = data.get("site_url", "")
     
-    # In a real implementation, this would initiate OAuth flow
-    # For now, we'll simulate a successful connection with mock data
+    # Determine redirect URI based on environment
+    frontend_url = os.environ.get("FRONTEND_URL", "https://labrand.com.br")
+    redirect_uri = f"{frontend_url}/api/google/callback"
     
-    integration_data = await db.google_integration.find_one({"brand_id": brand_id}) or {}
-    connection_status = integration_data.get("connection_status", {"analytics": False, "searchConsole": False})
-    
+    # Select scopes based on service
     if service == "analytics":
-        connection_status["analytics"] = True
-        # Mock analytics data
-        analytics_data = {
-            "users": 12450,
-            "users_change": 15.3,
-            "pageviews": 45230,
-            "pageviews_change": 8.7,
-            "bounce_rate": 42.5,
-            "avg_session_duration": "2:34",
-            "top_pages": [
-                {"path": "/", "views": 15000},
-                {"path": "/produtos", "views": 8500},
-                {"path": "/sobre", "views": 5200},
-                {"path": "/contato", "views": 3100},
-                {"path": "/blog", "views": 2800}
-            ]
-        }
-        update_data = {
-            "brand_id": brand_id,
-            "connection_status": connection_status,
-            "property_id": property_id,
-            "analytics": analytics_data,
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }
+        scopes = GOOGLE_ANALYTICS_SCOPES
     else:
-        connection_status["searchConsole"] = True
-        # Mock search console data
-        search_data = {
-            "clicks": 8750,
-            "impressions": 125000,
-            "ctr": 7.0,
-            "position": 12.4,
-            "top_queries": [
-                {"query": "sua marca", "clicks": 1200, "position": 3.2},
-                {"query": "produtos categoria", "clicks": 890, "position": 5.1},
-                {"query": "serviços empresa", "clicks": 650, "position": 8.4},
-                {"query": "marca cidade", "clicks": 420, "position": 4.7},
-                {"query": "comprar produto", "clicks": 380, "position": 11.2}
-            ]
-        }
-        update_data = {
-            "brand_id": brand_id,
-            "connection_status": connection_status,
-            "site_url": site_url,
-            "search_console": search_data,
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }
+        scopes = GOOGLE_SEARCH_CONSOLE_SCOPES
     
-    await db.google_integration.update_one(
-        {"brand_id": brand_id},
-        {"$set": update_data},
+    flow = get_google_oauth_flow(scopes, redirect_uri)
+    
+    # Generate authorization URL
+    auth_url, state = flow.authorization_url(
+        access_type='offline',
+        include_granted_scopes='true',
+        prompt='consent'
+    )
+    
+    # Store state and pending connection info
+    await db.google_oauth_state.update_one(
+        {"state": state},
+        {"$set": {
+            "state": state,
+            "brand_id": brand_id,
+            "user_id": user["user_id"],
+            "service": service,
+            "property_id": property_id,
+            "site_url": site_url,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }},
         upsert=True
     )
     
-    result = await db.google_integration.find_one({"brand_id": brand_id}, {"_id": 0})
-    return result
+    return {"auth_url": auth_url, "state": state}
+
+@api_router.get("/google/callback")
+async def google_oauth_callback(code: str = None, state: str = None, error: str = None):
+    """Handle Google OAuth callback"""
+    if error:
+        return RedirectResponse(url=f"{FRONTEND_URL}/google-integration?error={error}")
+    
+    if not code or not state:
+        return RedirectResponse(url=f"{FRONTEND_URL}/google-integration?error=missing_params")
+    
+    # Get stored state info
+    state_data = await db.google_oauth_state.find_one({"state": state})
+    if not state_data:
+        return RedirectResponse(url=f"{FRONTEND_URL}/google-integration?error=invalid_state")
+    
+    brand_id = state_data["brand_id"]
+    service = state_data["service"]
+    property_id = state_data.get("property_id", "")
+    site_url = state_data.get("site_url", "")
+    
+    try:
+        # Determine redirect URI
+        frontend_url = os.environ.get("FRONTEND_URL", "https://labrand.com.br")
+        redirect_uri = f"{frontend_url}/api/google/callback"
+        
+        # Select scopes
+        scopes = GOOGLE_ANALYTICS_SCOPES if service == "analytics" else GOOGLE_SEARCH_CONSOLE_SCOPES
+        
+        # Exchange code for tokens
+        flow = get_google_oauth_flow(scopes, redirect_uri)
+        flow.fetch_token(code=code)
+        credentials = flow.credentials
+        
+        # Store tokens
+        token_data = {
+            "token": credentials.token,
+            "refresh_token": credentials.refresh_token,
+            "token_uri": credentials.token_uri,
+            "client_id": credentials.client_id,
+            "client_secret": credentials.client_secret,
+            "scopes": list(credentials.scopes) if credentials.scopes else scopes
+        }
+        
+        # Update integration data
+        integration_data = await db.google_integration.find_one({"brand_id": brand_id}) or {}
+        connection_status = integration_data.get("connection_status", {"analytics": False, "searchConsole": False})
+        
+        if service == "analytics":
+            connection_status["analytics"] = True
+            update_data = {
+                "brand_id": brand_id,
+                "connection_status": connection_status,
+                "property_id": property_id,
+                "analytics_tokens": token_data,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        else:
+            connection_status["searchConsole"] = True
+            update_data = {
+                "brand_id": brand_id,
+                "connection_status": connection_status,
+                "site_url": site_url,
+                "search_console_tokens": token_data,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        
+        await db.google_integration.update_one(
+            {"brand_id": brand_id},
+            {"$set": update_data},
+            upsert=True
+        )
+        
+        # Clean up state
+        await db.google_oauth_state.delete_one({"state": state})
+        
+        # Fetch initial data
+        await fetch_google_data(brand_id, service)
+        
+        return RedirectResponse(url=f"{FRONTEND_URL}/google-integration?success=true&service={service}")
+        
+    except Exception as e:
+        logging.error(f"Google OAuth callback error: {str(e)}")
+        return RedirectResponse(url=f"{FRONTEND_URL}/google-integration?error=token_exchange_failed")
+
+async def get_google_credentials(brand_id: str, service: str):
+    """Get valid Google credentials for a brand"""
+    integration = await db.google_integration.find_one({"brand_id": brand_id})
+    if not integration:
+        return None
+    
+    token_key = "analytics_tokens" if service == "analytics" else "search_console_tokens"
+    token_data = integration.get(token_key)
+    if not token_data:
+        return None
+    
+    credentials = Credentials(
+        token=token_data.get("token"),
+        refresh_token=token_data.get("refresh_token"),
+        token_uri=token_data.get("token_uri"),
+        client_id=token_data.get("client_id"),
+        client_secret=token_data.get("client_secret"),
+        scopes=token_data.get("scopes")
+    )
+    
+    # Check if token is expired and refresh if needed
+    if credentials.expired and credentials.refresh_token:
+        from google.auth.transport.requests import Request
+        credentials.refresh(Request())
+        # Update stored tokens
+        new_token_data = {
+            **token_data,
+            "token": credentials.token
+        }
+        await db.google_integration.update_one(
+            {"brand_id": brand_id},
+            {"$set": {token_key: new_token_data}}
+        )
+    
+    return credentials
+
+async def fetch_google_data(brand_id: str, service: str):
+    """Fetch data from Google APIs"""
+    integration = await db.google_integration.find_one({"brand_id": brand_id})
+    if not integration:
+        return
+    
+    try:
+        credentials = await get_google_credentials(brand_id, service)
+        if not credentials:
+            return
+        
+        if service == "analytics":
+            property_id = integration.get("property_id", "")
+            if not property_id:
+                return
+            
+            # Build Analytics Data API client
+            analytics = build('analyticsdata', 'v1beta', credentials=credentials)
+            
+            # Fetch metrics for last 30 days
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=30)
+            prev_start = start_date - timedelta(days=30)
+            prev_end = start_date - timedelta(days=1)
+            
+            # Current period metrics
+            response = analytics.properties().runReport(
+                property=f"properties/{property_id}",
+                body={
+                    "dateRanges": [
+                        {"startDate": start_date.strftime("%Y-%m-%d"), "endDate": end_date.strftime("%Y-%m-%d")},
+                        {"startDate": prev_start.strftime("%Y-%m-%d"), "endDate": prev_end.strftime("%Y-%m-%d")}
+                    ],
+                    "metrics": [
+                        {"name": "activeUsers"},
+                        {"name": "screenPageViews"},
+                        {"name": "bounceRate"},
+                        {"name": "averageSessionDuration"}
+                    ]
+                }
+            ).execute()
+            
+            # Parse response
+            rows = response.get("rows", [])
+            current_metrics = rows[0]["metricValues"] if rows else [{"value": "0"}] * 4
+            prev_metrics = rows[1]["metricValues"] if len(rows) > 1 else [{"value": "0"}] * 4
+            
+            users = int(current_metrics[0]["value"])
+            prev_users = int(prev_metrics[0]["value"]) or 1
+            pageviews = int(current_metrics[1]["value"])
+            prev_pageviews = int(prev_metrics[1]["value"]) or 1
+            bounce_rate = float(current_metrics[2]["value"]) * 100
+            avg_duration = float(current_metrics[3]["value"])
+            
+            # Fetch top pages
+            pages_response = analytics.properties().runReport(
+                property=f"properties/{property_id}",
+                body={
+                    "dateRanges": [{"startDate": start_date.strftime("%Y-%m-%d"), "endDate": end_date.strftime("%Y-%m-%d")}],
+                    "dimensions": [{"name": "pagePath"}],
+                    "metrics": [{"name": "screenPageViews"}],
+                    "limit": 5,
+                    "orderBys": [{"metric": {"metricName": "screenPageViews"}, "desc": True}]
+                }
+            ).execute()
+            
+            top_pages = []
+            for row in pages_response.get("rows", []):
+                top_pages.append({
+                    "path": row["dimensionValues"][0]["value"],
+                    "views": int(row["metricValues"][0]["value"])
+                })
+            
+            analytics_data = {
+                "users": users,
+                "users_change": ((users - prev_users) / prev_users) * 100,
+                "pageviews": pageviews,
+                "pageviews_change": ((pageviews - prev_pageviews) / prev_pageviews) * 100,
+                "bounce_rate": round(bounce_rate, 1),
+                "avg_session_duration": f"{int(avg_duration // 60)}:{int(avg_duration % 60):02d}",
+                "top_pages": top_pages,
+                "fetched_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db.google_integration.update_one(
+                {"brand_id": brand_id},
+                {"$set": {"analytics": analytics_data}}
+            )
+            
+        else:  # Search Console
+            site_url = integration.get("site_url", "")
+            if not site_url:
+                return
+            
+            # Build Search Console API client
+            search_console = build('searchconsole', 'v1', credentials=credentials)
+            
+            # Fetch metrics for last 30 days
+            end_date = datetime.now() - timedelta(days=3)  # SC has 3-day delay
+            start_date = end_date - timedelta(days=30)
+            
+            response = search_console.searchanalytics().query(
+                siteUrl=site_url,
+                body={
+                    "startDate": start_date.strftime("%Y-%m-%d"),
+                    "endDate": end_date.strftime("%Y-%m-%d"),
+                    "dimensions": ["query"],
+                    "rowLimit": 10
+                }
+            ).execute()
+            
+            rows = response.get("rows", [])
+            total_clicks = sum(row.get("clicks", 0) for row in rows)
+            total_impressions = sum(row.get("impressions", 0) for row in rows)
+            avg_ctr = (total_clicks / total_impressions * 100) if total_impressions > 0 else 0
+            avg_position = sum(row.get("position", 0) for row in rows) / len(rows) if rows else 0
+            
+            top_queries = []
+            for row in rows[:5]:
+                top_queries.append({
+                    "query": row["keys"][0],
+                    "clicks": row.get("clicks", 0),
+                    "position": round(row.get("position", 0), 1)
+                })
+            
+            search_data = {
+                "clicks": total_clicks,
+                "impressions": total_impressions,
+                "ctr": round(avg_ctr, 1),
+                "position": round(avg_position, 1),
+                "top_queries": top_queries,
+                "fetched_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db.google_integration.update_one(
+                {"brand_id": brand_id},
+                {"$set": {"search_console": search_data}}
+            )
+            
+    except Exception as e:
+        logging.error(f"Error fetching Google data: {str(e)}")
+
+@api_router.post("/brands/{brand_id}/google-integration/connect")
+async def connect_google_service(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
+    """Initiate Google OAuth connection - returns auth URL"""
+    return await init_google_oauth(brand_id, data, user)
 
 @api_router.post("/brands/{brand_id}/google-integration/disconnect")
 async def disconnect_google_service(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
@@ -1686,22 +1953,35 @@ async def disconnect_google_service(brand_id: str, data: dict, user: dict = Depe
             connection_status["analytics"] = False
             await db.google_integration.update_one(
                 {"brand_id": brand_id},
-                {"$set": {"connection_status": connection_status, "analytics": None}}
+                {"$set": {"connection_status": connection_status, "analytics": None, "analytics_tokens": None}}
             )
         else:
             connection_status["searchConsole"] = False
             await db.google_integration.update_one(
                 {"brand_id": brand_id},
-                {"$set": {"connection_status": connection_status, "search_console": None}}
+                {"$set": {"connection_status": connection_status, "search_console": None, "search_console_tokens": None}}
             )
     
     return {"message": "Disconnected successfully"}
 
 @api_router.post("/brands/{brand_id}/google-integration/refresh")
-async def refresh_google_data(brand_id: str, user: dict = Depends(get_current_user)):
-    """Refresh Google data (mock - would call real APIs)"""
-    # In real implementation, this would fetch fresh data from Google APIs
-    return {"message": "Data refreshed"}
+async def refresh_google_data_endpoint(brand_id: str, user: dict = Depends(get_current_user)):
+    """Refresh Google data from APIs"""
+    integration = await db.google_integration.find_one({"brand_id": brand_id})
+    if not integration:
+        raise HTTPException(status_code=404, detail="No integration found")
+    
+    connection_status = integration.get("connection_status", {})
+    
+    if connection_status.get("analytics"):
+        await fetch_google_data(brand_id, "analytics")
+    
+    if connection_status.get("searchConsole"):
+        await fetch_google_data(brand_id, "searchConsole")
+    
+    result = await db.google_integration.find_one({"brand_id": brand_id}, {"_id": 0})
+    safe_result = {k: v for k, v in result.items() if k not in ['analytics_tokens', 'search_console_tokens']}
+    return safe_result
 
 
 
