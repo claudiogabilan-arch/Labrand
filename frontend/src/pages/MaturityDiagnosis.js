@@ -301,6 +301,133 @@ export default function MaturityDiagnosis() {
           </Card>
         </div>
 
+        {/* AI Recommendations Section */}
+        <Card className="border-indigo-200 bg-indigo-50/50 dark:bg-indigo-950/20">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Recomendações com IA
+              </CardTitle>
+              {!recommendations && (
+                <Button 
+                  onClick={getAIRecommendations} 
+                  disabled={loadingRecommendations}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                >
+                  {loadingRecommendations ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Gerando...</>
+                  ) : (
+                    <><Target className="h-4 w-4 mr-2" /> Gerar Recomendações (1 crédito)</>
+                  )}
+                </Button>
+              )}
+            </div>
+            {recommendations && (
+              <CardDescription>{recommendations.summary}</CardDescription>
+            )}
+          </CardHeader>
+          {recommendations && (
+            <CardContent className="space-y-6">
+              {/* Priority Actions */}
+              <div>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-orange-500" />
+                  Ações Prioritárias
+                </h4>
+                <div className="space-y-2">
+                  {recommendations.priority_actions?.map((action, i) => (
+                    <div key={i} className="p-3 bg-white dark:bg-background rounded-lg border">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{i + 1}</Badge>
+                          <span className="font-medium">{action.action}</span>
+                        </div>
+                        <div className="flex gap-1">
+                          <Badge variant={action.impact === 'alto' ? 'default' : 'secondary'} className="text-xs">
+                            Impacto: {action.impact}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            Esforço: {action.effort}
+                          </Badge>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">Dimensão: {action.dimension}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Wins */}
+              <div>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  Quick Wins
+                </h4>
+                <div className="grid md:grid-cols-3 gap-2">
+                  {recommendations.quick_wins?.map((win, i) => (
+                    <div key={i} className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200">
+                      <span className="text-sm">{win}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Roadmap */}
+              <div>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-blue-500" />
+                  Roadmap
+                </h4>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200">
+                    <Badge className="mb-2">30 dias</Badge>
+                    <ul className="text-sm space-y-1">
+                      {recommendations.roadmap?.["30_days"]?.map((item, i) => (
+                        <li key={i}>• {item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="p-4 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg border border-indigo-200">
+                    <Badge className="mb-2 bg-indigo-500">90 dias</Badge>
+                    <ul className="text-sm space-y-1">
+                      {recommendations.roadmap?.["90_days"]?.map((item, i) => (
+                        <li key={i}>• {item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200">
+                    <Badge className="mb-2 bg-purple-500">180 dias</Badge>
+                    <ul className="text-sm space-y-1">
+                      {recommendations.roadmap?.["180_days"]?.map((item, i) => (
+                        <li key={i}>• {item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Strengths to Leverage */}
+              {recommendations.strengths_to_leverage?.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-red-500" />
+                    Pontos Fortes para Alavancar
+                  </h4>
+                  <div className="space-y-2">
+                    {recommendations.strengths_to_leverage?.map((strength, i) => (
+                      <div key={i} className="p-3 bg-white dark:bg-background rounded-lg border flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                        <span className="text-sm">{strength}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          )}
+        </Card>
+
         <p className="text-xs text-muted-foreground text-center">
           Diagnóstico realizado em: {new Date(results.created_at).toLocaleString('pt-BR')}
         </p>
