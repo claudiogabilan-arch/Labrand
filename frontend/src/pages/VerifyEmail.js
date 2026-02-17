@@ -36,7 +36,8 @@ export default function VerifyEmail() {
       setUser(userData);
       
       toast.success('Email verificado com sucesso!');
-      window.location.href = '/dashboard';
+      // Novo usuário sempre vai para onboarding primeiro
+      window.location.href = '/onboarding';
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Código inválido');
     } finally {
