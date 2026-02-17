@@ -1343,6 +1343,11 @@ async def update_brand_way(brand_id: str, data: dict, user: dict = Depends(get_c
 async def generate_brand_way_suggestions(data: dict, user: dict = Depends(get_current_user)):
     """Generate AI suggestions for brand way dimensions"""
     try:
+        # Check and deduct AI credits
+        success, result = await deduct_ai_credits(user["user_id"], "brand_way_suggestion")
+        if not success:
+            raise HTTPException(status_code=402, detail=result)
+        
         dimension = data.get("dimension", "proposito")
         brand_name = data.get("brand_name", "Marca")
         industry = data.get("industry", "")
