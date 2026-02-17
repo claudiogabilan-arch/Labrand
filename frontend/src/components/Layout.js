@@ -41,7 +41,9 @@ import {
   UserCheck,
   Palette,
   TrendingUp,
-  Briefcase
+  Briefcase,
+  AlertTriangle,
+  Eye
 } from 'lucide-react';
 
 const navigationItems = [
