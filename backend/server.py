@@ -2799,13 +2799,21 @@ from emergentintegrations.payments.stripe.checkout import StripeCheckout, Checko
 
 # Plan definitions with Stripe Price IDs
 SUBSCRIPTION_PLANS = {
+    "free": {
+        "name": "Grátis",
+        "price": 0,
+        "currency": "brl",
+        "stripe_price_id": None,
+        "features": ["1 marca", "Pilares básicos", "Dashboard simplificado"],
+        "trial_days": 0
+    },
     "essencial": {
         "name": "Essencial",
         "price": 997.00,
         "currency": "brl",
         "stripe_price_id": "price_1T1hUG5XQ1KrllP27JJftGwi",
         "features": ["1 marca", "Todos os pilares", "Brand Strength Score", "Valuation básico", "Relatório PDF"],
-        "trial_days": 15
+        "trial_days": 7
     },
     "executivo": {
         "name": "Executivo", 
@@ -2813,7 +2821,7 @@ SUBSCRIPTION_PLANS = {
         "currency": "brl",
         "stripe_price_id": "price_1T1hWU5XQ1KrllP2yLGkblqv",
         "features": ["Até 5 marcas", "Dashboard Executivo", "Benchmark Setorial", "Simulador Estratégico", "Módulo de Risco", "Suporte prioritário"],
-        "trial_days": 15
+        "trial_days": 7
     },
     "enterprise": {
         "name": "Enterprise",
@@ -2824,6 +2832,55 @@ SUBSCRIPTION_PLANS = {
         "trial_days": 0
     }
 }
+
+# Feature access by plan
+FEATURE_ACCESS = {
+    "free": ["dashboard", "brand_way", "start", "values", "purpose"],
+    "essencial": ["dashboard", "brand_way", "start", "values", "purpose", "promise", "positioning", "personality", "universality", "valuation", "reports", "maturity"],
+    "executivo": ["dashboard", "brand_way", "start", "values", "purpose", "promise", "positioning", "personality", "universality", "valuation", "reports", "maturity", "executive", "benchmark", "simulator", "risk", "consistency", "competitors", "google_integration", "ai_mentor"],
+    "enterprise": ["all"]
+}
+
+PRO_FEATURES = {
+    "executive": {"name": "Dashboard Executivo", "min_plan": "executivo"},
+    "benchmark": {"name": "Benchmark Setorial", "min_plan": "executivo"},
+    "simulator": {"name": "Simulador Estratégico", "min_plan": "executivo"},
+    "risk": {"name": "Módulo de Risco", "min_plan": "executivo"},
+    "consistency": {"name": "Alertas de Consistência", "min_plan": "executivo"},
+    "competitors": {"name": "Comparador de Concorrentes", "min_plan": "executivo"},
+    "google_integration": {"name": "Google Analytics", "min_plan": "executivo"},
+    "valuation": {"name": "Valuation de Marca", "min_plan": "essencial"},
+    "reports": {"name": "Relatórios PDF", "min_plan": "essencial"},
+    "maturity": {"name": "Diagnóstico de Maturidade", "min_plan": "essencial"},
+}
+
+@api_router.get("/user/feature-access")
+async def get_feature_access(user: dict = Depends(get_current_user)):
+    """Get user's feature access based on plan"""
+    user_data = await db.users.find_one({"user_id": user["user_id"]})
+    plan = user_data.get("plan", "free") if user_data else "free"
+    
+    # Check if in trial
+    trial_ends = user_data.get("trial_ends_at") if user_data else None
+    in_trial = False
+    if trial_ends:
+        trial_end_date = datetime.fromisoformat(trial_ends.replace('Z', '+00:00'))
+        in_trial = datetime.now(timezone.utc) < trial_end_date
+    
+    # Get accessible features
+    if plan == "enterprise" or (in_trial and plan in ["essencial", "executivo"]):
+        accessible = FEATURE_ACCESS.get(plan, FEATURE_ACCESS["free"])
+    else:
+        accessible = FEATURE_ACCESS.get(plan, FEATURE_ACCESS["free"])
+    
+    return {
+        "plan": plan,
+        "plan_name": SUBSCRIPTION_PLANS.get(plan, {}).get("name", "Grátis"),
+        "in_trial": in_trial,
+        "trial_ends_at": trial_ends,
+        "accessible_features": accessible,
+        "pro_features": PRO_FEATURES
+    }
 
 @api_router.post("/payments/create-checkout")
 async def create_checkout_session(request: Request, data: dict, user: dict = Depends(get_current_user)):
