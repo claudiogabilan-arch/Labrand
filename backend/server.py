@@ -1255,8 +1255,6 @@ async def generate_ai_insight(data: dict, user: dict = Depends(get_current_user)
 @api_router.post("/ai/mentor")
 async def generate_mentor_insights(data: dict, user: dict = Depends(get_current_user)):
     try:
-        from emergentintegrations.llm.chat import chat, LlmModel
-        
         brand_id = data.get("brand_id")
         brand_name = data.get("brand_name", "Marca")
         industry = data.get("industry", "")
@@ -1294,16 +1292,13 @@ Analise os dados da marca e forneça insights em 5 categorias:
 
 Seja específico, prático e cite exemplos quando possível. Responda em português do Brasil."""
 
-        response = await chat(
-            api_key=os.environ.get("EMERGENT_LLM_KEY"),
-            model=LlmModel.GEMINI_2_0_FLASH,
-            system_prompt=system_prompt,
-            user_prompt=f"Dados da marca:\n{context}\n\nGere insights de mentor:"
-        )
+        user_prompt = f"Dados da marca:\n{context}\n\nGere insights de mentor:"
+        
+        response = await call_llm(system_prompt, user_prompt)
         
         return {"insights": response}
     except Exception as e:
-        logger.error(f"Mentor error: {str(e)}")
+        logging.error(f"Mentor error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ==================== BRAND WAY (JEITO DE SER) ====================
