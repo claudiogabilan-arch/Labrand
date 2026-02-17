@@ -98,9 +98,13 @@ export default function BrandRisk() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setRiskData(response.data);
-      toast.success('Análise de risco concluída!');
+      toast.success(`Análise de risco concluída! (${response.data.credits_used || 5} créditos usados)`);
     } catch (error) {
-      toast.error('Erro ao analisar riscos');
+      if (error.response?.status === 402) {
+        toast.error('Créditos insuficientes. Adquira mais créditos em Configurações > Créditos IA.');
+      } else {
+        toast.error('Erro ao analisar riscos');
+      }
     } finally {
       setAnalyzing(false);
     }
