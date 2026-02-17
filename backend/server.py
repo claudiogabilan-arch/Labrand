@@ -1229,6 +1229,11 @@ async def call_llm(system_prompt: str, user_prompt: str) -> str:
 @api_router.post("/ai/insights")
 async def generate_ai_insight(data: dict, user: dict = Depends(get_current_user)):
     try:
+        # Check and deduct AI credits
+        success, result = await deduct_ai_credits(user["user_id"], "suggestion")
+        if not success:
+            raise HTTPException(status_code=402, detail=result)
+        
         context = data.get("context", "")
         pillar = data.get("pillar", "default")
         brand_name = data.get("brand_name", "Marca")
@@ -1248,7 +1253,9 @@ async def generate_ai_insight(data: dict, user: dict = Depends(get_current_user)
         
         response = await call_llm(system_prompt, user_prompt)
         
-        return {"insight": response}
+        return {"insight": response, "credits_used": result}
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(f"AI insight error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
