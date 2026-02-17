@@ -71,9 +71,8 @@ export default function GoogleIntegration() {
       );
       
       if (response.data.auth_url) {
-        // Open Google OAuth in new window
-        window.open(response.data.auth_url, '_blank', 'width=500,height=600');
-        toast.info('Complete a autorização na janela do Google');
+        // Redirect to Google OAuth in same window
+        window.location.href = response.data.auth_url;
       } else {
         setConnectionStatus(response.data.connection_status);
         toast.success(`${service === 'analytics' ? 'Google Analytics' : 'Search Console'} conectado!`);
