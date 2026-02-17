@@ -13,7 +13,8 @@ Web application for brand management covering diagnosis, strategy creation, exec
 1. **Onboarding**: Multi-step guided process, user type selection
 2. **Brand Management**: Create brands, define pillars
 3. **Analytics**: Executive dashboard, benchmark, simulator, valuation
-4. **SaaS Model**: Grátis, Founder (15-day trial), Pro, Consultor, Enterprise
+4. **SaaS Model**: 7-day free trial, Pro, Consultor, Enterprise plans
+5. **AI Credits System**: Metered usage for AI features
 
 ### Tech Stack
 - **Frontend**: React, Tailwind CSS, Shadcn/UI
@@ -22,16 +23,35 @@ Web application for brand management covering diagnosis, strategy creation, exec
 - **Auth**: JWT + Google OAuth
 - **Email**: Resend API
 - **AI**: Emergent LLM Key (Gemini 2.0 Flash)
+- **Payments**: Stripe (LIVE keys)
 
 ---
 
 ## Changelog
 
+### 2026-02-17 (Session 3)
+- **IMPLEMENTED**: AI Credits Deduction System
+  - All AI endpoints now deduct credits before processing
+  - Returns `credits_used` in response
+  - 402 error when credits insufficient
+- **FIXED**: TRIAL_DAYS changed from 15 to 7 days
+- **UPDATED**: Frontend components handle 402 errors with user-friendly messages
+- **ADDED**: ACTION_LABELS mapping in AICredits.js for translated history
+
+### AI Credit Costs:
+| Action | Credits | Endpoint |
+|--------|---------|----------|
+| Sugestão de IA | 1 | POST /api/ai/insights |
+| Jeito de Ser (IA) | 2 | POST /api/ai/brand-way |
+| Mentor IA | 3 | POST /api/ai/mentor |
+| Análise de Risco | 5 | POST /api/brands/{id}/risk-analysis |
+| Alertas de Consistência | 5 | POST /api/brands/{id}/consistency-alerts |
+
 ### 2026-02-17 (Session 2 - Part 2)
 - **NEW**: Brand Risk Module - AI-powered risk analysis with 5 categories
 - **NEW**: Competitor Analysis - Compare up to 5 competitors across 6 attributes
 - **NEW**: Consistency Alerts - AI detects inconsistencies between brand pillars
-- **NEW**: Google Integration page (MOCKED - Analytics & Search Console)
+- **NEW**: Google Integration page (Real OAuth)
 - **FIXED**: AI endpoints corrected by testing agent
 
 ### 2026-02-17 (Session 2 - Part 1)
@@ -46,6 +66,7 @@ Web application for brand management covering diagnosis, strategy creation, exec
 - Google OAuth login
 - Executive Dashboard, Benchmark, Simulator modules
 - SaaS plans structure
+- Stripe integration (subscriptions + one-time purchases)
 
 ---
 
@@ -58,78 +79,61 @@ Web application for brand management covering diagnosis, strategy creation, exec
 - [x] Implement Brand Risk module
 - [x] Implement Competitor Analysis
 - [x] Implement Consistency Alerts
-- [x] Google Integration page (MOCKED)
+- [x] Google Integration (Real OAuth)
+- [x] Stripe Payments Integration
+- [x] AI Credits Deduction System
+- [x] 7-day trial period
 
 ### P1 - High Priority  
-- [ ] Implement real Google OAuth for Analytics/Search Console
-- [ ] Treeal payment integration
-- [ ] Refactor server.py (2500+ lines)
+- [ ] Refactor server.py (3000+ lines) into modular routers
+- [ ] Complete Maturity Diagnosis module
+- [ ] Team invitation functionality
 
 ### P2 - Medium Priority
-- [ ] Diagnóstico de Maturidade
-- [ ] Team invitation functionality
-- [ ] AI Credits system
+- [ ] Strategic Priority Report for consultants
+- [ ] Naming module
+- [ ] Brand Book PDF Generator
 
 ### P3 - Low Priority / Backlog
-- [ ] Naming module
 - [ ] White-labeling for Enterprise
-- [ ] Brand Book PDF Generator
+- [ ] API access for Enterprise
 - [ ] Timeline de Evolução
-
----
-
-## New Modules Summary
-
-### Brand Risk Module (/brand-risk)
-- **5 Risk Categories**: Reputacional, Competitivo, Operacional, Legal, Cultural
-- **AI Analysis**: Generates scores (0-100) and factors for each category
-- **Recommendations**: 5 mitigation recommendations
-- **Endpoints**: GET/POST /api/brands/{brand_id}/risk-analysis
-
-### Competitor Analysis (/competitors)
-- **6 Attributes**: Preço, Qualidade, Inovação, Atendimento, Presença Digital, Reconhecimento
-- **Max 5 Competitors**: With descriptions and scores
-- **Advantages/Disadvantages**: Auto-calculated based on scores
-- **Endpoints**: GET/PUT /api/brands/{brand_id}/competitors
-
-### Consistency Alerts (/consistency)
-- **AI Analysis**: Detects inconsistencies between brand pillars
-- **4 Alert Types**: error, warning, success, info
-- **Score**: 0-100% consistency score
-- **Endpoints**: GET/POST /api/brands/{brand_id}/consistency-alerts
-
-### Google Integration (/google-integration) ⚠️ MOCKED
-- **Analytics Tab**: Users, pageviews, bounce rate, session duration, top pages
-- **Search Console Tab**: Clicks, impressions, CTR, position, top queries
-- **Endpoints**: GET/POST /api/brands/{brand_id}/google-integration/*
 
 ---
 
 ## Key Files Reference
 
-### New Files Created (Session 2)
-- `/app/frontend/src/pages/BrandWay.js`
-- `/app/frontend/src/pages/BrandRisk.js`
-- `/app/frontend/src/pages/CompetitorAnalysis.js`
-- `/app/frontend/src/pages/ConsistencyAlerts.js`
-- `/app/frontend/src/pages/GoogleIntegration.js`
-- `/app/frontend/src/pages/PillarStart.js` (updated)
+### Backend
+- `/app/backend/server.py` - Monolithic file (needs refactoring)
+- `/app/backend/.env` - Contains LIVE Stripe keys, Emergent LLM key
 
-### Backend (Monolithic - Needs Refactoring)
-- `/app/backend/server.py` - 2500+ lines, all endpoints
+### Frontend Pages (New/Modified)
+- `/app/frontend/src/pages/AICredits.js` - Credit management
+- `/app/frontend/src/pages/BrandRisk.js` - Risk analysis
+- `/app/frontend/src/pages/CompetitorAnalysis.js` - Competitor comparison
+- `/app/frontend/src/pages/ConsistencyAlerts.js` - Consistency checks
+- `/app/frontend/src/pages/BrandWay.js` - Brand identity
+
+### Context Providers
+- `/app/frontend/src/contexts/AuthContext.js`
+- `/app/frontend/src/contexts/BrandContext.js`
+- `/app/frontend/src/contexts/PlanContext.js`
+
+---
 
 ## Test Credentials
-- Strategist: demo@labrand.com / password123
-- Brand ID: brand_92bcc15a44fb
+- **Strategist**: demo@labrand.com / password123
+- **Brand ID**: brand_92bcc15a44fb
 
 ## Integrations Status
 - ✅ Google OAuth (login)
+- ✅ Google Analytics Data API (GA4)
+- ✅ Google Search Console API
 - ✅ Resend (transactional emails)
 - ✅ Emergent LLM (Gemini 2.0 Flash)
-- ✅ Google Analytics Data API (GA4) - Real OAuth implementation
-- ✅ Google Search Console API - Real OAuth implementation
-- ✅ Stripe Payments - Checkout, webhooks, subscription management
+- ✅ Stripe Payments (LIVE keys)
+- ✅ AI Credits System
 
 ## Test Reports
-- `/app/test_reports/iteration_1.json` - Initial features
-- `/app/test_reports/iteration_3.json` - New modules (100% pass rate)
+- `/app/test_reports/iteration_4.json` - AI Credits system (100% pass)
+- `/app/test_reports/iteration_3.json` - New modules (100% pass)
