@@ -69,6 +69,8 @@ export default function MaturityDiagnosis() {
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [recommendations, setRecommendations] = useState(null);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
   useEffect(() => {
     if (currentBrand?.brand_id) {
