@@ -420,6 +420,28 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/maturity"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <MaturityDiagnosis />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ai-credits"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <AICredits />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
