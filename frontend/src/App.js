@@ -436,9 +436,11 @@ function AppRouter() {
         path="/ai-credits"
         element={
           <ProtectedRoute>
-            <MainLayout>
-              <AICredits />
-            </MainLayout>
+            <BrandProvider>
+              <MainLayout>
+                <AICredits />
+              </MainLayout>
+            </BrandProvider>
           </ProtectedRoute>
         }
       />
