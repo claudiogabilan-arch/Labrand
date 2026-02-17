@@ -90,12 +90,11 @@ export const Plans = () => {
                   ))}
                 </ul>
                 <Button 
-                  className="w-full" 
-                  variant={isCurrentPlan ? 'outline' : 'default'}
-                  disabled={isCurrentPlan}
+                  className="w-full mt-4" 
+                  variant={plan.popular ? 'default' : 'outline'}
                   onClick={() => handleUpgrade(plan.id)}
                 >
-                  {isCurrentPlan ? 'Plano Atual' : 'Selecionar'}
+                  {plan.cta || 'Selecionar'}
                 </Button>
               </CardContent>
             </Card>
