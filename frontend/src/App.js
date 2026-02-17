@@ -447,6 +447,18 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <AdminDashboard />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
