@@ -1226,6 +1226,56 @@ async def call_llm(system_prompt: str, user_prompt: str) -> str:
     response = await chat.send_message(user_msg)
     return response.text if hasattr(response, 'text') else str(response)
 
+# ==================== AI CREDITS HELPER FUNCTIONS ====================
+
+AI_CREDIT_COSTS = {
+    "suggestion": 1,
+    "risk_analysis": 5,
+    "consistency_analysis": 5,
+    "mentor_insight": 3,
+    "brand_way_suggestion": 2
+}
+
+async def deduct_ai_credits(user_id: str, action: str, amount: int = None):
+    """Deduct AI credits for an action"""
+    cost = amount or AI_CREDIT_COSTS.get(action, 1)
+    
+    # Initialize credits for new users if not exists
+    credits_data = await db.ai_credits.find_one({"user_id": user_id})
+    if not credits_data:
+        credits_data = {
+            "user_id": user_id,
+            "total_credits": 50,
+            "used_credits": 0,
+            "available_credits": 50,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.ai_credits.insert_one(credits_data)
+    
+    if credits_data.get("available_credits", 0) < cost:
+        return False, "Créditos insuficientes. Adquira mais créditos em Configurações > Créditos IA."
+    
+    # Deduct credits
+    await db.ai_credits.update_one(
+        {"user_id": user_id},
+        {
+            "$inc": {"used_credits": cost, "available_credits": -cost},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+        }
+    )
+    
+    # Record history
+    await db.ai_credits_history.insert_one({
+        "user_id": user_id,
+        "action": action,
+        "credits": -cost,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return True, cost
+
+# ==================== AI INSIGHTS ROUTES ====================
+
 @api_router.post("/ai/insights")
 async def generate_ai_insight(data: dict, user: dict = Depends(get_current_user)):
     try:
