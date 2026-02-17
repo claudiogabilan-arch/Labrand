@@ -1,143 +1,84 @@
-# LaBrand – Brand OS
+# LaBrand - Brand OS
+## Product Requirements Document
 
-## Problema Original
-Criar uma aplicação web para facilitar a gestão de marcas para empresas, cobrindo diagnóstico, criação de estratégia, execução e medição de resultados.
+### Original Problem Statement
+Web application for brand management covering diagnosis, strategy creation, execution, and result measurement. Positioned as a "Strategic Brand Infrastructure Platform (Brand OS)" for B2B companies and consultants.
 
-## Requisitos do Produto
-- **Onboarding:** Registro de clientes, conexão com Google Analytics/Search Console, importação de documentos do Google Drive.
-- **Pilares Core:** Módulos para desenvolvimento estratégico de marca (Start, Valores, Propósito, Promessa, Posicionamento, Personalidade, Universal).
-- **Dashboards & Ferramentas:** Dashboard de Inteligência, módulo de Planejamento & Execução, Scorecard, Histórias & Narrativas, Avaliação de Marca, Inteligência de Audiência, Calendário de Campanhas, Identidade Visual, Investment Match.
-- **Usuários & Permissões:** Dois papéis - "Estrategista" (acesso total) e "Cliente" (somente leitura).
-- **Design:** Interface moderna, responsiva, acessível com dark mode. Branding personalizado. Português brasileiro.
-- **Modelo SaaS:** Planos gratuito e pagos com período de trial de 15 dias.
-- **Integrações:** APIs do Google (Analytics, Drive, Search Console), OpenAI para insights, gateway de pagamento (Treeal).
+### User Personas
+- **Estrategista**: Full access to all features, can create/edit brands
+- **Cliente**: Read-only access to dashboards and reports
+- **Agência/Grupo Empresarial**: Multi-brand management
 
-## Arquitetura Técnica
-```
-/app/
-├── backend/
-│   ├── .env
-│   ├── requirements.txt
-│   └── server.py (monolítico - precisa refatorar)
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── contexts/
-│   │   ├── hooks/
-│   │   └── pages/
-│   └── public/
-└── memory/
-    └── PRD.md
-```
+### Core Requirements
+1. **Onboarding**: Multi-step guided process, user type selection, Google integrations
+2. **Brand Management**: Create brands, define pillars (values, purpose, promise, positioning, personality, universality)
+3. **Analytics**: Executive dashboard, benchmark, simulator, valuation
+4. **SaaS Model**: Grátis, Founder (15-day trial), Pro, Consultor, Enterprise
 
-## O que foi Implementado
+### Tech Stack
+- **Frontend**: React, Tailwind CSS, Shadcn/UI
+- **Backend**: FastAPI (Python)
+- **Database**: MongoDB
+- **Auth**: JWT + Google OAuth
+- **Email**: Resend API
 
-### Autenticação & Usuários
-- [x] JWT Authentication
-- [x] Google OAuth 2.0
-- [x] Papéis: Estrategista / Cliente
-- [x] Hook usePermissions
-- [x] **Esqueci minha senha** (12/02/2026)
-- [x] **Tipo de Usuário no cadastro** (12/02/2026) - Estrategista, Agência, Grupo Empresarial
-- [x] **Onboarding inteligente 5 etapas** (12/02/2026)
-- [x] **Fix bug passlib em produção** (12/02/2026)
+---
 
-### Planos SaaS (Atualizado 12/02/2026)
-- [x] Founder: 1 marca, básico
-- [x] Consultant: 5 marcas, PDF, benchmark, 50 créditos IA
-- [x] Enterprise: Ilimitado, dashboard executivo, API
+## Changelog
 
-### Pilares de Marca
-- [x] Start, Valores, Propósito, Promessa
-- [x] Posicionamento, Personalidade (12 arquétipos)
-- [x] Universal
+### 2026-02-17
+- **Fixed**: Critical auth bug - VerifyEmail.js now redirects to /onboarding instead of /dashboard
+- **Fixed**: /auth/me endpoint now returns onboarding_completed, email_verified, plan, user_type
+- **Fixed**: Updated 14 existing users with missing fields
 
-### Gestão
-- [x] Dashboard com métricas
-- [x] Avaliação de Marca (valuation completo)
-- [x] Relatórios em PDF
-- [x] Planejamento, Decisões, Narrativas
+### Previous Session (Summary)
+- Email verification flow implemented
+- "Forgot Password" flow with Resend
+- Google OAuth login working
+- New modules: Executive Dashboard, Benchmark, Simulator, Brand Identity, Investment Match
+- SaaS plans structure defined
 
-### Ferramentas
-- [x] **Identidade Visual** - Sugestões de cores, tipografia e estilo baseadas no arquétipo
-- [x] **Investment Match** - VCs REAIS brasileiros (Kaszek, Valor Capital, Canary, etc.)
-- [x] **Audiência** - Influenciadores REAIS (Instagram + YouTube) com links clicáveis
+---
 
-### Sistema
-- [x] Planos SaaS (Free, Pro, Enterprise)
-- [x] Trial de 15 dias
-- [x] Dark mode
-- [x] Upload de logo
-- [x] Branding LABrand
+## Roadmap
 
-## Endpoints da API
+### P0 - Critical
+- [x] Fix login/registration loop bug
 
-### Auth
-- POST /api/auth/register
-- POST /api/auth/login
-- GET /api/auth/me
-- GET /api/auth/google/init
-- GET /api/auth/google/callback
+### P1 - High Priority  
+- [ ] Complete Onboarding module (save 5 steps data)
+- [ ] Implement AI Mentor Insights logic
+- [ ] Módulo "Jeito de Ser da Marca"
 
-### Brands
-- GET/POST /api/brands
-- GET/PUT/DELETE /api/brands/{brand_id}
-- POST /api/brands/{brand_id}/logo
-- GET /api/brands/{brand_id}/report
+### P2 - Medium Priority
+- [ ] Módulo de Risco de Marca
+- [ ] Roadmap Estratégico Inteligente
+- [ ] Google Analytics/Search Console integration
 
-### Pillars
-- GET/PUT /api/brands/{brand_id}/pillars
+### P3 - Low Priority / Backlog
+- [ ] Treeal payment integration
+- [ ] Team invitation functionality
+- [ ] Refactor server.py (2000+ lines)
+- [ ] Naming module
+- [ ] White-labeling for Enterprise
+- [ ] AI Credits system
 
-### Valuation
-- GET/POST /api/brands/{brand_id}/valuation
+---
 
-### Identity (NOVO)
-- GET /api/brands/{brand_id}/identity
-- POST /api/brands/{brand_id}/identity/generate
+## Key Files Reference
+- `/app/backend/server.py` - Monolithic backend (needs refactoring)
+- `/app/frontend/src/contexts/AuthContext.js` - Auth state management
+- `/app/frontend/src/pages/VerifyEmail.js` - Email verification
+- `/app/frontend/src/pages/Onboarding.js` - 5-step onboarding
+- `/app/frontend/src/App.js` - Routes and redirect logic
 
-### Investment (NOVO)
-- GET /api/investment/investors
-- GET /api/investment/opportunities
+## Test Credentials
+- Strategist: demo@labrand.com / password123
+- Client: cliente@labrand.com / password123
 
-### Campaigns
-- GET/POST /api/campaigns
-- PUT/DELETE /api/campaigns/{campaign_id}
-
-## Pendências
-
-### P0 (Crítico)
-- [ ] Integrar Treeal para pagamentos (aguardando credenciais)
-
-### P1 (Alta)
-- [ ] Implementar AI Mentor com insights reais
-- [ ] Completar módulo Audiência
-- [ ] Completar módulo Campanhas
-- [ ] Buscar dados do Google Analytics/Search Console
-
-### P2 (Média)
-- [ ] Refatorar backend/server.py em routers separados
-- [ ] Importação de arquivos do Google Drive
-- [ ] Conteúdo do Tutorial de onboarding
-- [ ] Base real de VCs para Investment Match
-
-### P3 (Backlog)
-- [ ] Integração com Canva
-- [ ] Melhorar geração de relatórios PDF
-- [ ] Análise de PDFs grandes
-
-## Credenciais de Teste
-- **Estrategista:** demo@labrand.com / password123
-- **Cliente:** cliente@labrand.com / password123
-
-## Integrações de Terceiros
-| Serviço | Status | Chave |
-|---------|--------|-------|
-| Google OAuth | ✅ Configurado | User-provided |
-| OpenAI | ✅ Configurado | Emergent LLM Key |
-| Treeal | ⏳ Aguardando | Pendente |
-
-## Notas Técnicas
-- MongoDB para persistência
-- bcrypt 4.0.1 para hashing
-- reportlab para PDFs
-- Dados de VCs são MOCK (pode evoluir para API real)
+## Integrations Status
+- ✅ Google OAuth (login)
+- ✅ Resend (transactional emails)
+- ❌ Google Analytics/Search Console (not implemented)
+- ❌ Treeal payments (not implemented)
+- ⚠️ OpenAI/Emergent LLM (partial - influencer suggestions)
