@@ -106,7 +106,7 @@ PLANS = {
     }
 }
 
-TRIAL_DAYS = 15
+TRIAL_DAYS = 7
 
 class BrandBase(BaseModel):
     name: str
