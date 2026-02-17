@@ -36,6 +36,10 @@ import BrandIdentity from "./pages/BrandIdentity";
 import InvestmentMatch from "./pages/InvestmentMatch";
 import ResetPassword from "./pages/ResetPassword";
 import BrandWay from "./pages/BrandWay";
+import BrandRisk from "./pages/BrandRisk";
+import CompetitorAnalysis from "./pages/CompetitorAnalysis";
+import ConsistencyAlerts from "./pages/ConsistencyAlerts";
+import GoogleIntegration from "./pages/GoogleIntegration";
 import "./App.css";
 
 // Router wrapper to handle auth callback
