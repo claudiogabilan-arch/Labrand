@@ -89,7 +89,7 @@ const navigationItems = [
 export const Sidebar = ({ collapsed, setCollapsed }) => {
   const location = useLocation();
   const { metrics } = useBrand();
-  const { isCliente, canAccess } = useAuth();
+  const { isCliente, canAccess, user } = useAuth();
   const { theme } = useTheme();
 
   const getPillarProgress = (pillar) => {
@@ -100,6 +100,8 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
   // Filter navigation items based on user role
   const filteredNavItems = navigationItems.filter(item => {
     if (item.type === 'divider') return true;
+    // Hide admin-only items for non-admin users
+    if (item.adminOnly && user?.role !== 'admin' && !user?.is_admin) return false;
     return !isCliente || canAccess(item.href);
   });
 
