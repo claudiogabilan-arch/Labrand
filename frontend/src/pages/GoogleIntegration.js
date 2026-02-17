@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useBrand } from '../contexts/BrandContext';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -20,6 +21,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 export default function GoogleIntegration() {
   const { token } = useAuth();
   const { currentBrand } = useBrand();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -31,6 +33,22 @@ export default function GoogleIntegration() {
   const [searchConsoleData, setSearchConsoleData] = useState(null);
   const [propertyId, setPropertyId] = useState('');
   const [siteUrl, setSiteUrl] = useState('');
+
+  // Handle OAuth callback results
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const error = searchParams.get('error');
+    const service = searchParams.get('service');
+    
+    if (success === 'true') {
+      toast.success(`${service === 'analytics' ? 'Google Analytics' : 'Search Console'} conectado com sucesso!`);
+      // Clear URL params
+      setSearchParams({});
+    } else if (error) {
+      toast.error(`Erro na conexão: ${error}`);
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     if (currentBrand?.brand_id) {
