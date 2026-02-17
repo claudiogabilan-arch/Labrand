@@ -813,7 +813,11 @@ async def get_me(request: Request, user: dict = Depends(get_current_user)):
         "email": user["email"],
         "name": user["name"],
         "role": user.get("role", "cliente"),
-        "picture": user.get("picture")
+        "picture": user.get("picture"),
+        "onboarding_completed": user.get("onboarding_completed", False),
+        "email_verified": user.get("email_verified", False),
+        "plan": user.get("plan", "founder"),
+        "user_type": user.get("user_type", "estrategista")
     }
 
 @api_router.post("/auth/logout")
