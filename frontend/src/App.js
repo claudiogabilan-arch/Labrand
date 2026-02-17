@@ -458,7 +458,9 @@ function App() {
       <ThemeProvider>
         <BrowserRouter>
           <AuthProvider>
-            <AppRouter />
+            <PlanProvider>
+              <AppRouter />
+            </PlanProvider>
           </AuthProvider>
         </BrowserRouter>
         <Toaster 
