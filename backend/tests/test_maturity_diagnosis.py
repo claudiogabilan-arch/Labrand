@@ -242,17 +242,19 @@ class TestMaturityDiagnosisModule:
         assert response.status_code == 200, f"Credits history failed: {response.text}"
         data = response.json()
         
-        # Verify history is a list
-        assert isinstance(data, list), "History should be a list"
+        # History endpoint returns {"history": [...]}
+        assert "history" in data, "history key missing from response"
+        history = data["history"]
+        assert isinstance(history, list), "History should be a list"
         
-        if len(data) > 0:
+        if len(history) > 0:
             # Verify history entry structure
-            entry = data[0]
+            entry = history[0]
             assert "action" in entry, "action missing from history entry"
             assert "credits" in entry, "credits missing from history entry"
             assert "created_at" in entry, "created_at missing from history entry"
             
-            print(f"✓ AI Credits history retrieved - {len(data)} entries")
+            print(f"✓ AI Credits history retrieved - {len(history)} entries")
         else:
             print(f"✓ AI Credits history retrieved - empty (no transactions yet)")
     
