@@ -54,34 +54,34 @@ export const Plans = () => {
         <p className="text-muted-foreground">Escolha o plano ideal para sua estratégia de marca</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
         {PLANS_DATA.map((plan) => {
           const Icon = plan.icon;
           const isCurrentPlan = currentPlan === plan.id;
           
           return (
-            <Card key={plan.id} className={`relative ${plan.color} ${plan.popular ? 'scale-105' : ''}`}>
+            <Card key={plan.id} className={`relative ${plan.color} ${plan.popular ? 'scale-105 shadow-xl' : ''}`}>
               {plan.popular && (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500">
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600">
                   Mais Popular
                 </Badge>
               )}
               <CardHeader className="text-center pb-2">
                 <Icon className="h-10 w-10 mx-auto mb-2 text-primary" />
-                <CardTitle>{plan.name}</CardTitle>
-                <div className="mt-2">
-                  {plan.price === 0 ? (
-                    <span className="text-3xl font-bold">Grátis</span>
+                <CardTitle className="text-xl">{plan.name}</CardTitle>
+                <div className="mt-4">
+                  {plan.price === null ? (
+                    <span className="text-2xl font-bold">Sob Consulta</span>
                   ) : (
                     <>
-                      <span className="text-3xl font-bold">R$ {plan.price.toFixed(2).replace('.', ',')}</span>
+                      <span className="text-4xl font-bold">R$ {plan.price.toLocaleString('pt-BR')}</span>
                       <span className="text-muted-foreground">/mês</span>
                     </>
                   )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <ul className="space-y-2">
+                <ul className="space-y-3">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm">
                       <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
