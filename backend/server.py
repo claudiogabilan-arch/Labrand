@@ -1518,8 +1518,6 @@ async def get_consistency_alerts(brand_id: str, user: dict = Depends(get_current
 async def analyze_consistency(brand_id: str, user: dict = Depends(get_current_user)):
     """Analyze brand consistency using AI"""
     try:
-        from emergentintegrations.llm.chat import LlmChat, LlmModel
-        
         # Get all brand data
         brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
         brand_way = await db.brand_way.find_one({"brand_id": brand_id}, {"_id": 0})
@@ -1536,11 +1534,7 @@ async def analyze_consistency(brand_id: str, user: dict = Depends(get_current_us
         Pilares: {json.dumps(pillars, ensure_ascii=False)}
         """
         
-        llm = LlmChat(
-            api_key=os.environ.get("EMERGENT_LLM_KEY"),
-            model=LlmModel.GEMINI_2_0_FLASH
-        )
-        llm.add_system_message("Você é um especialista em consistência de marca. Analise os dados e identifique inconsistências entre os pilares. Retorne APENAS JSON válido.")
+        system_prompt = "Você é um especialista em consistência de marca. Analise os dados e identifique inconsistências entre os pilares. Retorne APENAS JSON válido."
         
         prompt = f"""Analise a consistência entre os pilares da marca:
         {context}
@@ -1566,7 +1560,7 @@ async def analyze_consistency(brand_id: str, user: dict = Depends(get_current_us
         
         Seja específico e construtivo. Mínimo 5 alertas, máximo 12."""
         
-        response = await llm.chat_async(prompt)
+        response = await call_llm(system_prompt, prompt)
         
         # Parse response
         clean_response = response.strip()
