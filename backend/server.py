@@ -3065,9 +3065,9 @@ AI_CREDIT_COSTS = {
 }
 
 CREDIT_PACKAGES = {
-    "starter": {"credits": 100, "price": 49.00},
-    "pro": {"credits": 500, "price": 199.00},
-    "enterprise": {"credits": 2000, "price": 699.00}
+    "starter": {"credits": 100, "price": 49.00, "stripe_price_id": "price_1T1hYh5XQ1KrllP22NrrLqVr"},
+    "pro": {"credits": 500, "price": 199.00, "stripe_price_id": "price_1T1hZo5XQ1KrllP2xuz1zoD9"},
+    "enterprise": {"credits": 2000, "price": 699.00, "stripe_price_id": "price_1T1has5XQ1KrllP2yTEaGs5A"}
 }
 
 @api_router.get("/ai-credits/balance")
