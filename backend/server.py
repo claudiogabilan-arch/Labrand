@@ -1442,6 +1442,11 @@ async def get_risk_analysis(brand_id: str, user: dict = Depends(get_current_user
 async def analyze_brand_risks(brand_id: str, user: dict = Depends(get_current_user)):
     """Analyze brand risks using AI"""
     try:
+        # Check and deduct AI credits
+        success, result = await deduct_ai_credits(user["user_id"], "risk_analysis")
+        if not success:
+            raise HTTPException(status_code=402, detail=result)
+        
         # Get brand data
         brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
         brand_way = await db.brand_way.find_one({"brand_id": brand_id}, {"_id": 0})
@@ -1490,6 +1495,7 @@ async def analyze_brand_risks(brand_id: str, user: dict = Depends(get_current_us
         risk_data = json.loads(clean_response)
         risk_data["brand_id"] = brand_id
         risk_data["analyzed_at"] = datetime.now(timezone.utc).isoformat()
+        risk_data["credits_used"] = result
         
         # Save to DB
         await db.brand_risk.update_one(
@@ -1499,6 +1505,8 @@ async def analyze_brand_risks(brand_id: str, user: dict = Depends(get_current_us
         )
         
         return risk_data
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(f"Risk analysis error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
