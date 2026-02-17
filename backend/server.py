@@ -1422,8 +1422,6 @@ async def get_risk_analysis(brand_id: str, user: dict = Depends(get_current_user
 async def analyze_brand_risks(brand_id: str, user: dict = Depends(get_current_user)):
     """Analyze brand risks using AI"""
     try:
-        from emergentintegrations.llm.chat import LlmChat, LlmModel
-        
         # Get brand data
         brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
         brand_way = await db.brand_way.find_one({"brand_id": brand_id}, {"_id": 0})
@@ -1440,11 +1438,7 @@ async def analyze_brand_risks(brand_id: str, user: dict = Depends(get_current_us
         Pilares: {json.dumps(pillars, ensure_ascii=False)}
         """
         
-        llm = LlmChat(
-            api_key=os.environ.get("EMERGENT_LLM_KEY"),
-            model=LlmModel.GEMINI_2_0_FLASH
-        )
-        llm.add_system_message("Você é um analista de risco de marca especializado. Analise os dados e retorne APENAS JSON válido.")
+        system_prompt = "Você é um analista de risco de marca especializado. Analise os dados e retorne APENAS JSON válido."
         
         prompt = f"""Analise os riscos da marca com base nos dados fornecidos:
         {context}
@@ -1463,7 +1457,7 @@ async def analyze_brand_risks(brand_id: str, user: dict = Depends(get_current_us
         
         Score: 0=sem risco, 100=risco máximo. Seja realista baseado nos dados disponíveis."""
         
-        response = await llm.chat_async(prompt)
+        response = await call_llm(system_prompt, prompt)
         
         # Parse response
         clean_response = response.strip()
