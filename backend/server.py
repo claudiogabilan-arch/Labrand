@@ -479,7 +479,7 @@ async def verify_email(data: VerifyEmailRequest):
             <p style="color: #444; font-size: 16px; line-height: 1.6;">Sua conta foi ativada com sucesso! Você agora tem acesso à plataforma de gestão estratégica de marca mais completa do mercado.</p>
             <div style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%); border-radius: 8px; padding: 24px; margin: 24px 0;">
                 <p style="color: white; margin: 0; font-size: 14px;">Seu plano atual</p>
-                <p style="color: white; margin: 8px 0 0; font-size: 24px; font-weight: bold;">Founder + 15 dias grátis</p>
+                <p style="color: white; margin: 8px 0 0; font-size: 24px; font-weight: bold;">Founder + {TRIAL_DAYS} dias grátis</p>
             </div>
             <p style="color: #444; font-size: 16px; line-height: 1.6;">Próximos passos:</p>
             <ul style="color: #444; font-size: 16px; line-height: 1.8;">
