@@ -49,6 +49,7 @@ import {
 const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Executivo', href: '/executive', icon: Briefcase },
+  { name: 'Diagnóstico', href: '/maturity', icon: ClipboardCheck },
   { type: 'divider', label: 'Pilares de Marca' },
   { name: 'Jeito de Ser', href: '/brand-way', icon: Heart },
   { name: 'Start', href: '/pillars/start', icon: Target, pillar: 'start' },
@@ -75,11 +76,9 @@ const navigationItems = [
   { name: 'Decisões', href: '/scorecard', icon: ClipboardCheck },
   { name: 'Narrativas', href: '/narratives', icon: BookOpen },
   { name: 'Relatórios', href: '/reports', icon: FileText },
-  { type: 'divider', label: 'Ferramentas' },
-  { name: 'Identidade Visual', href: '/identity', icon: Palette },
-  { name: 'Investment Match', href: '/investment', icon: Briefcase },
   { type: 'divider', label: 'Sistema' },
-  { name: 'Planos', href: '/plans', icon: Star },
+  { name: 'Créditos IA', href: '/ai-credits', icon: Star },
+  { name: 'Planos', href: '/plans', icon: DollarSign },
   { name: 'Configurações', href: '/settings', icon: Settings },
 ];
 
