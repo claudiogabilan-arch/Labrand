@@ -1210,11 +1210,24 @@ async def update_narrative(brand_id: str, narrative_id: str, narrative_data: dic
 
 # ==================== AI INSIGHTS ROUTE ====================
 
+async def call_llm(system_prompt: str, user_prompt: str) -> str:
+    """Helper function to call LLM using emergentintegrations"""
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    import uuid
+    
+    chat = LlmChat(
+        api_key=os.environ.get("EMERGENT_LLM_KEY"),
+        session_id=str(uuid.uuid4()),
+        system_message=system_prompt
+    )
+    chat = chat.with_model('google', 'gemini-2.0-flash')
+    user_msg = UserMessage(text=user_prompt)
+    response = await chat.send_message(user_msg)
+    return response.text if hasattr(response, 'text') else str(response)
+
 @api_router.post("/ai/insights")
 async def generate_ai_insight(data: dict, user: dict = Depends(get_current_user)):
     try:
-        from emergentintegrations.llm.chat import chat, LlmModel
-        
         context = data.get("context", "")
         pillar = data.get("pillar", "default")
         brand_name = data.get("brand_name", "Marca")
@@ -1230,17 +1243,13 @@ async def generate_ai_insight(data: dict, user: dict = Depends(get_current_user)
         }
         
         system_prompt = system_prompts.get(pillar, system_prompts["default"])
+        user_prompt = f"Marca: {brand_name}\n\nContexto:\n{context}\n\nGere insights estratégicos e acionáveis:"
         
-        response = await chat(
-            api_key=os.environ.get("EMERGENT_LLM_KEY"),
-            model=LlmModel.GEMINI_2_0_FLASH,
-            system_prompt=system_prompt,
-            user_prompt=f"Marca: {brand_name}\n\nContexto:\n{context}\n\nGere insights estratégicos e acionáveis:"
-        )
+        response = await call_llm(system_prompt, user_prompt)
         
         return {"insight": response}
     except Exception as e:
-        logger.error(f"AI insight error: {str(e)}")
+        logging.error(f"AI insight error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/ai/mentor")
