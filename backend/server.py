@@ -1106,6 +1106,31 @@ async def get_executive_summary(brand_id: str, user: dict = Depends(get_current_
         "opportunities": opportunities[:3]
     }
 
+@api_router.get("/brands/{brand_id}/benchmark")
+async def get_benchmark(brand_id: str, user: dict = Depends(get_current_user)):
+    """Benchmark setorial da marca"""
+    pillars = await db.pillars.find_one({"brand_id": brand_id}, {"_id": 0})
+    valuation = await db.valuations.find_one({"brand_id": brand_id}, {"_id": 0})
+    
+    # Determinar setor
+    sector = pillars.get("start", {}).get("industry", "default") if pillars else "default"
+    
+    # Calcular métricas
+    pillar_keys = ["start", "values", "purpose", "promise", "positioning", "personality", "universality"]
+    filled = sum(1 for k in pillar_keys if pillars and pillars.get(k) and len(pillars.get(k, {})) > 0)
+    brand_strength = int((filled / len(pillar_keys)) * 100) if pillars else 0
+    rbi = valuation.get("role_of_brand", 50) if valuation else 50
+    
+    # Calcular percentil (simplificado - baseado no brand strength)
+    percentile = min(95, max(5, brand_strength + 10))
+    
+    return {
+        "sector": sector,
+        "brand_strength": brand_strength,
+        "rbi": rbi,
+        "percentile": percentile
+    }
+
 @api_router.get("/brands/{brand_id}/decisions")
 async def get_decisions(brand_id: str, user: dict = Depends(get_current_user)):
     decisions = await db.decisions.find({"brand_id": brand_id}, {"_id": 0}).to_list(500)
