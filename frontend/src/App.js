@@ -40,6 +40,8 @@ import BrandRisk from "./pages/BrandRisk";
 import CompetitorAnalysis from "./pages/CompetitorAnalysis";
 import ConsistencyAlerts from "./pages/ConsistencyAlerts";
 import GoogleIntegration from "./pages/GoogleIntegration";
+import MaturityDiagnosis from "./pages/MaturityDiagnosis";
+import AICredits from "./pages/AICredits";
 import "./App.css";
 
 // Router wrapper to handle auth callback
