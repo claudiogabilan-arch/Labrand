@@ -1509,14 +1509,12 @@ async def google_login_init(request: Request):
     """Initiate Google OAuth flow for social login"""
     from urllib.parse import urlencode
     
-    # Usar o host da requisição para determinar o redirect URI correto
-    host = request.headers.get("host", "")
-    scheme = "https" if "emergentagent.com" in host or "labrand.com" in host else "http"
-    base_url = f"{scheme}://{host}"
+    # Usar FRONTEND_URL para garantir consistência com Google Console
+    redirect_uri = f"{FRONTEND_URL}/api/auth/google/login/callback"
     
     params = {
         "client_id": GOOGLE_CLIENT_ID,
-        "redirect_uri": f"{base_url}/api/auth/google/login/callback",
+        "redirect_uri": redirect_uri,
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
@@ -1532,13 +1530,10 @@ async def google_login_callback(request: Request, code: str = None, error: str =
     """Handle Google OAuth login callback"""
     from fastapi.responses import RedirectResponse
     
-    # Usar o host da requisição
-    host = request.headers.get("host", "")
-    scheme = "https" if "emergentagent.com" in host or "labrand.com" in host else "http"
-    base_url = f"{scheme}://{host}"
+    redirect_uri = f"{FRONTEND_URL}/api/auth/google/login/callback"
     
     if error or not code:
-        return RedirectResponse(url=f"{base_url}/login?error=google_auth_failed")
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=google_auth_failed")
     
     try:
         async with httpx.AsyncClient() as client:
@@ -1549,13 +1544,13 @@ async def google_login_callback(request: Request, code: str = None, error: str =
                     "client_id": GOOGLE_CLIENT_ID,
                     "client_secret": GOOGLE_CLIENT_SECRET,
                     "grant_type": "authorization_code",
-                    "redirect_uri": f"{base_url}/api/auth/google/login/callback"
+                    "redirect_uri": redirect_uri
                 }
             )
             
             if token_resp.status_code != 200:
                 logging.error(f"Google token error: {token_resp.text}")
-                return RedirectResponse(url=f"{base_url}/login?error=token_failed")
+                return RedirectResponse(url=f"{FRONTEND_URL}/login?error=token_failed")
             
             tokens = token_resp.json()
             
@@ -1566,7 +1561,7 @@ async def google_login_callback(request: Request, code: str = None, error: str =
             )
             
             if user_resp.status_code != 200:
-                return RedirectResponse(url=f"{base_url}/login?error=userinfo_failed")
+                return RedirectResponse(url=f"{FRONTEND_URL}/login?error=userinfo_failed")
             
             google_user = user_resp.json()
         
@@ -1605,15 +1600,15 @@ async def google_login_callback(request: Request, code: str = None, error: str =
         token = create_jwt_token(user_id, email, user.get("role", "estrategista"))
         
         # Redirect to dashboard with token
-        redirect_url = f"{base_url}/dashboard?token={token}"
+        redirect_url = f"{FRONTEND_URL}/dashboard?token={token}"
         if not user.get("onboarding_completed"):
-            redirect_url = f"{base_url}/onboarding?token={token}"
+            redirect_url = f"{FRONTEND_URL}/onboarding?token={token}"
         
         return RedirectResponse(url=redirect_url)
         
     except Exception as e:
         logging.error(f"Google login error: {e}")
-        return RedirectResponse(url=f"{base_url}/login?error=server_error")
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=server_error")
 
 @api_router.get("/auth/google/init")
 async def google_auth_init(brand_id: str, user: dict = Depends(get_current_user)):
