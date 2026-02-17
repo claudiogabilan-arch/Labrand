@@ -370,6 +370,54 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/brand-risk"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <BrandRisk />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/competitors"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <CompetitorAnalysis />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/consistency"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <ConsistencyAlerts />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/google-integration"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <GoogleIntegration />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
