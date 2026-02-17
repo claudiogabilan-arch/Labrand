@@ -16,6 +16,15 @@ const CREDIT_PACKAGES = [
   { id: 'enterprise', name: 'Enterprise', credits: 2000, price: 699, popular: false, savings: '30%' },
 ];
 
+const ACTION_LABELS = {
+  suggestion: 'Sugestão de IA',
+  risk_analysis: 'Análise de Risco',
+  consistency_analysis: 'Alertas de Consistência',
+  mentor_insight: 'Mentor IA',
+  brand_way_suggestion: 'Jeito de Ser (IA)',
+  purchase: 'Compra de créditos'
+};
+
 export default function AICredits() {
   const { user, token } = useAuth();
   const [loading, setLoading] = useState(true);
