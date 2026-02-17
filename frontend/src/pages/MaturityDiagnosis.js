@@ -89,11 +89,35 @@ export default function MaturityDiagnosis() {
         setResults(response.data);
         setAnswers(response.data.answers || {});
         setShowResults(true);
+        if (response.data.recommendations) {
+          setRecommendations(response.data.recommendations);
+        }
       }
     } catch (error) {
       console.log('No previous diagnosis');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getAIRecommendations = async () => {
+    setLoadingRecommendations(true);
+    try {
+      const response = await axios.post(
+        `${API}/brands/${currentBrand.brand_id}/maturity-diagnosis/recommendations`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setRecommendations(response.data);
+      toast.success(`Recomendações geradas! (${response.data.credits_used || 1} crédito usado)`);
+    } catch (error) {
+      if (error.response?.status === 402) {
+        toast.error('Créditos insuficientes. Adquira mais créditos em Configurações > Créditos IA.');
+      } else {
+        toast.error('Erro ao gerar recomendações');
+      }
+    } finally {
+      setLoadingRecommendations(false);
     }
   };
 
