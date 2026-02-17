@@ -1410,6 +1410,312 @@ Retorne em formato JSON:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ==================== BRAND RISK MODULE ====================
+
+@api_router.get("/brands/{brand_id}/risk-analysis")
+async def get_risk_analysis(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get brand risk analysis"""
+    data = await db.brand_risk.find_one({"brand_id": brand_id}, {"_id": 0})
+    return data or {}
+
+@api_router.post("/brands/{brand_id}/risk-analysis")
+async def analyze_brand_risks(brand_id: str, user: dict = Depends(get_current_user)):
+    """Analyze brand risks using AI"""
+    try:
+        from emergentintegrations.llm.chat import LlmChat, LlmModel
+        
+        # Get brand data
+        brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
+        brand_way = await db.brand_way.find_one({"brand_id": brand_id}, {"_id": 0})
+        pillars = {}
+        for pillar in ['start', 'values', 'purpose', 'promise', 'positioning', 'personality', 'universality']:
+            data = await db[f"pillar_{pillar}"].find_one({"brand_id": brand_id}, {"_id": 0})
+            if data:
+                pillars[pillar] = data
+        
+        context = f"""
+        Marca: {brand.get('name', 'N/A') if brand else 'N/A'}
+        Indústria: {brand.get('industry', 'N/A') if brand else 'N/A'}
+        Jeito de Ser: {json.dumps(brand_way, ensure_ascii=False) if brand_way else 'Não definido'}
+        Pilares: {json.dumps(pillars, ensure_ascii=False)}
+        """
+        
+        llm = LlmChat(
+            api_key=os.environ.get("EMERGENT_LLM_KEY"),
+            model=LlmModel.GEMINI_2_0_FLASH
+        )
+        llm.add_system_message("Você é um analista de risco de marca especializado. Analise os dados e retorne APENAS JSON válido.")
+        
+        prompt = f"""Analise os riscos da marca com base nos dados fornecidos:
+        {context}
+        
+        Retorne um JSON com a seguinte estrutura:
+        {{
+            "risks": {{
+                "reputacional": {{"score": 0-100, "factors": ["fator1", "fator2", "fator3"]}},
+                "competitivo": {{"score": 0-100, "factors": ["fator1", "fator2", "fator3"]}},
+                "operacional": {{"score": 0-100, "factors": ["fator1", "fator2", "fator3"]}},
+                "legal": {{"score": 0-100, "factors": ["fator1", "fator2", "fator3"]}},
+                "cultural": {{"score": 0-100, "factors": ["fator1", "fator2", "fator3"]}}
+            }},
+            "recommendations": ["recomendação1", "recomendação2", "recomendação3", "recomendação4", "recomendação5"]
+        }}
+        
+        Score: 0=sem risco, 100=risco máximo. Seja realista baseado nos dados disponíveis."""
+        
+        response = await llm.chat_async(prompt)
+        
+        # Parse response
+        clean_response = response.strip()
+        if clean_response.startswith("```"):
+            clean_response = clean_response.split("```")[1]
+            if clean_response.startswith("json"):
+                clean_response = clean_response[4:]
+        clean_response = clean_response.strip()
+        
+        risk_data = json.loads(clean_response)
+        risk_data["brand_id"] = brand_id
+        risk_data["analyzed_at"] = datetime.now(timezone.utc).isoformat()
+        
+        # Save to DB
+        await db.brand_risk.update_one(
+            {"brand_id": brand_id},
+            {"$set": risk_data},
+            upsert=True
+        )
+        
+        return risk_data
+    except Exception as e:
+        logging.error(f"Risk analysis error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== COMPETITOR ANALYSIS ====================
+
+@api_router.get("/brands/{brand_id}/competitors")
+async def get_competitors(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get competitor analysis data"""
+    data = await db.competitors.find_one({"brand_id": brand_id}, {"_id": 0})
+    return data or {"competitors": [], "my_brand_scores": {}}
+
+@api_router.put("/brands/{brand_id}/competitors")
+async def update_competitors(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
+    """Update competitor analysis data"""
+    data["brand_id"] = brand_id
+    data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.competitors.update_one(
+        {"brand_id": brand_id},
+        {"$set": data},
+        upsert=True
+    )
+    
+    result = await db.competitors.find_one({"brand_id": brand_id}, {"_id": 0})
+    return result
+
+# ==================== CONSISTENCY ALERTS ====================
+
+@api_router.get("/brands/{brand_id}/consistency-alerts")
+async def get_consistency_alerts(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get consistency alerts"""
+    data = await db.consistency_alerts.find_one({"brand_id": brand_id}, {"_id": 0})
+    return data or {}
+
+@api_router.post("/brands/{brand_id}/consistency-alerts")
+async def analyze_consistency(brand_id: str, user: dict = Depends(get_current_user)):
+    """Analyze brand consistency using AI"""
+    try:
+        from emergentintegrations.llm.chat import LlmChat, LlmModel
+        
+        # Get all brand data
+        brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
+        brand_way = await db.brand_way.find_one({"brand_id": brand_id}, {"_id": 0})
+        
+        pillars = {}
+        for pillar in ['start', 'values', 'purpose', 'promise', 'positioning', 'personality', 'universality']:
+            data = await db[f"pillar_{pillar}"].find_one({"brand_id": brand_id}, {"_id": 0})
+            if data:
+                pillars[pillar] = data
+        
+        context = f"""
+        Marca: {brand.get('name', 'N/A') if brand else 'N/A'}
+        Jeito de Ser: {json.dumps(brand_way, ensure_ascii=False) if brand_way else 'Não definido'}
+        Pilares: {json.dumps(pillars, ensure_ascii=False)}
+        """
+        
+        llm = LlmChat(
+            api_key=os.environ.get("EMERGENT_LLM_KEY"),
+            model=LlmModel.GEMINI_2_0_FLASH
+        )
+        llm.add_system_message("Você é um especialista em consistência de marca. Analise os dados e identifique inconsistências entre os pilares. Retorne APENAS JSON válido.")
+        
+        prompt = f"""Analise a consistência entre os pilares da marca:
+        {context}
+        
+        Identifique:
+        1. Inconsistências graves (type: "error") - contradições diretas entre pilares
+        2. Alertas de atenção (type: "warning") - desalinhamentos menores
+        3. Pontos consistentes (type: "success") - onde a marca está alinhada
+        4. Sugestões de melhoria (type: "info") - oportunidades de fortalecimento
+        
+        Retorne JSON:
+        {{
+            "alerts": [
+                {{
+                    "type": "error|warning|success|info",
+                    "title": "Título do alerta",
+                    "description": "Descrição detalhada",
+                    "suggestion": "Sugestão de correção (opcional)",
+                    "pillars": ["pilar1", "pilar2"] (pilares envolvidos, opcional)
+                }}
+            ]
+        }}
+        
+        Seja específico e construtivo. Mínimo 5 alertas, máximo 12."""
+        
+        response = await llm.chat_async(prompt)
+        
+        # Parse response
+        clean_response = response.strip()
+        if clean_response.startswith("```"):
+            clean_response = clean_response.split("```")[1]
+            if clean_response.startswith("json"):
+                clean_response = clean_response[4:]
+        clean_response = clean_response.strip()
+        
+        alerts_data = json.loads(clean_response)
+        alerts_data["brand_id"] = brand_id
+        alerts_data["analyzed_at"] = datetime.now(timezone.utc).isoformat()
+        
+        # Save to DB
+        await db.consistency_alerts.update_one(
+            {"brand_id": brand_id},
+            {"$set": alerts_data},
+            upsert=True
+        )
+        
+        return alerts_data
+    except Exception as e:
+        logging.error(f"Consistency analysis error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== GOOGLE INTEGRATION ====================
+
+@api_router.get("/brands/{brand_id}/google-integration")
+async def get_google_integration(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get Google integration data"""
+    data = await db.google_integration.find_one({"brand_id": brand_id}, {"_id": 0})
+    if not data:
+        return {
+            "connection_status": {"analytics": False, "searchConsole": False},
+            "analytics": None,
+            "search_console": None,
+            "property_id": "",
+            "site_url": ""
+        }
+    return data
+
+@api_router.post("/brands/{brand_id}/google-integration/connect")
+async def connect_google_service(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
+    """Connect Google Analytics or Search Console"""
+    service = data.get("service")
+    property_id = data.get("property_id", "")
+    site_url = data.get("site_url", "")
+    
+    # In a real implementation, this would initiate OAuth flow
+    # For now, we'll simulate a successful connection with mock data
+    
+    integration_data = await db.google_integration.find_one({"brand_id": brand_id}) or {}
+    connection_status = integration_data.get("connection_status", {"analytics": False, "searchConsole": False})
+    
+    if service == "analytics":
+        connection_status["analytics"] = True
+        # Mock analytics data
+        analytics_data = {
+            "users": 12450,
+            "users_change": 15.3,
+            "pageviews": 45230,
+            "pageviews_change": 8.7,
+            "bounce_rate": 42.5,
+            "avg_session_duration": "2:34",
+            "top_pages": [
+                {"path": "/", "views": 15000},
+                {"path": "/produtos", "views": 8500},
+                {"path": "/sobre", "views": 5200},
+                {"path": "/contato", "views": 3100},
+                {"path": "/blog", "views": 2800}
+            ]
+        }
+        update_data = {
+            "brand_id": brand_id,
+            "connection_status": connection_status,
+            "property_id": property_id,
+            "analytics": analytics_data,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+    else:
+        connection_status["searchConsole"] = True
+        # Mock search console data
+        search_data = {
+            "clicks": 8750,
+            "impressions": 125000,
+            "ctr": 7.0,
+            "position": 12.4,
+            "top_queries": [
+                {"query": "sua marca", "clicks": 1200, "position": 3.2},
+                {"query": "produtos categoria", "clicks": 890, "position": 5.1},
+                {"query": "serviços empresa", "clicks": 650, "position": 8.4},
+                {"query": "marca cidade", "clicks": 420, "position": 4.7},
+                {"query": "comprar produto", "clicks": 380, "position": 11.2}
+            ]
+        }
+        update_data = {
+            "brand_id": brand_id,
+            "connection_status": connection_status,
+            "site_url": site_url,
+            "search_console": search_data,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+    
+    await db.google_integration.update_one(
+        {"brand_id": brand_id},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    result = await db.google_integration.find_one({"brand_id": brand_id}, {"_id": 0})
+    return result
+
+@api_router.post("/brands/{brand_id}/google-integration/disconnect")
+async def disconnect_google_service(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
+    """Disconnect Google service"""
+    service = data.get("service")
+    
+    integration_data = await db.google_integration.find_one({"brand_id": brand_id})
+    if integration_data:
+        connection_status = integration_data.get("connection_status", {})
+        if service == "analytics":
+            connection_status["analytics"] = False
+            await db.google_integration.update_one(
+                {"brand_id": brand_id},
+                {"$set": {"connection_status": connection_status, "analytics": None}}
+            )
+        else:
+            connection_status["searchConsole"] = False
+            await db.google_integration.update_one(
+                {"brand_id": brand_id},
+                {"$set": {"connection_status": connection_status, "search_console": None}}
+            )
+    
+    return {"message": "Disconnected successfully"}
+
+@api_router.post("/brands/{brand_id}/google-integration/refresh")
+async def refresh_google_data(brand_id: str, user: dict = Depends(get_current_user)):
+    """Refresh Google data (mock - would call real APIs)"""
+    # In real implementation, this would fetch fresh data from Google APIs
+    return {"message": "Data refreshed"}
+
+
+
 
 # ==================== DASHBOARD METRICS ====================
 
