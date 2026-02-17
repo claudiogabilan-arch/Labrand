@@ -3171,6 +3171,81 @@ async def get_subscription_status(user: dict = Depends(get_current_user)):
 
 # ==================== MATURITY DIAGNOSIS ====================
 
+# Maturity Dimensions Definition
+MATURITY_DIMENSIONS = {
+    "estrategia": {
+        "name": "Estratégia de Marca",
+        "description": "Clareza e documentação da estratégia de marca",
+        "questions": [
+            {"id": "e1", "text": "A marca possui um propósito claro e documentado?", "weight": 2},
+            {"id": "e2", "text": "Existe um posicionamento de marca definido?", "weight": 2},
+            {"id": "e3", "text": "Os valores da marca estão formalizados?", "weight": 1.5},
+            {"id": "e4", "text": "A promessa de marca está articulada?", "weight": 1.5},
+            {"id": "e5", "text": "Existe um plano estratégico de marca para os próximos 3 anos?", "weight": 1}
+        ]
+    },
+    "identidade": {
+        "name": "Identidade Visual",
+        "description": "Consistência e qualidade dos elementos visuais",
+        "questions": [
+            {"id": "i1", "text": "A marca possui um manual de identidade visual atualizado?", "weight": 2},
+            {"id": "i2", "text": "O logotipo é utilizado de forma consistente em todos os pontos de contato?", "weight": 2},
+            {"id": "i3", "text": "A paleta de cores é respeitada em todas as comunicações?", "weight": 1.5},
+            {"id": "i4", "text": "A tipografia segue padrões definidos?", "weight": 1},
+            {"id": "i5", "text": "Existe um banco de imagens e assets padronizado?", "weight": 1}
+        ]
+    },
+    "comunicacao": {
+        "name": "Comunicação",
+        "description": "Tom de voz e mensagens-chave",
+        "questions": [
+            {"id": "c1", "text": "A marca possui um tom de voz definido e documentado?", "weight": 2},
+            {"id": "c2", "text": "As mensagens-chave são consistentes em todos os canais?", "weight": 2},
+            {"id": "c3", "text": "Existe um guia de redação/conteúdo para a marca?", "weight": 1.5},
+            {"id": "c4", "text": "A comunicação é adaptada para diferentes públicos mantendo a essência?", "weight": 1.5},
+            {"id": "c5", "text": "Há um calendário editorial alinhado à estratégia de marca?", "weight": 1}
+        ]
+    },
+    "experiencia": {
+        "name": "Experiência do Cliente",
+        "description": "Consistência nos pontos de contato",
+        "questions": [
+            {"id": "x1", "text": "Todos os pontos de contato estão mapeados?", "weight": 1.5},
+            {"id": "x2", "text": "A experiência é consistente em todos os canais (on/offline)?", "weight": 2},
+            {"id": "x3", "text": "Existe um padrão de atendimento alinhado à marca?", "weight": 2},
+            {"id": "x4", "text": "O packaging/embalagem reflete a identidade da marca?", "weight": 1},
+            {"id": "x5", "text": "Os ambientes físicos expressam a marca?", "weight": 1}
+        ]
+    },
+    "cultura": {
+        "name": "Cultura Interna",
+        "description": "Engajamento dos colaboradores com a marca",
+        "questions": [
+            {"id": "u1", "text": "Os colaboradores conhecem e entendem a marca?", "weight": 2},
+            {"id": "u2", "text": "Existe um programa de employer branding estruturado?", "weight": 1.5},
+            {"id": "u3", "text": "Os valores da marca são vivenciados internamente?", "weight": 2},
+            {"id": "u4", "text": "Há treinamentos regulares sobre a marca?", "weight": 1},
+            {"id": "u5", "text": "Os líderes são embaixadores da marca?", "weight": 1.5}
+        ]
+    },
+    "metricas": {
+        "name": "Métricas e Governança",
+        "description": "Monitoramento e gestão da marca",
+        "questions": [
+            {"id": "m1", "text": "Existe um comitê/responsável pela gestão da marca?", "weight": 2},
+            {"id": "m2", "text": "A marca é medida regularmente (awareness, NPS, etc.)?", "weight": 2},
+            {"id": "m3", "text": "Há KPIs de marca definidos e acompanhados?", "weight": 1.5},
+            {"id": "m4", "text": "O valor da marca é calculado periodicamente?", "weight": 1},
+            {"id": "m5", "text": "Existe um processo de aprovação para uso da marca?", "weight": 1.5}
+        ]
+    }
+}
+
+@api_router.get("/maturity/dimensions")
+async def get_maturity_dimensions(user: dict = Depends(get_current_user)):
+    """Get all maturity dimensions and questions"""
+    return {"dimensions": MATURITY_DIMENSIONS}
+
 @api_router.get("/brands/{brand_id}/maturity-diagnosis")
 async def get_maturity_diagnosis(brand_id: str, user: dict = Depends(get_current_user)):
     """Get maturity diagnosis results"""
@@ -3195,6 +3270,91 @@ async def save_maturity_diagnosis(brand_id: str, data: dict, user: dict = Depend
     )
     
     return diagnosis_data
+
+@api_router.post("/brands/{brand_id}/maturity-diagnosis/recommendations")
+async def get_maturity_recommendations(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get AI-powered recommendations based on maturity diagnosis"""
+    try:
+        # Check and deduct AI credits
+        success, result = await deduct_ai_credits(user["user_id"], "suggestion")
+        if not success:
+            raise HTTPException(status_code=402, detail=result)
+        
+        # Get diagnosis data
+        diagnosis = await db.maturity_diagnosis.find_one({"brand_id": brand_id}, {"_id": 0})
+        if not diagnosis:
+            raise HTTPException(status_code=400, detail="Complete o diagnóstico primeiro")
+        
+        brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
+        
+        # Get results from diagnosis
+        results = diagnosis.get("results", {})
+        dimension_scores = results.get("dimension_scores", {})
+        overall_score = results.get("overall_score", 0)
+        maturity_level = results.get("maturity_level", {})
+        
+        context = f"""
+        Marca: {brand.get('name', 'N/A') if brand else 'N/A'}
+        Score Geral de Maturidade: {overall_score}%
+        Nível de Maturidade: {maturity_level.get('level', 'N/A')}
+        
+        Scores por Dimensão:
+        {chr(10).join([f"- {k}: {v}%" for k, v in dimension_scores.items()])}
+        """
+        
+        system_prompt = """Você é um consultor de branding experiente. Analise o diagnóstico de maturidade e forneça recomendações práticas.
+
+Retorne um JSON com:
+{
+    "summary": "Resumo executivo do diagnóstico (2-3 linhas)",
+    "priority_actions": [
+        {"action": "Ação prioritária 1", "dimension": "dimensão", "impact": "alto/médio/baixo", "effort": "alto/médio/baixo"},
+        {"action": "Ação prioritária 2", "dimension": "dimensão", "impact": "alto/médio/baixo", "effort": "alto/médio/baixo"},
+        {"action": "Ação prioritária 3", "dimension": "dimensão", "impact": "alto/médio/baixo", "effort": "alto/médio/baixo"}
+    ],
+    "quick_wins": ["Quick win 1", "Quick win 2", "Quick win 3"],
+    "roadmap": {
+        "30_days": ["Ação para 30 dias"],
+        "90_days": ["Ação para 90 dias"],
+        "180_days": ["Ação para 180 dias"]
+    },
+    "strengths_to_leverage": ["Ponto forte 1 para alavancar", "Ponto forte 2 para alavancar"]
+}
+
+Seja específico e prático. Use português do Brasil."""
+
+        prompt = f"""Analise o diagnóstico de maturidade da marca e gere recomendações:
+        {context}
+        
+        Retorne apenas o JSON válido."""
+        
+        response = await call_llm(system_prompt, prompt)
+        
+        # Parse response
+        clean_response = response.strip()
+        if clean_response.startswith("```"):
+            clean_response = clean_response.split("```")[1]
+            if clean_response.startswith("json"):
+                clean_response = clean_response[4:]
+        clean_response = clean_response.strip()
+        
+        recommendations = json.loads(clean_response)
+        recommendations["credits_used"] = result
+        recommendations["generated_at"] = datetime.now(timezone.utc).isoformat()
+        
+        # Save recommendations
+        await db.maturity_diagnosis.update_one(
+            {"brand_id": brand_id},
+            {"$set": {"recommendations": recommendations}}
+        )
+        
+        return recommendations
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Maturity recommendations error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ==================== AI CREDITS SYSTEM ====================
 
