@@ -3024,6 +3024,169 @@ async def get_subscription_status(user: dict = Depends(get_current_user)):
         "trial_ends_at": user_data.get("trial_ends_at")
     }
 
+# ==================== MATURITY DIAGNOSIS ====================
+
+@api_router.get("/brands/{brand_id}/maturity-diagnosis")
+async def get_maturity_diagnosis(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get maturity diagnosis results"""
+    data = await db.maturity_diagnosis.find_one({"brand_id": brand_id}, {"_id": 0})
+    return data or {}
+
+@api_router.post("/brands/{brand_id}/maturity-diagnosis")
+async def save_maturity_diagnosis(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
+    """Save maturity diagnosis results"""
+    diagnosis_data = {
+        "brand_id": brand_id,
+        "user_id": user["user_id"],
+        "answers": data.get("answers", {}),
+        "results": data.get("results", {}),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.maturity_diagnosis.update_one(
+        {"brand_id": brand_id},
+        {"$set": diagnosis_data},
+        upsert=True
+    )
+    
+    return diagnosis_data
+
+# ==================== AI CREDITS SYSTEM ====================
+
+AI_CREDIT_COSTS = {
+    "suggestion": 1,
+    "risk_analysis": 5,
+    "consistency_analysis": 5,
+    "mentor_insight": 3,
+    "brand_way_suggestion": 2
+}
+
+CREDIT_PACKAGES = {
+    "starter": {"credits": 100, "price": 49.00},
+    "pro": {"credits": 500, "price": 199.00},
+    "enterprise": {"credits": 2000, "price": 699.00}
+}
+
+@api_router.get("/ai-credits/balance")
+async def get_ai_credits_balance(user: dict = Depends(get_current_user)):
+    """Get user's AI credits balance"""
+    credits_data = await db.ai_credits.find_one({"user_id": user["user_id"]})
+    
+    if not credits_data:
+        # Initialize with 50 free credits for new users
+        credits_data = {
+            "user_id": user["user_id"],
+            "total_credits": 50,
+            "used_credits": 0,
+            "available_credits": 50,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.ai_credits.insert_one(credits_data)
+    
+    return {
+        "total_credits": credits_data.get("total_credits", 0),
+        "used_credits": credits_data.get("used_credits", 0),
+        "available_credits": credits_data.get("available_credits", 0)
+    }
+
+@api_router.get("/ai-credits/history")
+async def get_ai_credits_history(user: dict = Depends(get_current_user)):
+    """Get AI credits usage history"""
+    history = await db.ai_credits_history.find(
+        {"user_id": user["user_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    return {"history": history}
+
+@api_router.post("/ai-credits/purchase")
+async def purchase_ai_credits(request: Request, data: dict, user: dict = Depends(get_current_user)):
+    """Purchase AI credits via Stripe"""
+    package_id = data.get("package_id")
+    origin_url = data.get("origin_url", os.environ.get("FRONTEND_URL"))
+    
+    if package_id not in CREDIT_PACKAGES:
+        raise HTTPException(status_code=400, detail="Pacote inválido")
+    
+    package = CREDIT_PACKAGES[package_id]
+    
+    try:
+        stripe_api_key = os.environ.get("STRIPE_API_KEY")
+        host_url = str(request.base_url).rstrip('/')
+        webhook_url = f"{host_url}/api/webhook/stripe"
+        
+        stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
+        
+        success_url = f"{origin_url}/ai-credits?session_id={{CHECKOUT_SESSION_ID}}&success=true"
+        cancel_url = f"{origin_url}/ai-credits?canceled=true"
+        
+        checkout_request = CheckoutSessionRequest(
+            amount=package["price"],
+            currency="brl",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                "user_id": user["user_id"],
+                "type": "ai_credits",
+                "package_id": package_id,
+                "credits": str(package["credits"])
+            }
+        )
+        
+        session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(checkout_request)
+        
+        return {"checkout_url": session.url, "session_id": session.session_id}
+        
+    except Exception as e:
+        logging.error(f"AI credits purchase error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def deduct_ai_credits(user_id: str, action: str, amount: int = None):
+    """Deduct AI credits for an action"""
+    cost = amount or AI_CREDIT_COSTS.get(action, 1)
+    
+    credits_data = await db.ai_credits.find_one({"user_id": user_id})
+    if not credits_data or credits_data.get("available_credits", 0) < cost:
+        return False, "Créditos insuficientes"
+    
+    # Deduct credits
+    await db.ai_credits.update_one(
+        {"user_id": user_id},
+        {
+            "$inc": {"used_credits": cost, "available_credits": -cost},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+        }
+    )
+    
+    # Record history
+    await db.ai_credits_history.insert_one({
+        "user_id": user_id,
+        "action": action,
+        "credits": -cost,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return True, cost
+
+async def add_ai_credits(user_id: str, credits: int, reason: str):
+    """Add AI credits to user account"""
+    await db.ai_credits.update_one(
+        {"user_id": user_id},
+        {
+            "$inc": {"total_credits": credits, "available_credits": credits},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+        },
+        upsert=True
+    )
+    
+    # Record history
+    await db.ai_credits_history.insert_one({
+        "user_id": user_id,
+        "action": reason,
+        "credits": credits,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+
 # Include the router in the main app
 app.include_router(api_router)
 
