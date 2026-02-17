@@ -1297,6 +1297,122 @@ Seja específico, prático e cite exemplos quando possível. Responda em portugu
         logger.error(f"Mentor error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ==================== BRAND WAY (JEITO DE SER) ====================
+
+@api_router.get("/brands/{brand_id}/brand-way")
+async def get_brand_way(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get brand way/identity data"""
+    data = await db.brand_way.find_one({"brand_id": brand_id}, {"_id": 0})
+    return data or {}
+
+@api_router.put("/brands/{brand_id}/brand-way")
+async def update_brand_way(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
+    """Update brand way/identity data"""
+    data["brand_id"] = brand_id
+    data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    existing = await db.brand_way.find_one({"brand_id": brand_id})
+    if existing:
+        await db.brand_way.update_one({"brand_id": brand_id}, {"$set": data})
+    else:
+        await db.brand_way.insert_one(data)
+    
+    result = await db.brand_way.find_one({"brand_id": brand_id}, {"_id": 0})
+    return result
+
+@api_router.post("/ai/brand-way")
+async def generate_brand_way_suggestions(data: dict, user: dict = Depends(get_current_user)):
+    """Generate AI suggestions for brand way dimensions"""
+    try:
+        from emergentintegrations.llm.chat import chat, LlmModel
+        
+        dimension = data.get("dimension", "proposito")
+        brand_name = data.get("brand_name", "Marca")
+        industry = data.get("industry", "")
+        current_data = data.get("current_data", {})
+        
+        prompts = {
+            "proposito": f"""Analise a marca "{brand_name}" do setor "{industry}" e sugira:
+1. Uma declaração de propósito inspiradora (por que a empresa existe além do lucro)
+2. O impacto que a marca gera no mundo
+3. 3 evidências de como o propósito se manifesta
+
+Retorne em formato JSON:
+{{"declaracao": "...", "impacto": "...", "evidencias": ["...", "...", "..."]}}""",
+
+            "valores": f"""Para a marca "{brand_name}" do setor "{industry}", sugira:
+5 valores de marca autênticos e diferenciadores, com descrições práticas.
+
+Retorne em formato JSON:
+{{"lista": ["Valor1", "Valor2", ...], "descricoes": {{"Valor1": "descrição...", ...}}}}""",
+
+            "personalidade": f"""Se a marca "{brand_name}" fosse uma pessoa, como seria?
+Sugira:
+1. Arquétipo principal (de Jung)
+2. Arquétipo secundário
+3. 5 atributos de personalidade
+
+Retorne em formato JSON:
+{{"arquetipo_principal": "...", "arquetipo_secundario": "...", "atributos": ["...", ...]}}""",
+
+            "tom_voz": f"""Defina o tom de voz para a marca "{brand_name}" do setor "{industry}":
+1. Estilo de comunicação (descrição)
+2. 3 exemplos do que a marca FAZ na comunicação
+3. 3 exemplos do que a marca NÃO faz
+
+Retorne em formato JSON:
+{{"estilo": "...", "exemplos_fazer": ["...", ...], "exemplos_evitar": ["...", ...]}}""",
+
+            "comportamentos": f"""Defina comportamentos para a marca "{brand_name}":
+1. 3 comportamentos internos (com colaboradores)
+2. 3 comportamentos externos (com clientes)
+3. 2 rituais da marca
+
+Retorne em formato JSON:
+{{"internos": ["...", ...], "externos": ["...", ...], "rituais": ["...", ...]}}""",
+
+            "promessa": f"""Defina a promessa de marca para "{brand_name}" do setor "{industry}":
+1. Declaração de promessa central
+2. Entrega funcional (o que o cliente recebe)
+3. Entrega emocional (como se sente)
+4. Entrega aspiracional (o que pode se tornar)
+
+Retorne em formato JSON:
+{{"declaracao": "...", "funcional": "...", "emocional": "...", "aspiracional": "..."}}"""
+        }
+        
+        prompt = prompts.get(dimension, prompts["proposito"])
+        
+        response = await chat(
+            api_key=os.environ.get("EMERGENT_LLM_KEY"),
+            model=LlmModel.GEMINI_2_0_FLASH,
+            system_prompt="Você é um especialista em branding e estratégia de marca. Responda APENAS em JSON válido, sem markdown ou explicações adicionais. Use português do Brasil.",
+            user_prompt=prompt
+        )
+        
+        # Parse JSON response
+        import json
+        try:
+            # Clean response - remove markdown code blocks if present
+            clean_response = response.strip()
+            if clean_response.startswith("```"):
+                clean_response = clean_response.split("```")[1]
+                if clean_response.startswith("json"):
+                    clean_response = clean_response[4:]
+            clean_response = clean_response.strip()
+            
+            suggestions = json.loads(clean_response)
+        except json.JSONDecodeError:
+            # If JSON parsing fails, return as text
+            suggestions = {"raw": response}
+        
+        return {"suggestions": suggestions}
+    except Exception as e:
+        logging.error(f"Brand way AI error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
 # ==================== DASHBOARD METRICS ====================
 
 @api_router.get("/brands/{brand_id}/metrics")
