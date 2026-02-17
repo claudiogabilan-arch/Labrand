@@ -3278,33 +3278,6 @@ async def purchase_ai_credits(request: Request, data: dict, user: dict = Depends
         logging.error(f"AI credits purchase error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-async def deduct_ai_credits(user_id: str, action: str, amount: int = None):
-    """Deduct AI credits for an action"""
-    cost = amount or AI_CREDIT_COSTS.get(action, 1)
-    
-    credits_data = await db.ai_credits.find_one({"user_id": user_id})
-    if not credits_data or credits_data.get("available_credits", 0) < cost:
-        return False, "Créditos insuficientes"
-    
-    # Deduct credits
-    await db.ai_credits.update_one(
-        {"user_id": user_id},
-        {
-            "$inc": {"used_credits": cost, "available_credits": -cost},
-            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
-        }
-    )
-    
-    # Record history
-    await db.ai_credits_history.insert_one({
-        "user_id": user_id,
-        "action": action,
-        "credits": -cost,
-        "created_at": datetime.now(timezone.utc).isoformat()
-    })
-    
-    return True, cost
-
 async def add_ai_credits(user_id: str, credits: int, reason: str):
     """Add AI credits to user account"""
     await db.ai_credits.update_one(
