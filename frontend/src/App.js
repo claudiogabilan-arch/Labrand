@@ -27,6 +27,8 @@ import Valuation from "./pages/Valuation";
 import Onboarding from "./pages/Onboarding";
 import VerifyEmail from "./pages/VerifyEmail";
 import ExecutiveDashboard from "./pages/ExecutiveDashboard";
+import Benchmark from "./pages/Benchmark";
+import Simulator from "./pages/Simulator";
 import Audience from "./pages/Audience";
 import Campaigns from "./pages/Campaigns";
 import Plans from "./pages/Plans";
