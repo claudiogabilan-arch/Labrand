@@ -1328,8 +1328,6 @@ async def update_brand_way(brand_id: str, data: dict, user: dict = Depends(get_c
 async def generate_brand_way_suggestions(data: dict, user: dict = Depends(get_current_user)):
     """Generate AI suggestions for brand way dimensions"""
     try:
-        from emergentintegrations.llm.chat import chat, LlmModel
-        
         dimension = data.get("dimension", "proposito")
         brand_name = data.get("brand_name", "Marca")
         industry = data.get("industry", "")
@@ -1386,13 +1384,9 @@ Retorne em formato JSON:
         }
         
         prompt = prompts.get(dimension, prompts["proposito"])
+        system_prompt = "Você é um especialista em branding e estratégia de marca. Responda APENAS em JSON válido, sem markdown ou explicações adicionais. Use português do Brasil."
         
-        response = await chat(
-            api_key=os.environ.get("EMERGENT_LLM_KEY"),
-            model=LlmModel.GEMINI_2_0_FLASH,
-            system_prompt="Você é um especialista em branding e estratégia de marca. Responda APENAS em JSON válido, sem markdown ou explicações adicionais. Use português do Brasil.",
-            user_prompt=prompt
-        )
+        response = await call_llm(system_prompt, prompt)
         
         # Parse JSON response
         import json
