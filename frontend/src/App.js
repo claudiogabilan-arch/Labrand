@@ -44,6 +44,7 @@ import ConsistencyAlerts from "./pages/ConsistencyAlerts";
 import GoogleIntegration from "./pages/GoogleIntegration";
 import MaturityDiagnosis from "./pages/MaturityDiagnosis";
 import AICredits from "./pages/AICredits";
+import AdminDashboard from "./pages/AdminDashboard";
 import "./App.css";
 
 // Router wrapper to handle auth callback
