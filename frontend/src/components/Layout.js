@@ -45,7 +45,8 @@ import {
   Briefcase,
   AlertTriangle,
   Eye,
-  Crown
+  Crown,
+  Shield
 } from 'lucide-react';
 
 const navigationItems = [
