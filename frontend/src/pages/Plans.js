@@ -10,50 +10,32 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const PLANS_DATA = [
   {
-    id: 'free',
-    name: 'Grátis',
-    price: 0,
+    id: 'essencial',
+    name: 'Essencial',
+    price: 997,
     icon: Building2,
     color: 'border-gray-300',
-    features: ['1 marca', '7 pilares básicos', 'Dashboard', '5 requisições IA/mês'],
-    notIncluded: ['Exportação PDF', 'Integração Google', 'Benchmark']
+    features: ['1 marca', 'Todos os pilares', 'Brand Strength Score', 'Valuation básico', 'Relatório PDF'],
+    cta: 'Começar'
   },
   {
-    id: 'founder',
-    name: 'Founder',
-    price: 59.90,
-    icon: Rocket,
-    color: 'border-green-500',
-    features: ['1 marca', 'Todos os pilares', 'Valuation básico', '20 requisições IA/mês'],
-    notIncluded: ['Múltiplas marcas', 'Benchmark setorial']
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: 97,
+    id: 'executivo',
+    name: 'Executivo',
+    price: 1997,
     icon: Zap,
-    color: 'border-blue-500 ring-2 ring-blue-100',
+    color: 'border-blue-500 ring-2 ring-blue-200',
     popular: true,
-    features: ['Até 3 marcas', 'Todos os pilares', 'Exportação PDF', 'Integração Google', '50 requisições IA/mês'],
-    notIncluded: ['Benchmark setorial', 'Dashboard executivo']
-  },
-  {
-    id: 'consultor',
-    name: 'Consultor',
-    price: 197,
-    icon: Briefcase,
-    color: 'border-purple-500',
-    features: ['Até 5 marcas', 'Valuation completo', 'Benchmark setorial', 'Exportação PDF avançada', '100 requisições IA/mês'],
-    notIncluded: ['API access', 'White label']
+    features: ['Até 5 marcas', 'Dashboard Executivo', 'Benchmark Setorial', 'Simulador Estratégico', 'Módulo de Risco', 'Suporte prioritário'],
+    cta: 'Mais Popular'
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
-    price: 497,
+    price: null,
     icon: Crown,
     color: 'border-amber-500',
-    features: ['Marcas ilimitadas', 'Dashboard executivo', 'API access', 'White label', 'Suporte prioritário', 'IA ilimitada'],
-    notIncluded: []
+    features: ['Marcas ilimitadas', 'API access', 'White label', 'Onboarding dedicado', 'SLA garantido', 'Integrações customizadas'],
+    cta: 'Falar com Consultor'
   }
 ];
 
