@@ -2797,12 +2797,13 @@ async def get_opportunities(user: dict = Depends(get_current_user)):
 
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 
-# Plan definitions (prices in BRL)
+# Plan definitions with Stripe Price IDs
 SUBSCRIPTION_PLANS = {
     "essencial": {
         "name": "Essencial",
         "price": 997.00,
         "currency": "brl",
+        "stripe_price_id": "price_1T1hUG5XQ1KrllP27JJftGwi",
         "features": ["1 marca", "Todos os pilares", "Brand Strength Score", "Valuation básico", "Relatório PDF"],
         "trial_days": 15
     },
@@ -2810,13 +2811,15 @@ SUBSCRIPTION_PLANS = {
         "name": "Executivo", 
         "price": 1997.00,
         "currency": "brl",
+        "stripe_price_id": "price_1T1hWU5XQ1KrllP2yLGkblqv",
         "features": ["Até 5 marcas", "Dashboard Executivo", "Benchmark Setorial", "Simulador Estratégico", "Módulo de Risco", "Suporte prioritário"],
         "trial_days": 15
     },
     "enterprise": {
         "name": "Enterprise",
-        "price": None,  # Custom pricing
+        "price": None,
         "currency": "brl",
+        "stripe_price_id": None,
         "features": ["Marcas ilimitadas", "API access", "White label", "Onboarding dedicado", "SLA garantido"],
         "trial_days": 0
     }
