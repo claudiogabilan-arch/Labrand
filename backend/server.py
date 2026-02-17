@@ -42,6 +42,51 @@ api_router = APIRouter(prefix="/api")
 async def health_check():
     return {"status": "healthy", "service": "labrand-api"}
 
+# ==================== SETUP ADMIN (TEMPORÁRIO - REMOVER APÓS USAR) ====================
+@api_router.post("/setup/create-admin")
+async def setup_create_admin(data: dict):
+    """
+    ENDPOINT TEMPORÁRIO - Criar usuário admin master
+    Acesse UMA vez e depois remova este código!
+    """
+    secret_key = data.get("secret_key")
+    
+    # Chave secreta para proteger o endpoint
+    if secret_key != "LABRAND_SETUP_2024_SEGURO":
+        raise HTTPException(status_code=403, detail="Chave secreta inválida")
+    
+    # Verificar se admin já existe
+    existing = await db.users.find_one({"email": "admin@labrand.com"})
+    if existing:
+        return {"message": "Admin já existe! Faça login com admin@labrand.com", "exists": True}
+    
+    # Criar admin
+    from passlib.context import CryptContext
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    
+    admin_doc = {
+        "user_id": "user_admin_master",
+        "email": "admin@labrand.com",
+        "password": pwd_context.hash("LaBrand@2024!"),
+        "name": "Administrador",
+        "role": "admin",
+        "is_admin": True,
+        "user_type": "admin",
+        "plan": "enterprise",
+        "email_verified": True,
+        "onboarding_completed": True,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.users.insert_one(admin_doc)
+    
+    return {
+        "message": "Admin criado com sucesso!",
+        "email": "admin@labrand.com",
+        "password": "LaBrand@2024!",
+        "IMPORTANTE": "REMOVA ESTE ENDPOINT DO CÓDIGO APÓS USAR!"
+    }
+
 # ==================== MODELS ====================
 
 class UserBase(BaseModel):
