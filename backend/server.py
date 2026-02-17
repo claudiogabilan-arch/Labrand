@@ -1220,7 +1220,7 @@ async def call_llm(system_prompt: str, user_prompt: str) -> str:
         session_id=str(uuid.uuid4()),
         system_message=system_prompt
     )
-    chat = chat.with_model('google', 'gemini-2.0-flash')
+    chat = chat.with_model('google', 'gemini/gemini-2.0-flash')
     user_msg = UserMessage(text=user_prompt)
     response = await chat.send_message(user_msg)
     return response.text if hasattr(response, 'text') else str(response)
