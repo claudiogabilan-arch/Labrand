@@ -20,12 +20,150 @@ import {
   TrendingUp,
   Users as UsersIcon,
   FileText,
-  Lightbulb
+  Lightbulb,
+  User,
+  Package,
+  Briefcase,
+  Heart,
+  Rocket,
+  Building2,
+  HandHeart,
+  Music,
+  CheckCircle2,
+  ArrowRight,
+  MapPin
 } from 'lucide-react';
+
+// Definição das finalidades de marca
+const BRAND_PURPOSES = [
+  { id: 'influencer', label: 'Influencer/Creator', icon: User, color: 'bg-pink-500', description: 'Personal branding e criação de conteúdo' },
+  { id: 'produto', label: 'Produto', icon: Package, color: 'bg-blue-500', description: 'Marca de produto físico ou digital' },
+  { id: 'servico', label: 'Serviço', icon: Briefcase, color: 'bg-green-500', description: 'Prestação de serviços B2B ou B2C' },
+  { id: 'comunidade', label: 'Comunidade', icon: Heart, color: 'bg-purple-500', description: 'Movimentos, clubes, associações' },
+  { id: 'startup', label: 'Startup', icon: Rocket, color: 'bg-orange-500', description: 'Empresa em fase inicial de crescimento' },
+  { id: 'corporativo', label: 'Corporativo', icon: Building2, color: 'bg-slate-500', description: 'Empresa estabelecida no mercado' },
+  { id: 'ong', label: 'ONG/Social', icon: HandHeart, color: 'bg-teal-500', description: 'Organização sem fins lucrativos' },
+  { id: 'artista', label: 'Artista/Entretenimento', icon: Music, color: 'bg-red-500', description: 'Músicos, artistas, entretenimento' },
+];
+
+// Trilhas de módulos por finalidade
+const TRACK_RECOMMENDATIONS = {
+  influencer: {
+    priority: ['personalidade', 'tom_voz', 'audiencia', 'narrativas', 'proposito'],
+    description: 'Foco em construir uma marca pessoal autêntica e engajadora',
+    tips: [
+      'Defina seu arquétipo de personalidade para criar consistência',
+      'Estabeleça um tom de voz único que ressoe com sua audiência',
+      'Mapeie sua audiência ideal e onde encontrá-la',
+      'Crie narrativas que conectem sua história pessoal ao valor que entrega'
+    ]
+  },
+  produto: {
+    priority: ['posicionamento', 'promessa', 'valores', 'valuation', 'benchmark'],
+    description: 'Foco em diferenciação de mercado e proposta de valor clara',
+    tips: [
+      'Posicione seu produto claramente contra concorrentes',
+      'Defina uma promessa de marca que seja entregável e memorável',
+      'Use o benchmark para entender seu espaço competitivo',
+      'Calcule o valuation para decisões estratégicas de pricing'
+    ]
+  },
+  servico: {
+    priority: ['valores', 'proposito', 'comportamentos', 'promessa', 'audiencia'],
+    description: 'Foco em confiança, experiência do cliente e relacionamento',
+    tips: [
+      'Valores fortes são essenciais para serviços - clientes compram confiança',
+      'Defina comportamentos claros para toda a equipe',
+      'A promessa de serviço deve ser experiencial, não apenas funcional',
+      'Mapeie a jornada emocional do seu cliente'
+    ]
+  },
+  comunidade: {
+    priority: ['proposito', 'valores', 'narrativas', 'jeito_de_ser', 'comportamentos'],
+    description: 'Foco em propósito compartilhado e senso de pertencimento',
+    tips: [
+      'O propósito é o coração de uma comunidade - seja inspirador',
+      'Valores compartilhados criam identidade de grupo',
+      'Narrativas fortalecem o senso de pertencimento',
+      'Rituais e comportamentos definem a cultura da comunidade'
+    ]
+  },
+  startup: {
+    priority: ['posicionamento', 'valuation', 'proposito', 'promessa', 'benchmark'],
+    description: 'Foco em diferenciação, escalabilidade e atração de investimento',
+    tips: [
+      'Posicionamento claro é crucial para se destacar em mercados disputados',
+      'Valuation ajuda a preparar para rodadas de investimento',
+      'Propósito forte atrai talentos e investidores alinhados',
+      'Use benchmark para validar oportunidade de mercado'
+    ]
+  },
+  corporativo: {
+    priority: ['valores', 'jeito_de_ser', 'comportamentos', 'valuation', 'benchmark'],
+    description: 'Foco em cultura organizacional, governança e valor de marca',
+    tips: [
+      'Valores bem definidos guiam decisões em toda a organização',
+      'O "Jeito de Ser" cria consistência em todas as interações',
+      'Comportamentos codificam a cultura desejada',
+      'Valuation demonstra o impacto estratégico da marca'
+    ]
+  },
+  ong: {
+    priority: ['proposito', 'narrativas', 'valores', 'audiencia', 'comportamentos'],
+    description: 'Foco em causa, impacto social e engajamento de stakeholders',
+    tips: [
+      'Propósito é tudo para uma ONG - seja claro e inspirador',
+      'Narrativas de impacto são essenciais para captação',
+      'Valores devem refletir a mudança que você quer ver',
+      'Mapeie todos os stakeholders: doadores, beneficiários, parceiros'
+    ]
+  },
+  artista: {
+    priority: ['personalidade', 'narrativas', 'tom_voz', 'audiencia', 'promessa'],
+    description: 'Foco em autenticidade artística e conexão emocional',
+    tips: [
+      'Sua personalidade É sua marca - seja autêntico',
+      'Narrativas contam sua jornada artística',
+      'Tom de voz deve refletir sua arte',
+      'Conecte-se emocionalmente com sua audiência'
+    ]
+  }
+};
+
+const MODULE_LABELS = {
+  proposito: 'Propósito',
+  valores: 'Valores', 
+  personalidade: 'Personalidade',
+  tom_voz: 'Tom de Voz',
+  posicionamento: 'Posicionamento',
+  promessa: 'Promessa',
+  comportamentos: 'Comportamentos',
+  audiencia: 'Audiência',
+  narrativas: 'Narrativas',
+  valuation: 'Valuation',
+  benchmark: 'Benchmark',
+  jeito_de_ser: 'Jeito de Ser'
+};
+
+const MODULE_ROUTES = {
+  proposito: '/pillars/purpose',
+  valores: '/pillars/values',
+  personalidade: '/pillars/personality',
+  tom_voz: '/brand-way',
+  posicionamento: '/pillars/positioning',
+  promessa: '/pillars/promise',
+  comportamentos: '/brand-way',
+  audiencia: '/audience',
+  narrativas: '/narratives',
+  valuation: '/valuation',
+  benchmark: '/benchmark',
+  jeito_de_ser: '/brand-way'
+};
 
 export const PillarStart = () => {
   const { currentBrand, fetchPillar, updatePillar, generateInsight } = useBrand();
   const [data, setData] = useState({
+    finalidade_marca: '',
     desafio: '',
     background: '',
     urgencia: '',
@@ -40,6 +178,7 @@ export const PillarStart = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState('finalidade');
   const [newItems, setNewItems] = useState({
     players: '',
     regulamentacoes: '',
@@ -55,6 +194,13 @@ export const PillarStart = () => {
     }
   }, [currentBrand?.brand_id]);
 
+  // Se já tem finalidade definida, ir direto para canvas
+  useEffect(() => {
+    if (data.finalidade_marca && activeTab === 'finalidade') {
+      // Manter na aba finalidade para permitir alteração
+    }
+  }, [data.finalidade_marca]);
+
   const loadData = async () => {
     setIsLoading(true);
     try {
@@ -65,6 +211,10 @@ export const PillarStart = () => {
           ...pillarData,
           cenarios: pillarData.cenarios || { C1: '', C2: '', C3: '', C4: '' }
         }));
+        // Se já tem finalidade, mostrar o roadmap
+        if (pillarData.finalidade_marca) {
+          setActiveTab('roadmap');
+        }
       }
     } catch (error) {
       console.error('Error loading pillar:', error);
@@ -95,6 +245,14 @@ export const PillarStart = () => {
     autoSave(newData);
   };
 
+  const handlePurposeSelect = (purposeId) => {
+    const newData = { ...data, finalidade_marca: purposeId };
+    setData(newData);
+    autoSave(newData);
+    toast.success('Finalidade selecionada! Veja seu roadmap personalizado.');
+    setActiveTab('roadmap');
+  };
+
   const handleCenarioChange = (key, value) => {
     const newCenarios = { ...data.cenarios, [key]: value };
     const newData = { ...data, cenarios: newCenarios };
@@ -122,6 +280,7 @@ export const PillarStart = () => {
     setIsGenerating(true);
     try {
       const context = `
+        Finalidade: ${data.finalidade_marca}
         Desafio: ${data.desafio}
         Background: ${data.background}
         Urgência: ${data.urgencia}
@@ -132,7 +291,6 @@ export const PillarStart = () => {
       `;
       const result = await generateInsight(context, 'start', currentBrand.name);
       toast.success('Insight gerado!');
-      // Add insight to incertezas or show in a modal
       const newIncertezas = [...data.incertezas, `[IA] ${result.insight.slice(0, 200)}...`];
       handleFieldChange('incertezas', newIncertezas);
     } catch (error) {
@@ -155,10 +313,10 @@ export const PillarStart = () => {
   };
 
   const calculateProgress = () => {
-    const fields = ['desafio', 'background', 'urgencia', 'cenario_competitivo'];
+    const fields = ['finalidade_marca', 'desafio', 'background', 'urgencia', 'cenario_competitivo'];
     const listFields = ['players', 'tendencias', 'publicos_interesse'];
     let filled = 0;
-    let total = fields.length + listFields.length + 4; // +4 for scenarios
+    let total = fields.length + listFields.length + 4;
 
     fields.forEach(f => { if (data[f]) filled++; });
     listFields.forEach(f => { if (data[f]?.length > 0) filled++; });
@@ -166,6 +324,9 @@ export const PillarStart = () => {
 
     return Math.round((filled / total) * 100);
   };
+
+  const selectedPurpose = BRAND_PURPOSES.find(p => p.id === data.finalidade_marca);
+  const trackData = TRACK_RECOMMENDATIONS[data.finalidade_marca];
 
   if (isLoading) {
     return (
@@ -193,7 +354,7 @@ export const PillarStart = () => {
           </div>
           <div>
             <h1 className="font-heading text-2xl font-bold">Pilar Start</h1>
-            <p className="text-muted-foreground">Diagnóstico inicial e mapeamento de cenários</p>
+            <p className="text-muted-foreground">Diagnóstico inicial e definição de trilha</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -214,13 +375,160 @@ export const PillarStart = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="canvas" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
+          <TabsTrigger value="finalidade" data-testid="tab-finalidade">
+            <MapPin className="h-4 w-4 mr-2" />
+            Finalidade
+          </TabsTrigger>
+          <TabsTrigger value="roadmap" data-testid="tab-roadmap" disabled={!data.finalidade_marca}>
+            <Target className="h-4 w-4 mr-2" />
+            Roadmap
+          </TabsTrigger>
           <TabsTrigger value="canvas" data-testid="tab-canvas">Canvas</TabsTrigger>
           <TabsTrigger value="cenarios" data-testid="tab-cenarios">Cenários</TabsTrigger>
           <TabsTrigger value="incertezas" data-testid="tab-incertezas">Incertezas</TabsTrigger>
         </TabsList>
 
+        {/* FINALIDADE TAB */}
+        <TabsContent value="finalidade" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl">Qual é a finalidade da sua marca?</CardTitle>
+              <CardDescription>
+                Selecione o tipo que melhor descreve sua marca. Isso nos ajudará a criar uma trilha personalizada de módulos prioritários.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {BRAND_PURPOSES.map((purpose) => {
+                  const Icon = purpose.icon;
+                  const isSelected = data.finalidade_marca === purpose.id;
+                  return (
+                    <button
+                      key={purpose.id}
+                      onClick={() => handlePurposeSelect(purpose.id)}
+                      className={`p-4 rounded-xl border-2 transition-all text-left hover:shadow-md ${
+                        isSelected 
+                          ? 'border-primary bg-primary/5 shadow-md' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                      data-testid={`purpose-${purpose.id}`}
+                    >
+                      <div className={`w-10 h-10 rounded-lg ${purpose.color} flex items-center justify-center mb-3`}>
+                        <Icon className="h-5 w-5 text-white" />
+                      </div>
+                      <h3 className="font-semibold mb-1">{purpose.label}</h3>
+                      <p className="text-sm text-muted-foreground">{purpose.description}</p>
+                      {isSelected && (
+                        <Badge className="mt-2" variant="default">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Selecionado
+                        </Badge>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ROADMAP TAB */}
+        <TabsContent value="roadmap" className="space-y-6">
+          {selectedPurpose && trackData && (
+            <>
+              {/* Header da Trilha */}
+              <Card className={`border-2 ${selectedPurpose.color.replace('bg-', 'border-')}/30`}>
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div className={`w-14 h-14 rounded-xl ${selectedPurpose.color} flex items-center justify-center`}>
+                      <selectedPurpose.icon className="h-7 w-7 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl">Trilha: {selectedPurpose.label}</CardTitle>
+                      <CardDescription className="text-base">{trackData.description}</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+
+              {/* Roadmap Visual */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-primary" />
+                    Seu Roadmap Personalizado
+                  </CardTitle>
+                  <CardDescription>
+                    Siga esta ordem de módulos para máximo impacto na sua marca
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {trackData.priority.map((moduleId, index) => (
+                      <div key={moduleId} className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
+                          index === 0 ? 'bg-primary' : index < 3 ? 'bg-primary/70' : 'bg-muted-foreground'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div className="flex-1">
+                          <a 
+                            href={MODULE_ROUTES[moduleId]}
+                            className="font-medium hover:text-primary transition-colors flex items-center gap-2"
+                          >
+                            {MODULE_LABELS[moduleId]}
+                            <ArrowRight className="h-4 w-4" />
+                          </a>
+                          {index === 0 && (
+                            <Badge variant="secondary" className="mt-1">Comece aqui</Badge>
+                          )}
+                        </div>
+                        {index < trackData.priority.length - 1 && (
+                          <div className="hidden sm:block w-px h-8 bg-border absolute left-5 mt-12" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Dicas da Trilha */}
+              <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                    <Lightbulb className="h-5 w-5" />
+                    Dicas para {selectedPurpose.label}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    {trackData.tips.map((tip, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                        <span className="text-amber-900 dark:text-amber-100">{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <div className="flex justify-center">
+                <Button 
+                  size="lg" 
+                  onClick={() => window.location.href = MODULE_ROUTES[trackData.priority[0]]}
+                  className="gap-2"
+                >
+                  Começar Trilha
+                  <ArrowRight className="h-5 w-5" />
+                </Button>
+              </div>
+            </>
+          )}
+        </TabsContent>
+
+        {/* CANVAS TAB - Original content */}
         <TabsContent value="canvas" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Desafio */}
@@ -478,7 +786,7 @@ export const PillarStart = () => {
                   <div 
                     key={index} 
                     className={`flex items-start gap-3 p-3 rounded-lg border ${
-                      item.startsWith('[IA]') ? 'bg-amber-50 border-amber-200' : 'bg-muted/50'
+                      item.startsWith('[IA]') ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800' : 'bg-muted/50'
                     }`}
                   >
                     <span className="flex-1 text-sm">{item}</span>
