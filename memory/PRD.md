@@ -138,8 +138,12 @@ Note: Original server.py kept functional (98 routes). Migration can be done grad
 ### P1 - High Priority (Completed ✅)
 - [x] Backend refactoring structure (modular files created)
 - [x] Complete Maturity Diagnosis module with AI recommendations
+- [x] Touchpoints Module Phase 1 (ROI, Personas, AI Analysis, Dashboard)
+- [x] Admin Dashboard with usage metrics
 
-### P2 - Medium Priority
+### P2 - Medium Priority (In Progress)
+- [ ] Complete backend migration to refactored server.py
+- [ ] Onboarding flow save responses to DB
 - [ ] Team invitation functionality
 - [ ] Strategic Priority Report for consultants
 - [ ] Naming module
