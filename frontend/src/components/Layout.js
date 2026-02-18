@@ -46,7 +46,8 @@ import {
   AlertTriangle,
   Eye,
   Crown,
-  Shield
+  Shield,
+  MapPin
 } from 'lucide-react';
 
 const navigationItems = [
