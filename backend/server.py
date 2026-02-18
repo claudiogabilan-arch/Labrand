@@ -3460,6 +3460,125 @@ async def add_ai_credits(user_id: str, credits: int, reason: str):
         "created_at": datetime.now(timezone.utc).isoformat()
     })
 
+# ==================== TOUCHPOINTS MODULE ====================
+
+FUNNEL_PHASES = ["Topo de Funil", "Meio de Funil", "Fundo de Funil"]
+ENVIRONMENTS = ["Online", "Offline"]
+SENTIMENTS = ["Feliz", "Triste", "Frustrado", "Neutro"]
+
+@api_router.get("/brands/{brand_id}/touchpoints")
+async def get_touchpoints(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get all touchpoints for a brand"""
+    touchpoints = await db.touchpoints.find(
+        {"brand_id": brand_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(200)
+    
+    # Group by funnel phase for visualization
+    by_phase = {
+        "Topo de Funil": [],
+        "Meio de Funil": [],
+        "Fundo de Funil": []
+    }
+    
+    for tp in touchpoints:
+        phase = tp.get("fase_funil", "Topo de Funil")
+        if phase in by_phase:
+            by_phase[phase].append(tp)
+    
+    # Calculate stats
+    total = len(touchpoints)
+    avg_score = sum(tp.get("nota", 0) for tp in touchpoints) / total if total > 0 else 0
+    
+    critical = len([tp for tp in touchpoints if tp.get("nota", 0) <= 3])
+    attention = len([tp for tp in touchpoints if 4 <= tp.get("nota", 0) <= 6])
+    excellent = len([tp for tp in touchpoints if tp.get("nota", 0) >= 7])
+    
+    return {
+        "touchpoints": touchpoints,
+        "by_phase": by_phase,
+        "stats": {
+            "total": total,
+            "avg_score": round(avg_score, 1),
+            "critical": critical,
+            "attention": attention,
+            "excellent": excellent
+        }
+    }
+
+@api_router.post("/brands/{brand_id}/touchpoints")
+async def create_touchpoint(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
+    """Create a new touchpoint"""
+    touchpoint_id = f"tp_{uuid.uuid4().hex[:12]}"
+    
+    touchpoint_doc = {
+        "touchpoint_id": touchpoint_id,
+        "brand_id": brand_id,
+        "nome": data.get("nome", ""),
+        "descricao": data.get("descricao", ""),
+        "ambiente": data.get("ambiente", "Online"),
+        "fase_funil": data.get("fase_funil", "Topo de Funil"),
+        "sentimento": data.get("sentimento", "Neutro"),
+        "nota": min(10, max(0, int(data.get("nota", 5)))),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.touchpoints.insert_one(touchpoint_doc)
+    touchpoint_doc.pop("_id", None)
+    
+    return touchpoint_doc
+
+@api_router.put("/brands/{brand_id}/touchpoints/{touchpoint_id}")
+async def update_touchpoint(brand_id: str, touchpoint_id: str, data: dict, user: dict = Depends(get_current_user)):
+    """Update a touchpoint"""
+    update_data = {
+        "nome": data.get("nome"),
+        "descricao": data.get("descricao"),
+        "ambiente": data.get("ambiente"),
+        "fase_funil": data.get("fase_funil"),
+        "sentimento": data.get("sentimento"),
+        "nota": min(10, max(0, int(data.get("nota", 5)))),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Remove None values
+    update_data = {k: v for k, v in update_data.items() if v is not None}
+    
+    await db.touchpoints.update_one(
+        {"touchpoint_id": touchpoint_id, "brand_id": brand_id},
+        {"$set": update_data}
+    )
+    
+    updated = await db.touchpoints.find_one(
+        {"touchpoint_id": touchpoint_id},
+        {"_id": 0}
+    )
+    
+    return updated
+
+@api_router.delete("/brands/{brand_id}/touchpoints/{touchpoint_id}")
+async def delete_touchpoint(brand_id: str, touchpoint_id: str, user: dict = Depends(get_current_user)):
+    """Delete a touchpoint"""
+    result = await db.touchpoints.delete_one({
+        "touchpoint_id": touchpoint_id,
+        "brand_id": brand_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Touchpoint não encontrado")
+    
+    return {"message": "Touchpoint removido com sucesso"}
+
+@api_router.get("/touchpoints/options")
+async def get_touchpoint_options(user: dict = Depends(get_current_user)):
+    """Get options for touchpoint form"""
+    return {
+        "funnel_phases": FUNNEL_PHASES,
+        "environments": ENVIRONMENTS,
+        "sentiments": SENTIMENTS
+    }
+
 # ==================== ADMIN DASHBOARD ====================
 
 async def get_admin_user(request: Request) -> dict:
