@@ -3467,12 +3467,13 @@ ENVIRONMENTS = ["Online", "Offline"]
 SENTIMENTS = ["Feliz", "Triste", "Frustrado", "Neutro"]
 
 @api_router.get("/brands/{brand_id}/touchpoints")
-async def get_touchpoints(brand_id: str, user: dict = Depends(get_current_user)):
-    """Get all touchpoints for a brand"""
-    touchpoints = await db.touchpoints.find(
-        {"brand_id": brand_id},
-        {"_id": 0}
-    ).sort("created_at", -1).to_list(200)
+async def get_touchpoints(brand_id: str, persona: str = None, user: dict = Depends(get_current_user)):
+    """Get all touchpoints for a brand, optionally filtered by persona"""
+    query = {"brand_id": brand_id}
+    if persona:
+        query["persona"] = persona
+    
+    touchpoints = await db.touchpoints.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
     
     # Group by funnel phase for visualization
     by_phase = {
@@ -3494,6 +3495,30 @@ async def get_touchpoints(brand_id: str, user: dict = Depends(get_current_user))
     attention = len([tp for tp in touchpoints if 4 <= tp.get("nota", 0) <= 6])
     excellent = len([tp for tp in touchpoints if tp.get("nota", 0) >= 7])
     
+    # Financial stats
+    total_custo = sum(tp.get("custo_mensal", 0) for tp in touchpoints)
+    total_receita = sum(tp.get("receita_gerada", 0) for tp in touchpoints)
+    total_conversoes = sum(tp.get("conversoes", 0) for tp in touchpoints)
+    roi_geral = ((total_receita - total_custo) / total_custo * 100) if total_custo > 0 else 0
+    
+    # Heatmap data (score by phase)
+    heatmap = {}
+    for phase, tps in by_phase.items():
+        if tps:
+            heatmap[phase] = {
+                "avg_score": round(sum(t.get("nota", 0) for t in tps) / len(tps), 1),
+                "count": len(tps),
+                "critical": len([t for t in tps if t.get("nota", 0) <= 3]),
+                "roi": round(sum(t.get("roi", 0) for t in tps) / len(tps), 1) if tps else 0
+            }
+        else:
+            heatmap[phase] = {"avg_score": 0, "count": 0, "critical": 0, "roi": 0}
+    
+    # Top 5 best and worst
+    sorted_by_score = sorted(touchpoints, key=lambda x: x.get("nota", 0))
+    top_critical = sorted_by_score[:5] if len(sorted_by_score) >= 5 else sorted_by_score
+    top_excellent = sorted_by_score[-5:][::-1] if len(sorted_by_score) >= 5 else sorted_by_score[::-1]
+    
     return {
         "touchpoints": touchpoints,
         "by_phase": by_phase,
@@ -3503,13 +3528,27 @@ async def get_touchpoints(brand_id: str, user: dict = Depends(get_current_user))
             "critical": critical,
             "attention": attention,
             "excellent": excellent
-        }
+        },
+        "financial": {
+            "total_custo": total_custo,
+            "total_receita": total_receita,
+            "total_conversoes": total_conversoes,
+            "roi_geral": round(roi_geral, 1)
+        },
+        "heatmap": heatmap,
+        "top_critical": top_critical,
+        "top_excellent": top_excellent
     }
 
 @api_router.post("/brands/{brand_id}/touchpoints")
 async def create_touchpoint(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
     """Create a new touchpoint"""
     touchpoint_id = f"tp_{uuid.uuid4().hex[:12]}"
+    
+    # Calculate ROI if financial data provided
+    custo = float(data.get("custo_mensal", 0))
+    receita = float(data.get("receita_gerada", 0))
+    roi = ((receita - custo) / custo * 100) if custo > 0 else 0
     
     touchpoint_doc = {
         "touchpoint_id": touchpoint_id,
