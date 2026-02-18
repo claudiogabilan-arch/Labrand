@@ -3633,6 +3633,158 @@ async def get_touchpoint_options(user: dict = Depends(get_current_user)):
         "sentiments": SENTIMENTS
     }
 
+# ==================== PERSONAS ====================
+
+@api_router.get("/brands/{brand_id}/personas")
+async def get_personas(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get all personas for a brand"""
+    personas = await db.personas.find({"brand_id": brand_id}, {"_id": 0}).to_list(50)
+    
+    # Always include "Geral" as default
+    persona_names = ["Geral"] + [p["nome"] for p in personas]
+    
+    return {"personas": personas, "persona_names": persona_names}
+
+@api_router.post("/brands/{brand_id}/personas")
+async def create_persona(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
+    """Create a new persona"""
+    persona_id = f"persona_{uuid.uuid4().hex[:12]}"
+    
+    persona_doc = {
+        "persona_id": persona_id,
+        "brand_id": brand_id,
+        "nome": data.get("nome", ""),
+        "descricao": data.get("descricao", ""),
+        "caracteristicas": data.get("caracteristicas", []),
+        "objetivos": data.get("objetivos", []),
+        "dores": data.get("dores", []),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.personas.insert_one(persona_doc)
+    persona_doc.pop("_id", None)
+    
+    return persona_doc
+
+@api_router.delete("/brands/{brand_id}/personas/{persona_id}")
+async def delete_persona(brand_id: str, persona_id: str, user: dict = Depends(get_current_user)):
+    """Delete a persona"""
+    await db.personas.delete_one({"persona_id": persona_id, "brand_id": brand_id})
+    return {"message": "Persona removida com sucesso"}
+
+# ==================== TOUCHPOINTS AI ANALYSIS ====================
+
+@api_router.post("/brands/{brand_id}/touchpoints/ai-analysis")
+async def analyze_touchpoints_ai(brand_id: str, user: dict = Depends(get_current_user)):
+    """Analyze touchpoints with AI and provide recommendations (3 credits)"""
+    try:
+        # Check and deduct AI credits
+        success, result = await deduct_ai_credits(user["user_id"], "suggestion", 3)
+        if not success:
+            raise HTTPException(status_code=402, detail=result)
+        
+        # Get all touchpoints
+        touchpoints = await db.touchpoints.find({"brand_id": brand_id}, {"_id": 0}).to_list(100)
+        
+        if not touchpoints:
+            raise HTTPException(status_code=400, detail="Nenhum touchpoint cadastrado para análise")
+        
+        # Get brand info
+        brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
+        
+        # Prepare context
+        critical_tps = [tp for tp in touchpoints if tp.get("nota", 0) <= 3]
+        attention_tps = [tp for tp in touchpoints if 4 <= tp.get("nota", 0) <= 6]
+        
+        total_custo = sum(tp.get("custo_mensal", 0) for tp in touchpoints)
+        total_receita = sum(tp.get("receita_gerada", 0) for tp in touchpoints)
+        
+        context = f"""
+        Marca: {brand.get('name', 'N/A') if brand else 'N/A'}
+        
+        RESUMO DOS TOUCHPOINTS:
+        - Total: {len(touchpoints)}
+        - Críticos (nota 0-3): {len(critical_tps)}
+        - Atenção (nota 4-6): {len(attention_tps)}
+        - Investimento mensal total: R$ {total_custo:,.2f}
+        - Receita gerada total: R$ {total_receita:,.2f}
+        
+        TOUCHPOINTS CRÍTICOS (precisam de ação):
+        {chr(10).join([f"- {tp['nome']} (Fase: {tp.get('fase_funil')}, Nota: {tp.get('nota')}, Sentimento: {tp.get('sentimento')}, ROI: {tp.get('roi', 0)}%)" for tp in critical_tps[:5]])}
+        
+        TOUCHPOINTS QUE PRECISAM DE ATENÇÃO:
+        {chr(10).join([f"- {tp['nome']} (Fase: {tp.get('fase_funil')}, Nota: {tp.get('nota')}, Sentimento: {tp.get('sentimento')})" for tp in attention_tps[:5]])}
+        
+        DISTRIBUIÇÃO POR FUNIL:
+        - Topo: {len([t for t in touchpoints if t.get('fase_funil') == 'Topo de Funil'])}
+        - Meio: {len([t for t in touchpoints if t.get('fase_funil') == 'Meio de Funil'])}
+        - Fundo: {len([t for t in touchpoints if t.get('fase_funil') == 'Fundo de Funil'])}
+        """
+        
+        system_prompt = """Você é um especialista em Customer Experience e Jornada do Cliente. Analise os touchpoints da marca e forneça recomendações estratégicas.
+
+Retorne um JSON válido com:
+{
+    "diagnostico": "Resumo executivo da saúde dos touchpoints (2-3 linhas)",
+    "pontos_criticos": [
+        {"touchpoint": "nome", "problema": "descrição", "impacto": "alto/médio/baixo", "acao_sugerida": "ação específica"}
+    ],
+    "quick_wins": ["ação rápida 1", "ação rápida 2", "ação rápida 3"],
+    "otimizacao_funil": {
+        "topo": "recomendação para topo do funil",
+        "meio": "recomendação para meio do funil",
+        "fundo": "recomendação para fundo do funil"
+    },
+    "sugestao_novos_touchpoints": [
+        {"nome": "nome sugerido", "fase": "fase do funil", "motivo": "por que adicionar"}
+    ],
+    "roi_insights": "análise sobre o ROI e recomendações financeiras",
+    "prioridades": ["prioridade 1", "prioridade 2", "prioridade 3"]
+}
+
+Seja específico, prático e baseado nos dados fornecidos. Use português do Brasil."""
+
+        prompt = f"""Analise os touchpoints da marca e gere recomendações estratégicas:
+        {context}
+        
+        Retorne apenas o JSON válido."""
+        
+        response = await call_llm(system_prompt, prompt)
+        
+        # Parse response
+        clean_response = response.strip()
+        if clean_response.startswith("```"):
+            clean_response = clean_response.split("```")[1]
+            if clean_response.startswith("json"):
+                clean_response = clean_response[4:]
+        clean_response = clean_response.strip()
+        
+        analysis = json.loads(clean_response)
+        analysis["credits_used"] = 3
+        analysis["analyzed_at"] = datetime.now(timezone.utc).isoformat()
+        analysis["touchpoints_analyzed"] = len(touchpoints)
+        
+        # Save analysis
+        await db.touchpoint_analysis.update_one(
+            {"brand_id": brand_id},
+            {"$set": {"brand_id": brand_id, **analysis}},
+            upsert=True
+        )
+        
+        return analysis
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Touchpoints AI analysis error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/brands/{brand_id}/touchpoints/ai-analysis")
+async def get_touchpoints_analysis(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get previous AI analysis for touchpoints"""
+    analysis = await db.touchpoint_analysis.find_one({"brand_id": brand_id}, {"_id": 0})
+    return analysis or {}
+
 # ==================== ADMIN DASHBOARD ====================
 
 async def get_admin_user(request: Request) -> dict:
