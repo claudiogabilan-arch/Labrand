@@ -62,6 +62,8 @@ const navigationItems = [
   { name: 'Posicionamento', href: '/pillars/positioning', icon: Crosshair, pillar: 'positioning', featureId: 'positioning', pro: true },
   { name: 'Personalidade', href: '/pillars/personality', icon: Users, pillar: 'personality', featureId: 'personality', pro: true },
   { name: 'Universal', href: '/pillars/universality', icon: Globe, pillar: 'universality', featureId: 'universality', pro: true },
+  { type: 'divider', label: 'Jornada do Cliente' },
+  { name: 'Touchpoints', href: '/touchpoints', icon: MapPin, featureId: 'touchpoints' },
   { type: 'divider', label: 'Análise & Risco' },
   { name: 'Risco de Marca', href: '/brand-risk', icon: AlertTriangle, featureId: 'risk', pro: true },
   { name: 'Alertas Consistência', href: '/consistency', icon: Eye, featureId: 'consistency', pro: true },
