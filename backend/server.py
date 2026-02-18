@@ -3559,6 +3559,11 @@ async def create_touchpoint(brand_id: str, data: dict, user: dict = Depends(get_
         "fase_funil": data.get("fase_funil", "Topo de Funil"),
         "sentimento": data.get("sentimento", "Neutro"),
         "nota": min(10, max(0, int(data.get("nota", 5)))),
+        "persona": data.get("persona", "Geral"),
+        "custo_mensal": custo,
+        "receita_gerada": receita,
+        "conversoes": int(data.get("conversoes", 0)),
+        "roi": round(roi, 1),
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
@@ -3571,6 +3576,11 @@ async def create_touchpoint(brand_id: str, data: dict, user: dict = Depends(get_
 @api_router.put("/brands/{brand_id}/touchpoints/{touchpoint_id}")
 async def update_touchpoint(brand_id: str, touchpoint_id: str, data: dict, user: dict = Depends(get_current_user)):
     """Update a touchpoint"""
+    # Calculate ROI if financial data provided
+    custo = float(data.get("custo_mensal", 0))
+    receita = float(data.get("receita_gerada", 0))
+    roi = ((receita - custo) / custo * 100) if custo > 0 else 0
+    
     update_data = {
         "nome": data.get("nome"),
         "descricao": data.get("descricao"),
@@ -3578,6 +3588,11 @@ async def update_touchpoint(brand_id: str, touchpoint_id: str, data: dict, user:
         "fase_funil": data.get("fase_funil"),
         "sentimento": data.get("sentimento"),
         "nota": min(10, max(0, int(data.get("nota", 5)))),
+        "persona": data.get("persona"),
+        "custo_mensal": custo,
+        "receita_gerada": receita,
+        "conversoes": int(data.get("conversoes", 0)),
+        "roi": round(roi, 1),
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
