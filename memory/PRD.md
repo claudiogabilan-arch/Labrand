@@ -177,6 +177,7 @@ Note: Original server.py kept functional (98 routes). Migration can be done grad
 
 ## Test Credentials
 - **Strategist**: demo@labrand.com / password123
+- **Admin**: admin@labrand.com / LaBrand@2024!
 - **Brand ID**: brand_92bcc15a44fb
 
 ## Integrations Status
@@ -195,3 +196,19 @@ Note: Original server.py kept functional (98 routes). Migration can be done grad
 
 ## Backend Tests Created
 - `/app/backend/tests/test_maturity_diagnosis.py`
+
+---
+
+## Touchpoints Module Details
+| Field | Type | Description |
+|-------|------|-------------|
+| nome | string | Touchpoint name |
+| descricao | string | Description |
+| ambiente | enum | "Online" or "Offline" |
+| fase_funil | enum | "Topo de Funil", "Meio de Funil", "Fundo de Funil" |
+| sentimento | enum | "Feliz", "Neutro", "Triste", "Frustrado" |
+| nota | int (1-10) | Customer experience score |
+| persona | string | Target persona (default: "Geral") |
+| custo_mensal | float | Monthly cost |
+| receita_gerada | float | Generated revenue |
+| conversoes | int | Number of conversions |
