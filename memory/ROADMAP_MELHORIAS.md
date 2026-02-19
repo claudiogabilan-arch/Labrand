@@ -220,4 +220,54 @@ Quando tiver créditos disponíveis, recomendo:
 
 ---
 
+---
+
+## 🏷️ MÓDULO DE NAMING "ESTÚDIO ONOMÁSTICO"
+**Adicionado em:** 2026-02-18
+**Prioridade:** A definir pelo usuário
+
+### Metodologia Proprietária - 6 Etapas:
+1. **Essência Decode®** - Formulários (missão, valores, público, concorrentes)
+2. **Fator Propulsor®** - Tensão central e arquétipos
+3. **Arquétipos Vivos®** - Mapas semânticos com IA
+4. **Laboratório Sonoro®** - Combinador de sílabas, aliterações, blends
+5. **Fricção Global®** - Verificação multilíngue, alertas de pronúncia
+6. **Matriz Hiperescala®** - Scoring com pesos e ranking
+
+### Estimativa por Versão:
+
+| Versão | Escopo | Créditos |
+|--------|--------|----------|
+| **MVP Mínimo** | Formulário + Geração IA + Lista ranking | 600-900 |
+| **Versão Core** | Etapas 1-3 + IA + Matriz scoring | 1.200-1.800 |
+| **Completo** | 6 etapas + PDF + Mock domínios | 2.300-3.550 |
+
+### Funcionalidades Detalhadas:
+
+| Componente | Créditos | Complexidade |
+|------------|----------|--------------|
+| Setup/navegação/estado | 150-250 | 🟢 Baixa |
+| Etapa 1 - Essência Decode | 100-150 | 🟢 Baixa |
+| Etapa 2 - Fator Propulsor | 150-250 | 🟡 Média |
+| Etapa 3 - Arquétipos Vivos (IA) | 300-450 | 🟡 Média |
+| Etapa 4 - Laboratório Sonoro | 400-600 | 🔴 Alta |
+| Etapa 5 - Fricção Global | 350-500 | 🟡 Média |
+| Etapa 6 - Matriz Hiperescala | 250-400 | 🟡 Média |
+| Geração de Nomes IA | 300-450 | 🟡 Média |
+| Exportação PDF | 200-350 | 🟡 Média |
+| Mock domínio/redes | 100-150 | 🟢 Baixa |
+
+---
+
+## ⚠️ NOTA SOBRE CUSTOS DE CRÉDITOS
+
+**Observação do usuário (2026-02-18):**
+> "Antes consumia 12 créditos por funcionalidade"
+
+As estimativas acima podem estar inflacionadas. Histórico real do projeto LaBrand mostra implementações anteriores com custos menores. Reavaliar quando iniciar implementação.
+
+**Sugestão:** Ao retomar, pedir estimativa atualizada baseada no consumo real da sessão.
+
+---
+
 *Documento salvo para referência futura. Atualizado em 2026-02-18.*
