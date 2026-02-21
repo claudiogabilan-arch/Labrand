@@ -57,17 +57,24 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithGoogle = () => {
-    // Usar o Google OAuth configurado no backend para login social
-    window.location.href = `${API}/auth/google/login`;
+    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    // Use window.location.origin to ensure the user returns to the exact domain they are currently on
+    const redirectUrl = window.location.origin + '/dashboard';
+    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 
   const processOAuthSession = async (sessionId) => {
-    const response = await axios.post(`${API}/auth/session`, 
+    const response = await axios.post(`${API}/api/auth/session`, 
       { session_id: sessionId },
       { withCredentials: true }
     );
-    setUser(response.data);
-    return response.data;
+    const userData = response.data;
+    if (userData.token) {
+      localStorage.setItem('labrand_token', userData.token);
+      setToken(userData.token);
+    }
+    setUser(userData);
+    return userData;
   };
 
   const logout = async () => {
