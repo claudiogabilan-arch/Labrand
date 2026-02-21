@@ -48,13 +48,15 @@ import {
   Crown,
   Shield,
   MapPin,
-  Sparkles
+  Sparkles,
+  Wrench
 } from 'lucide-react';
 
 const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, featureId: 'dashboard' },
   { name: 'Executivo', href: '/executive', icon: Briefcase, featureId: 'executive', pro: true },
   { name: 'Diagnóstico', href: '/maturity', icon: ClipboardCheck, featureId: 'maturity', pro: true },
+  { name: 'Ferramentas', href: '/brand-tools', icon: Wrench, featureId: 'brand_tools', pro: true },
   { type: 'divider', label: 'Pilares de Marca' },
   { name: 'Jeito de Ser', href: '/brand-way', icon: Heart, featureId: 'brand_way' },
   { name: 'Naming', href: '/naming', icon: Sparkles, featureId: 'naming', pro: true },
