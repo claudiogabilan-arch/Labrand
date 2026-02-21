@@ -563,8 +563,67 @@ export default function BrandTools() {
                 </Button>
               </div>
 
-              <p className="text-xs text-muted-foreground">
-                * Funcionalidade MOCK - Integração real com Resend em desenvolvimento
+              {/* Send Specific Alerts */}
+              <div className="pt-4 border-t">
+                <h4 className="font-medium mb-3">Enviar Alerta Agora</h4>
+                <div className="flex gap-2 flex-wrap">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => sendSpecificAlert('consistency')} 
+                    disabled={loading.sendAlert}
+                    data-testid="send-consistency-alert-btn"
+                  >
+                    ⚠️ Consistência
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => sendSpecificAlert('risk')} 
+                    disabled={loading.sendAlert}
+                    data-testid="send-risk-alert-btn"
+                  >
+                    🚨 Risco
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => sendSpecificAlert('opportunities')} 
+                    disabled={loading.sendAlert}
+                    data-testid="send-opportunities-alert-btn"
+                  >
+                    💡 Oportunidades
+                  </Button>
+                </div>
+              </div>
+
+              {/* Alerts History */}
+              {alertsHistory && alertsHistory.length > 0 && (
+                <div className="pt-4 border-t">
+                  <h4 className="font-medium mb-3">Histórico de Alertas Enviados</h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {alertsHistory.slice(0, 5).map((alert, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2 bg-muted/50 rounded text-sm">
+                        <div className="flex items-center gap-2">
+                          <span>{alert.alert_type === 'test' ? '✅' : alert.alert_type === 'consistency' ? '⚠️' : alert.alert_type === 'risk' ? '🚨' : '💡'}</span>
+                          <span className="capitalize">{alert.alert_type}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span>{alert.recipients?.[0]}</span>
+                          <span>{new Date(alert.sent_at).toLocaleString('pt-BR')}</span>
+                          {alert.success ? 
+                            <span className="text-green-500">✓</span> : 
+                            <span className="text-red-500">✗</span>
+                          }
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <p className="text-xs text-muted-foreground mt-4">
+                ✅ Integração real com Resend ativa - Emails sendo enviados para os destinatários configurados.
               </p>
             </CardContent>
           </Card>
