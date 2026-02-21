@@ -47,7 +47,8 @@ import {
   Eye,
   Crown,
   Shield,
-  MapPin
+  MapPin,
+  Sparkles
 } from 'lucide-react';
 
 const navigationItems = [
