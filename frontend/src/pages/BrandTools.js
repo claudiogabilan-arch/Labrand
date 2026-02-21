@@ -541,7 +541,7 @@ export default function BrandTools() {
               )}
 
               <p className="text-xs text-muted-foreground">
-                * Funcionalidade MOCK - Download real de PDF em desenvolvimento
+                ✅ Relatório PDF real gerado com ReportLab
               </p>
             </CardContent>
           </Card>
@@ -737,7 +737,7 @@ export default function BrandTools() {
                   </div>
 
                   <p className="text-xs text-muted-foreground">
-                    * Dados MOCK - Integração real com APIs de social listening em desenvolvimento
+                    ⚡ Preview com dados de demonstração - Integração com APIs reais em breve
                   </p>
                 </div>
               )}

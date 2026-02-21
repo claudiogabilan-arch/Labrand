@@ -101,7 +101,7 @@ export default function AdsIntegration() {
         {},
         { headers: { Authorization: `Bearer ${token}` }}
       );
-      toast.success('Dados sincronizados (MOCK)');
+      toast.success('Dados sincronizados com sucesso! (Preview)');
       
       // Reload metrics
       const metRes = await axios.get(
@@ -110,7 +110,7 @@ export default function AdsIntegration() {
       );
       setMetrics(prev => ({ ...prev, [provider]: metRes.data }));
     } catch (error) {
-      toast.error('Erro ao sincronizar');
+      toast.error('Erro ao sincronizar. Verifique suas credenciais.');
     } finally {
       setSyncing(null);
     }
