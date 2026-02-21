@@ -103,7 +103,7 @@ export default function CRMIntegration() {
       setFormData({});
       loadData();
     } catch (error) {
-      toast.error('Erro ao conectar CRM');
+      toast.error('Erro ao conectar CRM. Verifique suas credenciais.');
     }
   };
 
@@ -114,10 +114,10 @@ export default function CRMIntegration() {
         `${API}/brands/${currentBrand.brand_id}/crm/${provider}`,
         { headers: { Authorization: `Bearer ${token}` }}
       );
-      toast.success('CRM desconectado');
+      toast.success('CRM desconectado com sucesso');
       loadData();
     } catch (error) {
-      toast.error('Erro ao desconectar');
+      toast.error('Erro ao desconectar. Tente novamente.');
     }
   };
 
@@ -132,7 +132,7 @@ export default function CRMIntegration() {
       toast.success(response.data.message);
       loadData();
     } catch (error) {
-      toast.error('Erro ao importar dados');
+      toast.error('Erro ao importar dados. Verifique a conexão.');
     } finally {
       setImporting(null);
     }
