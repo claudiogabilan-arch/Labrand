@@ -41,27 +41,32 @@ Web application for brand management covering diagnosis, strategy creation, exec
 - Frontend features working (heatmap, personas, ROI, AI analysis)
 
 #### ✅ COMPLETED: CRM Integration Module (NEW)
-- **Backend endpoints:**
-  - `GET /api/crm/providers` - List available CRM providers
-  - `GET /api/brands/{id}/crm` - Get CRM integrations status
-  - `POST /api/brands/{id}/crm/connect` - Connect a CRM
-  - `DELETE /api/brands/{id}/crm/{provider}` - Disconnect CRM
-  - `POST /api/brands/{id}/crm/import` - Import contacts (MOCK)
-  - `GET /api/brands/{id}/crm/contacts` - List imported contacts
+- **Backend endpoints:** 6 endpoints for connect/disconnect/import/list
+- **Supported CRMs:** RD Station, HubSpot, Kommo
+- **Frontend features:** Cards, import, stats, contacts table
+- **Note:** Import is currently MOCK data. Real API integration pending.
 
-- **Supported CRMs:**
-  - RD Station
-  - HubSpot
-  - Kommo
+#### ✅ COMPLETED: Naming Module "Estúdio Onomástico" (NEW)
+- **Backend endpoints:**
+  - `GET /api/naming/criteria` - Evaluation criteria (7 criteria with weights)
+  - `GET /api/brands/{id}/naming` - List naming projects
+  - `GET /api/brands/{id}/naming/{id}` - Get project with names
+  - `POST /api/brands/{id}/naming` - Create project
+  - `POST /api/brands/{id}/naming/{id}/generate` - Generate names with AI (3 credits)
+  - `PUT /api/brands/{id}/naming/{id}/names/{id}/score` - Score a name
+  - `PUT /api/brands/{id}/naming/{id}/names/{id}/favorite` - Toggle favorite
+  - `DELETE /api/brands/{id}/naming/{id}/names/{id}` - Delete name
+  - `DELETE /api/brands/{id}/naming/{id}` - Delete project
 
 - **Frontend features:**
-  - Cards for each CRM with connect/disconnect
-  - Contact import with sync button
-  - Stats by stage (Lead, Qualified, Opportunity, Customer)
-  - Contacts table with filters by CRM
-  - Connection dialog with credential fields
+  - Project list with status (draft/generated)
+  - Context form (business, mission, values, audience, competitors, tone, style)
+  - AI name generation (10 names per request)
+  - Scoring system with 7 weighted criteria
+  - Favorite toggle
+  - Progress steps (Context → Generate → Evaluate)
 
-- **Note:** Import is currently MOCK data. Real API integration pending user credentials.
+- **Evaluation Criteria:** Memorabilidade, Pronúncia, Escrita, Unicidade, Significado, Sonoridade, Extensibilidade
 
 #### ✅ SYSTEM HEALTH
 - Frontend: RUNNING
