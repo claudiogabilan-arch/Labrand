@@ -63,14 +63,30 @@ export default function BrandTools() {
     setLoading(l => ({ ...l, report: true }));
     try {
       const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/reports/executive-pdf`, {
-        method: 'POST', headers, body: JSON.stringify({ sections: ['score', 'pillars', 'recommendations'] })
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sections: ['summary', 'pillars', 'score', 'recommendations'] })
       });
       if (res.ok) {
-        const data = await res.json();
-        toast({ title: 'Relatório gerado!', description: data.message });
+        // Download the PDF
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `labrand_relatorio_${currentBrand.name.toLowerCase().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        toast({ title: 'Relatório baixado!', description: 'PDF gerado e baixado com sucesso' });
         fetchReportHistory();
+      } else {
+        toast({ title: 'Erro', description: 'Falha ao gerar relatório', variant: 'destructive' });
       }
-    } catch (e) { toast({ title: 'Erro', description: 'Falha ao gerar relatório', variant: 'destructive' }); }
+    } catch (e) { 
+      console.error(e);
+      toast({ title: 'Erro', description: 'Falha ao gerar relatório', variant: 'destructive' }); 
+    }
     setLoading(l => ({ ...l, report: false }));
   };
 
