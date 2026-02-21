@@ -148,9 +148,15 @@ export default function Naming() {
       setPropulsor(project.propulsor || { archetype: '', tension: '' });
       setSemanticMap(project.semantic_map || null);
       setKeywords(project.keywords || []);
+      setSoundAnalysis(project.sound_analysis || null);
+      setGlobalCheck(project.global_check || null);
       
-      // Determine current step
-      if (response.data.names?.length > 0) setStep(5);
+      // Determine current step based on progress
+      if (response.data.names?.length > 0) {
+        if (project.global_check) setStep(7);
+        else if (project.sound_analysis) setStep(6);
+        else setStep(5);
+      }
       else if (project.semantic_map) setStep(4);
       else if (project.propulsor?.archetype) setStep(3);
       else setStep(2);
