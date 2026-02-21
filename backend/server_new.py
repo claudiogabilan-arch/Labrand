@@ -63,6 +63,7 @@ api_router.include_router(touchpoints_router)
 api_router.include_router(admin_router)
 api_router.include_router(extras_router)
 api_router.include_router(naming_router)
+api_router.include_router(reports_router)
 
 # Include the main API router
 app.include_router(api_router)
