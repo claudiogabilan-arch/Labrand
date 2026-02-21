@@ -48,6 +48,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Touchpoints from "./pages/Touchpoints";
 import CRMIntegration from "./pages/CRMIntegration";
 import Naming from "./pages/Naming";
+import AdsIntegration from "./pages/AdsIntegration";
 import "./App.css";
 
 // Router wrapper to handle auth callback
