@@ -80,37 +80,7 @@ async def get_unified_brand_score(brand_id: str, user: dict = Depends(get_curren
         ]
     }
 
-@router.post("/brands/{brand_id}/reports/executive-pdf")
-async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user: dict = Depends(get_current_user)):
-    brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
-    if not brand:
-        raise HTTPException(status_code=404, detail="Marca não encontrada")
-    
-    pillars = await db.pillars.find({"brand_id": brand_id}, {"_id": 0}).to_list(10)
-    maturity = await db.maturity_diagnosis.find_one({"brand_id": brand_id}, {"_id": 0})
-    
-    report_data = {
-        "report_id": f"rep_{uuid.uuid4().hex[:12]}", "brand_id": brand_id,
-        "brand_name": brand.get("name", "N/A"), "generated_at": datetime.now(timezone.utc).isoformat(),
-        "sections_included": request.sections,
-        "executive_summary": {
-            "overall_health": "Bom",
-            "key_strengths": ["Posicionamento claro", "Valores bem definidos"],
-            "areas_for_improvement": ["Expandir touchpoints digitais", "Aumentar consistência visual"],
-            "priority_actions": ["Revisar identidade visual", "Mapear jornada do cliente"]
-        },
-        "pillar_summary": [{"name": p.get("pillar_type", ""), "status": "complete" if p.get("answers") else "pending"} for p in pillars],
-        "maturity_level": maturity.get("level", "Em análise") if maturity else "Não avaliado",
-        "download_ready": True, "message": "Relatório PDF executivo gerado! (MOCK)"
-    }
-    
-    await db.executive_reports.insert_one({**report_data, "user_id": user["user_id"], "_created": datetime.now(timezone.utc)})
-    return report_data
-
-@router.get("/brands/{brand_id}/reports/history")
-async def get_report_history(brand_id: str, user: dict = Depends(get_current_user)):
-    reports = await db.executive_reports.find({"brand_id": brand_id}, {"_id": 0}).sort("generated_at", -1).to_list(50)
-    return {"reports": reports, "total": len(reports)}
+# PDF Reports movidos para /routes/reports.py
 
 @router.get("/brands/{brand_id}/alerts/config")
 async def get_alert_config(brand_id: str, user: dict = Depends(get_current_user)):
