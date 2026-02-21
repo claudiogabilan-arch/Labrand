@@ -499,6 +499,18 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/ads"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <AdsIntegration />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
