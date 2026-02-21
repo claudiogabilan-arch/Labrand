@@ -17,7 +17,7 @@ import { useToast } from '../hooks/use-toast';
 import {
   BarChart3, FileText, Bell, MessageCircle, Users, Sparkles,
   TrendingUp, Download, Send, RefreshCw, Loader2, CheckCircle,
-  AlertTriangle, Target, Zap, Copy, Heart
+  AlertTriangle, Target, Zap, Copy, Heart, Award, ArrowUp, ArrowDown
 } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -37,6 +37,7 @@ export default function BrandTools() {
   const [competitorAnalysis, setCompetitorAnalysis] = useState(null);
   const [contentTypes, setContentTypes] = useState([]);
   const [generatedContent, setGeneratedContent] = useState(null);
+  const [brandEquity, setBrandEquity] = useState(null);
 
   // Form states
   const [competitors, setCompetitors] = useState('');
@@ -178,6 +179,17 @@ export default function BrandTools() {
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     toast({ title: 'Copiado!', description: 'Texto copiado para a área de transferência' });
+  };
+
+  // Brand Equity
+  const fetchBrandEquity = async () => {
+    if (!currentBrand) return;
+    setLoading(l => ({ ...l, equity: true }));
+    try {
+      const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/brand-equity`, { headers });
+      if (res.ok) setBrandEquity(await res.json());
+    } catch (e) { console.error(e); }
+    setLoading(l => ({ ...l, equity: false }));
   };
 
   useEffect(() => {
