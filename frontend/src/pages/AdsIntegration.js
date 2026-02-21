@@ -74,7 +74,7 @@ export default function AdsIntegration() {
       setFormData({ account_id: '', access_token: '' });
       loadData();
     } catch (error) {
-      toast.error('Erro ao conectar');
+      toast.error('Erro ao conectar. Verifique os dados informados.');
     }
   };
 
@@ -85,11 +85,11 @@ export default function AdsIntegration() {
         `${API}/brands/${currentBrand.brand_id}/ads/${provider}`,
         { headers: { Authorization: `Bearer ${token}` }}
       );
-      toast.success('Desconectado');
+      toast.success('Provedor desconectado com sucesso');
       setMetrics(prev => ({ ...prev, [provider]: null }));
       loadData();
     } catch (error) {
-      toast.error('Erro ao desconectar');
+      toast.error('Erro ao desconectar. Tente novamente.');
     }
   };
 
