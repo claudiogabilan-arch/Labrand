@@ -964,17 +964,193 @@ export default function Naming() {
         </Card>
       )}
 
-      {/* Step 5: Names List & Evaluation */}
+      {/* Step 5: Sound Analysis (Laboratório Sonoro) */}
       {step === 5 && names.length > 0 && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Volume2 className="h-5 w-5" /> Etapa 5: Laboratório Sonoro®
+              </CardTitle>
+              <CardDescription>
+                Analise a fonética e sonoridade dos nomes gerados
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2 mb-4">
+                {names.slice(0, 10).map(n => (
+                  <Badge key={n.name_id} variant="outline">{n.name}</Badge>
+                ))}
+              </div>
+              
+              <Button onClick={handleSoundAnalysis} disabled={generating} className="w-full">
+                {generating ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Analisando...</>
+                ) : (
+                  <><Volume2 className="h-4 w-4 mr-2" /> Analisar Sonoridade (1 crédito)</>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {soundAnalysis && soundAnalysis.analysis && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Análise Fonética</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {soundAnalysis.analysis.map((item, idx) => (
+                  <div key={idx} className="p-4 bg-muted/50 rounded-lg space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-bold">{item.name}</span>
+                      <Badge variant={item.pronunciation_score >= 7 ? 'default' : 'secondary'}>
+                        Pronúncia: {item.pronunciation_score}/10
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                      <div><span className="text-muted-foreground">Sílabas:</span> {item.syllables}</div>
+                      <div><span className="text-muted-foreground">Ritmo:</span> {item.rhythm}</div>
+                    </div>
+                    <p className="text-sm"><span className="text-muted-foreground">Sons:</span> {item.sounds}</p>
+                    {item.patterns && <p className="text-sm"><span className="text-muted-foreground">Padrões:</span> {item.patterns}</p>}
+                    {item.variations?.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        <span className="text-sm text-muted-foreground">Variações:</span>
+                        {item.variations.map((v, i) => (
+                          <Badge key={i} variant="outline" className="text-xs">{v}</Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                
+                {soundAnalysis.best_for_jingle && (
+                  <div className="p-3 bg-green-500/10 rounded-lg">
+                    <p className="text-sm"><strong>Mais musical:</strong> {soundAnalysis.best_for_jingle}</p>
+                  </div>
+                )}
+                {soundAnalysis.easiest_to_say && (
+                  <div className="p-3 bg-blue-500/10 rounded-lg">
+                    <p className="text-sm"><strong>Mais fácil de falar:</strong> {soundAnalysis.easiest_to_say}</p>
+                  </div>
+                )}
+
+                <Button onClick={() => setStep(6)} className="w-full">
+                  <ChevronRight className="h-4 w-4 mr-2" /> Próxima Etapa: Verificação Global
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Step 6: Global Check (Fricção Global) */}
+      {step === 6 && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5" /> Etapa 6: Fricção Global®
+              </CardTitle>
+              <CardDescription>
+                Verifique como os nomes funcionam em diferentes idiomas e culturas
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2 mb-4">
+                {names.slice(0, 10).map(n => (
+                  <Badge key={n.name_id} variant="outline">{n.name}</Badge>
+                ))}
+              </div>
+              
+              <div className="text-sm text-muted-foreground">
+                Idiomas verificados: Português, Espanhol, Inglês, Francês, Alemão, Italiano, Chinês
+              </div>
+              
+              <Button onClick={handleGlobalCheck} disabled={generating} className="w-full">
+                {generating ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Verificando...</>
+                ) : (
+                  <><Globe className="h-4 w-4 mr-2" /> Verificar Internacionalmente (2 créditos)</>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {globalCheck && globalCheck.global_analysis && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Análise Internacional</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {globalCheck.global_analysis.map((item, idx) => (
+                  <div key={idx} className="p-4 bg-muted/50 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-bold">{item.name}</span>
+                      <Badge variant={item.overall_score >= 7 ? 'default' : item.overall_score >= 5 ? 'secondary' : 'destructive'}>
+                        Score Global: {item.overall_score}/10
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {item.languages && Object.entries(item.languages).map(([lang, data]) => (
+                        <div key={lang} className={`p-2 rounded text-sm ${data.warning ? 'bg-yellow-500/10' : 'bg-muted'}`}>
+                          <div className="flex items-center justify-between">
+                            <span className="capitalize font-medium">{lang}</span>
+                            <span>{data.score}/10</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{data.notes}</p>
+                          {data.warning && <AlertTriangle className="h-3 w-3 text-yellow-500 mt-1" />}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {item.alerts?.length > 0 && (
+                      <div className="p-2 bg-red-500/10 rounded">
+                        <p className="text-sm text-red-600 flex items-center gap-1">
+                          <AlertTriangle className="h-4 w-4" /> {item.alerts.join(', ')}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {item.recommendation && (
+                      <p className="text-sm italic">{item.recommendation}</p>
+                    )}
+                  </div>
+                ))}
+                
+                {globalCheck.safest_globally && (
+                  <div className="p-3 bg-green-500/10 rounded-lg flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <p><strong>Mais seguro globalmente:</strong> {globalCheck.safest_globally}</p>
+                  </div>
+                )}
+
+                <Button onClick={() => setStep(7)} className="w-full">
+                  <ChevronRight className="h-4 w-4 mr-2" /> Próxima Etapa: Avaliação Final
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Step 7: Final Evaluation & Export */}
+      {step === 7 && names.length > 0 && (
         <>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Star className="h-5 w-5" /> Etapa 5: Avaliação
+              <Star className="h-5 w-5" /> Etapa 7: Avaliação Final
             </h2>
-            <Button variant="outline" onClick={handleGenerate} disabled={generating}>
-              {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
-              Gerar mais
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleExportPDF}>
+                <Download className="h-4 w-4 mr-2" /> Exportar Relatório
+              </Button>
+              <Button variant="outline" onClick={handleGenerate} disabled={generating}>
+                {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
+                Gerar mais
+              </Button>
+            </div>
           </div>
 
           <div className="grid gap-4">
@@ -996,8 +1172,42 @@ export default function Naming() {
                       {name.rationale && (
                         <p className="text-sm text-muted-foreground mt-2 italic">"{name.rationale}"</p>
                       )}
+                      
+                      {/* Availability Check */}
+                      {availability[name.name] && (
+                        <div className="mt-3 p-3 bg-muted/50 rounded-lg">
+                          <p className="text-sm font-medium mb-2">Disponibilidade:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(availability[name.name].domains || {}).map(([domain, available]) => (
+                              <Badge key={domain} variant={available ? 'default' : 'secondary'} className="text-xs">
+                                {available ? <CheckCircle className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
+                                {domain}
+                              </Badge>
+                            ))}
+                          </div>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {Object.entries(availability[name.name].social_media || {}).map(([social, available]) => (
+                              <Badge key={social} variant={available ? 'outline' : 'secondary'} className="text-xs">
+                                {available ? '✓' : '✗'} {social}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleCheckAvailability(name.name)}
+                        disabled={checkingAvailability === name.name}
+                      >
+                        {checkingAvailability === name.name ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <ExternalLink className="h-4 w-4" />
+                        )}
+                      </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleToggleFavorite(name.name_id)}>
                         {name.is_favorite ? <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" /> : <StarOff className="h-4 w-4" />}
                       </Button>
