@@ -244,6 +244,132 @@ export default function BrandTools() {
           </TabsTrigger>
         </TabsList>
 
+        {/* TAB 0: Brand Equity Score */}
+        <TabsContent value="equity" className="space-y-4" data-testid="tab-content-equity">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-amber-500" />
+                Brand Equity Score
+              </CardTitle>
+              <CardDescription>Valor da marca baseado no modelo de Aaker (5 dimensões)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!brandEquity ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">Calcule o valor estratégico da sua marca</p>
+                  <Button onClick={fetchBrandEquity} disabled={loading.equity} data-testid="calc-equity-btn">
+                    {loading.equity ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Award className="h-4 w-4 mr-2" />}
+                    Calcular Brand Equity
+                  </Button>
+                </div>
+              ) : loading.equity ? (
+                <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Score Principal */}
+                  <div className="flex items-center gap-6">
+                    <div className="relative w-36 h-36">
+                      <svg className="w-36 h-36 transform -rotate-90">
+                        <circle cx="72" cy="72" r="64" stroke="currentColor" strokeWidth="12" fill="none" className="text-muted" />
+                        <circle cx="72" cy="72" r="64" stroke="currentColor" strokeWidth="12" fill="none"
+                          className={brandEquity.status === 'excellent' ? 'text-amber-500' : brandEquity.status === 'good' ? 'text-green-500' : brandEquity.status === 'developing' ? 'text-blue-500' : 'text-gray-400'}
+                          strokeDasharray={`${brandEquity.equity_score * 4.02} 402`} strokeLinecap="round" />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center flex-col">
+                        <span className="text-4xl font-bold">{brandEquity.equity_score}</span>
+                        <span className="text-xs text-muted-foreground">Equity</span>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge className={brandEquity.status === 'excellent' ? 'bg-amber-500' : brandEquity.status === 'good' ? 'bg-green-500' : 'bg-blue-500'}>
+                          {brandEquity.level}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">Multiplicador: {brandEquity.valuation_multiplier}x</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Brand Equity mede o valor agregado que sua marca traz além do produto/serviço em si.
+                      </p>
+                      {brandEquity.benchmark && (
+                        <div className="flex items-center gap-2 text-sm">
+                          {brandEquity.benchmark.gap_to_average >= 0 ? (
+                            <><ArrowUp className="h-4 w-4 text-green-500" /><span className="text-green-600">{brandEquity.benchmark.gap_to_average} pontos acima da média do setor</span></>
+                          ) : (
+                            <><ArrowDown className="h-4 w-4 text-red-500" /><span className="text-red-600">{Math.abs(brandEquity.benchmark.gap_to_average)} pontos abaixo da média do setor</span></>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 5 Dimensões */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm">5 Dimensões do Brand Equity</h4>
+                    {Object.entries(brandEquity.dimensions || {}).map(([key, dim]) => (
+                      <div key={key} className="p-3 border rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">{dim.name}</span>
+                            <Badge variant="outline" className="text-xs">Peso: {dim.weight}%</Badge>
+                          </div>
+                          <span className={`text-sm font-bold ${dim.status === 'high' ? 'text-green-600' : dim.status === 'medium' ? 'text-amber-600' : 'text-red-600'}`}>
+                            {dim.score}%
+                          </span>
+                        </div>
+                        <Progress value={dim.score} className={`h-2 ${dim.status === 'high' ? '[&>div]:bg-green-500' : dim.status === 'medium' ? '[&>div]:bg-amber-500' : '[&>div]:bg-red-500'}`} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Recomendações */}
+                  {brandEquity.recommendations?.length > 0 && (
+                    <div className="p-4 bg-muted/50 rounded-lg">
+                      <h4 className="font-medium mb-3 flex items-center gap-2">
+                        <Target className="h-4 w-4" /> Recomendações para Aumentar o Equity
+                      </h4>
+                      <div className="space-y-2">
+                        {brandEquity.recommendations.map((rec, i) => (
+                          <div key={i} className="flex items-start gap-2 text-sm">
+                            <Badge variant={rec.priority === 'alta' ? 'destructive' : 'secondary'} className="text-xs shrink-0">
+                              {rec.priority}
+                            </Badge>
+                            <div>
+                              <span className="font-medium">{rec.dimension}:</span> {rec.action}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Benchmark */}
+                  {brandEquity.benchmark && (
+                    <div className="grid grid-cols-3 gap-4 p-4 border rounded-lg">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-primary">{brandEquity.equity_score}</p>
+                        <p className="text-xs text-muted-foreground">Sua Marca</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold">{brandEquity.benchmark.industry_average}</p>
+                        <p className="text-xs text-muted-foreground">Média do Setor</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-amber-500">{brandEquity.benchmark.industry_top_10}</p>
+                        <p className="text-xs text-muted-foreground">Top 10%</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <Button onClick={fetchBrandEquity} variant="outline" size="sm">
+                    <RefreshCw className="h-4 w-4 mr-2" /> Recalcular
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* TAB 1: Brand Score Unificado */}
         <TabsContent value="score" className="space-y-4" data-testid="tab-content-score">
           <Card>
