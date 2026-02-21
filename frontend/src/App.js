@@ -46,6 +46,7 @@ import MaturityDiagnosis from "./pages/MaturityDiagnosis";
 import AICredits from "./pages/AICredits";
 import AdminDashboard from "./pages/AdminDashboard";
 import Touchpoints from "./pages/Touchpoints";
+import CRMIntegration from "./pages/CRMIntegration";
 import "./App.css";
 
 // Router wrapper to handle auth callback
