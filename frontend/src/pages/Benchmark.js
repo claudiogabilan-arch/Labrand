@@ -53,16 +53,30 @@ export default function Benchmark() {
   const { token } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [groups, setGroups] = useState([]);
+  const [showNewGroup, setShowNewGroup] = useState(false);
+  const [newGroup, setNewGroup] = useState({ name: '', segment: '', region: '' });
+  const [editingGroup, setEditingGroup] = useState(null);
+  const [newCompetitor, setNewCompetitor] = useState({ name: '', strength: 50, rbi: 50 });
 
   useEffect(() => {
     const fetchData = async () => {
       if (!currentBrand) return;
       setLoading(true);
       try {
-        const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/benchmark`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) setData(await res.json());
+        const [benchRes, groupsRes] = await Promise.all([
+          fetch(`${API}/api/brands/${currentBrand.brand_id}/benchmark`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch(`${API}/api/brands/${currentBrand.brand_id}/competitor-groups`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+        if (benchRes.ok) setData(await benchRes.json());
+        if (groupsRes.ok) {
+          const gData = await groupsRes.json();
+          setGroups(gData.groups || []);
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -71,6 +85,69 @@ export default function Benchmark() {
     };
     fetchData();
   }, [currentBrand, token]);
+
+  const handleCreateGroup = async () => {
+    if (!newGroup.name) return;
+    try {
+      const res = await axios.post(
+        `${API}/api/brands/${currentBrand.brand_id}/competitor-groups?name=${encodeURIComponent(newGroup.name)}&segment=${encodeURIComponent(newGroup.segment)}&region=${encodeURIComponent(newGroup.region)}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      setGroups([...groups, res.data]);
+      setShowNewGroup(false);
+      setNewGroup({ name: '', segment: '', region: '' });
+      toast.success('Grupo criado!');
+    } catch (err) {
+      toast.error('Erro ao criar grupo');
+    }
+  };
+
+  const handleAddCompetitor = async () => {
+    if (!editingGroup || !newCompetitor.name) return;
+    const updated = [...(editingGroup.competitors || []), { ...newCompetitor, id: Date.now() }];
+    try {
+      await axios.put(
+        `${API}/api/brands/${currentBrand.brand_id}/competitor-groups/${editingGroup.group_id}`,
+        updated,
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }}
+      );
+      setGroups(groups.map(g => g.group_id === editingGroup.group_id ? { ...g, competitors: updated } : g));
+      setEditingGroup({ ...editingGroup, competitors: updated });
+      setNewCompetitor({ name: '', strength: 50, rbi: 50 });
+      toast.success('Concorrente adicionado!');
+    } catch (err) {
+      toast.error('Erro ao adicionar');
+    }
+  };
+
+  const handleRemoveCompetitor = async (compId) => {
+    const updated = editingGroup.competitors.filter(c => c.id !== compId);
+    try {
+      await axios.put(
+        `${API}/api/brands/${currentBrand.brand_id}/competitor-groups/${editingGroup.group_id}`,
+        updated,
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }}
+      );
+      setGroups(groups.map(g => g.group_id === editingGroup.group_id ? { ...g, competitors: updated } : g));
+      setEditingGroup({ ...editingGroup, competitors: updated });
+    } catch (err) {
+      toast.error('Erro ao remover');
+    }
+  };
+
+  const handleDeleteGroup = async (groupId) => {
+    try {
+      await axios.delete(
+        `${API}/api/brands/${currentBrand.brand_id}/competitor-groups/${groupId}`,
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      setGroups(groups.filter(g => g.group_id !== groupId));
+      toast.success('Grupo removido');
+    } catch (err) {
+      toast.error('Erro ao remover');
+    }
+  };
 
   if (!currentBrand) {
     return (
