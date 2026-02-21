@@ -72,6 +72,10 @@ export default function Naming() {
   const [semanticMap, setSemanticMap] = useState(null);
   const [keywords, setKeywords] = useState([]);
   const [newKeyword, setNewKeyword] = useState('');
+  const [soundAnalysis, setSoundAnalysis] = useState(null);
+  const [globalCheck, setGlobalCheck] = useState(null);
+  const [availability, setAvailability] = useState({});
+  const [checkingAvailability, setCheckingAvailability] = useState(null);
   
   const [formData, setFormData] = useState({
     project_name: '',
