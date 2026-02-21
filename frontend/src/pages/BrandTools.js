@@ -220,7 +220,10 @@ export default function BrandTools() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-6 w-full">
+        <TabsList className="grid grid-cols-7 w-full">
+          <TabsTrigger value="equity" className="flex items-center gap-1" data-testid="tab-equity">
+            <Award className="h-4 w-4" /> Equity
+          </TabsTrigger>
           <TabsTrigger value="score" className="flex items-center gap-1" data-testid="tab-score">
             <BarChart3 className="h-4 w-4" /> Score
           </TabsTrigger>
@@ -234,7 +237,7 @@ export default function BrandTools() {
             <MessageCircle className="h-4 w-4" /> Social
           </TabsTrigger>
           <TabsTrigger value="competitors" className="flex items-center gap-1" data-testid="tab-competitors">
-            <Users className="h-4 w-4" /> Concorrentes
+            <Users className="h-4 w-4" /> IA
           </TabsTrigger>
           <TabsTrigger value="content" className="flex items-center gap-1" data-testid="tab-content">
             <Sparkles className="h-4 w-4" /> Conteúdo
