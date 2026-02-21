@@ -114,6 +114,29 @@ O backend foi refatorado de um arquivo monolítico (5300+ linhas) para arquitetu
 
 **Testes:** 100% backend (21 testes) + 100% frontend (Dashboard, brand-tools, naming)
 
+#### ✅ COMPLETED: Brand Equity Score (Inteligência Avançada)
+
+**Implementação baseada no modelo de Aaker (5 dimensões):**
+- `GET /api/brands/{id}/brand-equity` - Calcula Brand Equity Score
+- `GET /api/brands/{id}/brand-equity/history` - Histórico do score
+- `GET /api/brands/{id}/brand-equity/comparison` - Comparação com benchmark
+
+**5 Dimensões calculadas:**
+1. **Conhecimento de Marca (20%)** - Baseado em impressões de Ads
+2. **Associações de Marca (25%)** - Baseado em pilares preenchidos
+3. **Qualidade Percebida (20%)** - Baseado em touchpoints e maturidade
+4. **Lealdade à Marca (20%)** - Baseado em CRM e conversões
+5. **Ativos Proprietários (15%)** - Baseado em naming, logo, universo
+
+**Features:**
+- Score 0-100 com níveis (Inicial, Emergente, Em Desenvolvimento, Forte, Premium)
+- Multiplicador de valuation (0.5x a 3.5x)
+- Recomendações priorizadas para aumentar o equity
+- Benchmark com média do setor
+- Histórico de evolução (6 meses)
+
+**Frontend:** Nova aba "Equity" em /brand-tools (primeira aba)
+
 ---
 
 ### 2026-02-18 (Session 5)
