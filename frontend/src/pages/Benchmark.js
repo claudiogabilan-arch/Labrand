@@ -97,9 +97,9 @@ export default function Benchmark() {
       setGroups([...groups, res.data]);
       setShowNewGroup(false);
       setNewGroup({ name: '', segment: '', region: '' });
-      toast.success('Grupo criado!');
+      toast.success('Grupo criado com sucesso!');
     } catch (err) {
-      toast.error('Erro ao criar grupo');
+      toast.error('Erro ao criar grupo. Tente novamente.');
     }
   };
 
@@ -117,7 +117,7 @@ export default function Benchmark() {
       setNewCompetitor({ name: '', strength: 50, rbi: 50 });
       toast.success('Concorrente adicionado!');
     } catch (err) {
-      toast.error('Erro ao adicionar');
+      toast.error('Erro ao adicionar concorrente. Tente novamente.');
     }
   };
 
@@ -132,7 +132,7 @@ export default function Benchmark() {
       setGroups(groups.map(g => g.group_id === editingGroup.group_id ? { ...g, competitors: updated } : g));
       setEditingGroup({ ...editingGroup, competitors: updated });
     } catch (err) {
-      toast.error('Erro ao remover');
+      toast.error('Erro ao remover concorrente. Tente novamente.');
     }
   };
 
@@ -143,9 +143,9 @@ export default function Benchmark() {
         { headers: { Authorization: `Bearer ${token}` }}
       );
       setGroups(groups.filter(g => g.group_id !== groupId));
-      toast.success('Grupo removido');
+      toast.success('Grupo removido com sucesso');
     } catch (err) {
-      toast.error('Erro ao remover');
+      toast.error('Erro ao remover grupo. Tente novamente.');
     }
   };
 
