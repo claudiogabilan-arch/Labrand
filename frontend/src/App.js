@@ -486,6 +486,18 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/naming"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <Naming />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
