@@ -29,7 +29,40 @@ Web application for brand management covering diagnosis, strategy creation, exec
 
 ## Changelog
 
-### 2026-02-21 (Session 6 - Current)
+### 2026-02-21 (Session 7 - Current)
+
+#### ✅ COMPLETED: Limpeza de Código e Correção de Arquitetura
+
+**Ações realizadas:**
+
+1. **Arquivo Bridge `server.py` Criado:**
+   - O supervisor aponta para `server:app`, então criamos um arquivo bridge que importa do `server_new.py`
+   - Isso permite manter a arquitetura modular sem modificar configurações do supervisor
+   - Arquivo original monolítico removido com sucesso
+
+2. **Router de Reports Integrado:**
+   - `reports.py` agora está corretamente incluído no `server_new.py`
+   - Endpoints `/api/brands/{id}/reports/executive-pdf` funcionando
+   - Geração REAL de PDF com ReportLab (não mais mock)
+
+3. **PDF Generation FUNCIONANDO:**
+   - Content-Type: application/pdf ✅
+   - Arquivo binário válido (%PDF-1.4) ✅
+   - Histórico de relatórios mantido no MongoDB ✅
+
+**Estrutura Final do Backend:**
+```
+/app/backend/
+├── server.py              # Bridge → imports from server_new.py
+├── server_new.py          # Modular entry point (16 routers)
+└── routes/
+    ├── reports.py         # PDF generation (NOVO - agora integrado)
+    └── ... (15 outros routers)
+```
+
+---
+
+### 2026-02-21 (Session 6)
 
 #### ✅ COMPLETED: 6 Brand Tools Features (Alto Impacto + Diferenciação)
 
