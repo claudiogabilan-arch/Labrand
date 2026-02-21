@@ -49,24 +49,30 @@ Web application for brand management covering diagnosis, strategy creation, exec
 #### ✅ COMPLETED: Naming Module "Estúdio Onomástico" (NEW)
 - **Backend endpoints:**
   - `GET /api/naming/criteria` - Evaluation criteria (7 criteria with weights)
+  - `GET /api/naming/archetypes` - 12 archetypes + 8 tension examples (NEW)
   - `GET /api/brands/{id}/naming` - List naming projects
   - `GET /api/brands/{id}/naming/{id}` - Get project with names
   - `POST /api/brands/{id}/naming` - Create project
+  - `PUT /api/brands/{id}/naming/{id}/propulsor` - Save archetype/tension (NEW)
+  - `POST /api/brands/{id}/naming/{id}/semantic-map` - Generate semantic map (1 credit) (NEW)
   - `POST /api/brands/{id}/naming/{id}/generate` - Generate names with AI (3 credits)
   - `PUT /api/brands/{id}/naming/{id}/names/{id}/score` - Score a name
   - `PUT /api/brands/{id}/naming/{id}/names/{id}/favorite` - Toggle favorite
   - `DELETE /api/brands/{id}/naming/{id}/names/{id}` - Delete name
   - `DELETE /api/brands/{id}/naming/{id}` - Delete project
 
-- **Frontend features:**
-  - Project list with status (draft/generated)
-  - Context form (business, mission, values, audience, competitors, tone, style)
-  - AI name generation (10 names per request)
-  - Scoring system with 7 weighted criteria
-  - Favorite toggle
-  - Progress steps (Context → Generate → Evaluate)
+- **5 Etapas Implementadas:**
+  1. **Essência Decode®** - Formulário de contexto (negócio, missão, valores, público)
+  2. **Fator Propulsor®** - Seleção de arquétipo (12 opções) + tensão criativa (8 exemplos)
+  3. **Arquétipos Vivos®** - Mapa semântico com IA (keywords, conceitos, metáforas, palavras estrangeiras)
+  4. **Geração** - Criação de nomes com IA
+  5. **Avaliação** - Scoring com 7 critérios ponderados + favoritos
 
-- **Evaluation Criteria:** Memorabilidade, Pronúncia, Escrita, Unicidade, Significado, Sonoridade, Extensibilidade
+- **12 Arquétipos de Marca:** Herói, Mago, Rebelde, Explorador, Sábio, Inocente, Criador, Governante, Cuidador, Cara Comum, Amante, Bobo da Corte
+
+- **Custo de IA:**
+  - Mapa Semântico: 1 crédito
+  - Geração de Nomes: 3 créditos
 
 #### ✅ SYSTEM HEALTH
 - Frontend: RUNNING
