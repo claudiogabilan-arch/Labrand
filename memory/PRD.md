@@ -64,6 +64,20 @@ Web application for brand management covering diagnosis, strategy creation, exec
   - 12 Arquétipos de marca com keywords e exemplos
   - 8 exemplos de tensões criativas
 
+#### ✅ COMPLETED: Onboarding & Benchmark Improvements
+- **Templates API:**
+  - `GET /api/templates/pillars?sector=X` - Templates por pilar e setor
+  - `GET /api/templates/sectors` - Lista de 12 setores
+  - Templates para: Purpose, Values, Promise, Positioning
+  - Setores: Tecnologia, Saúde, Educação, Varejo, Financeiro, Indústria, etc.
+
+- **Benchmark com Grupos de Concorrentes:**
+  - `GET /api/brands/{id}/competitor-groups` - Listar grupos
+  - `POST /api/brands/{id}/competitor-groups` - Criar grupo
+  - `PUT /api/brands/{id}/competitor-groups/{id}` - Atualizar concorrentes
+  - `DELETE /api/brands/{id}/competitor-groups/{id}` - Remover grupo
+  - Frontend: Criar grupos por segmento/região, adicionar concorrentes com scores
+
 #### ✅ SYSTEM HEALTH
 - Frontend: RUNNING
 - Backend: RUNNING  
