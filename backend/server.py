@@ -3959,6 +3959,193 @@ Responda em JSON:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.post("/brands/{brand_id}/naming/{project_id}/sound-lab")
+async def analyze_sound(brand_id: str, project_id: str, names: List[str] = [], user: dict = Depends(get_current_user)):
+    """Laboratório Sonoro - Analyze phonetics of names (1 credit)"""
+    if not names:
+        raise HTTPException(status_code=400, detail="Insira pelo menos um nome")
+    
+    success, result = await deduct_ai_credits(user["user_id"], "sound_lab", 1)
+    if not success:
+        raise HTTPException(status_code=402, detail=result)
+    
+    try:
+        prompt = f"""Analise a sonoridade e fonética dos seguintes nomes de marca:
+
+NOMES: {', '.join(names)}
+
+Para cada nome, forneça:
+1. Número de sílabas
+2. Ritmo (ex: "forte-fraco", "crescente", "decrescente")
+3. Sons predominantes (vogais abertas/fechadas, consoantes fortes/suaves)
+4. Facilidade de pronúncia (1-10)
+5. Aliterações ou padrões sonoros interessantes
+6. Sugestões de variações fonéticas
+
+Responda em JSON:
+{{
+  "analysis": [
+    {{
+      "name": "Nome",
+      "syllables": 3,
+      "rhythm": "forte-fraco-fraco",
+      "sounds": "vogais abertas, consoantes suaves",
+      "pronunciation_score": 8,
+      "patterns": "aliteração em 'n'",
+      "variations": ["Variação1", "Variação2"]
+    }}
+  ],
+  "best_for_jingle": "Nome mais musical",
+  "easiest_to_say": "Nome mais fácil"
+}}"""
+
+        response = await call_llm(prompt)
+        
+        import re
+        json_match = re.search(r'\{[\s\S]*\}', response)
+        sound_data = json.loads(json_match.group()) if json_match else {"analysis": []}
+        
+        await db.naming_projects.update_one(
+            {"project_id": project_id},
+            {"$set": {"sound_analysis": sound_data, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        return {"success": True, "sound_analysis": sound_data, "credits_used": 1}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/brands/{brand_id}/naming/{project_id}/global-check")
+async def check_global_friction(brand_id: str, project_id: str, names: List[str] = [], user: dict = Depends(get_current_user)):
+    """Fricção Global - Check names in multiple languages (2 credits)"""
+    if not names:
+        raise HTTPException(status_code=400, detail="Insira pelo menos um nome")
+    
+    success, result = await deduct_ai_credits(user["user_id"], "global_check", 2)
+    if not success:
+        raise HTTPException(status_code=402, detail=result)
+    
+    try:
+        prompt = f"""Analise os seguintes nomes de marca para uso internacional:
+
+NOMES: {', '.join(names)}
+
+IDIOMAS A VERIFICAR: Português, Espanhol, Inglês, Francês, Alemão, Italiano, Chinês (Mandarim)
+
+Para cada nome, verifique:
+1. Facilidade de pronúncia em cada idioma
+2. Possíveis significados negativos ou embaraçosos
+3. Conotações culturais problemáticas
+4. Similaridade com palavras ofensivas
+5. Dificuldades de escrita/digitação
+
+Responda em JSON:
+{{
+  "global_analysis": [
+    {{
+      "name": "Nome",
+      "overall_score": 8,
+      "languages": {{
+        "português": {{"score": 9, "notes": "Fácil pronúncia"}},
+        "espanhol": {{"score": 7, "notes": "Pode soar como...", "warning": false}},
+        "inglês": {{"score": 8, "notes": "Neutro"}},
+        "francês": {{"score": 6, "notes": "Difícil pronúncia do R", "warning": true}},
+        "alemão": {{"score": 7, "notes": "OK"}},
+        "italiano": {{"score": 8, "notes": "Sonoro"}},
+        "chinês": {{"score": 5, "notes": "Sem significado direto", "warning": false}}
+      }},
+      "alerts": ["Alerta específico se houver"],
+      "recommendation": "Recomendação geral"
+    }}
+  ],
+  "safest_globally": "Nome mais seguro internacionalmente",
+  "avoid_in_markets": {{"NomeX": ["espanhol", "francês"]}}
+}}"""
+
+        response = await call_llm(prompt)
+        
+        import re
+        json_match = re.search(r'\{[\s\S]*\}', response)
+        global_data = json.loads(json_match.group()) if json_match else {"global_analysis": []}
+        
+        await db.naming_projects.update_one(
+            {"project_id": project_id},
+            {"$set": {"global_check": global_data, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        return {"success": True, "global_check": global_data, "credits_used": 2}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/brands/{brand_id}/naming/{project_id}/check-availability")
+async def check_domain_availability(brand_id: str, project_id: str, name: str, user: dict = Depends(get_current_user)):
+    """Mock - Check domain and social media availability"""
+    # This is a MOCK - in production would call real APIs
+    import random
+    
+    name_lower = name.lower().replace(" ", "")
+    
+    # Simulate availability (random for demo)
+    domains = {
+        f"{name_lower}.com": random.choice([True, False, False]),  # .com usually taken
+        f"{name_lower}.com.br": random.choice([True, True, False]),
+        f"{name_lower}.io": random.choice([True, True, False]),
+        f"{name_lower}.co": random.choice([True, False]),
+    }
+    
+    social = {
+        "instagram": random.choice([True, True, False]),
+        "twitter": random.choice([True, False]),
+        "linkedin": random.choice([True, True, True]),
+        "facebook": random.choice([True, False]),
+        "tiktok": random.choice([True, True, False]),
+    }
+    
+    return {
+        "name": name,
+        "domains": domains,
+        "social_media": social,
+        "note": "MOCK - Verificação simulada para demonstração"
+    }
+
+@api_router.get("/brands/{brand_id}/naming/{project_id}/export-pdf")
+async def export_naming_pdf(brand_id: str, project_id: str, user: dict = Depends(get_current_user)):
+    """Generate PDF report for naming project"""
+    project = await db.naming_projects.find_one({"project_id": project_id, "brand_id": brand_id}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    names = await db.naming_names.find({"project_id": project_id}, {"_id": 0}).sort("total_score", -1).to_list(100)
+    
+    # Get archetype info
+    archetype_info = None
+    if project.get("propulsor", {}).get("archetype"):
+        for arch in ARCHETYPES:
+            if arch["id"] == project["propulsor"]["archetype"]:
+                archetype_info = arch
+                break
+    
+    # Build report data
+    report = {
+        "project_name": project.get("project_name"),
+        "created_at": project.get("created_at"),
+        "context": project.get("context", {}),
+        "propulsor": {
+            "archetype": archetype_info,
+            "tension": project.get("propulsor", {}).get("tension")
+        },
+        "semantic_map": project.get("semantic_map"),
+        "keywords": project.get("keywords", []),
+        "sound_analysis": project.get("sound_analysis"),
+        "global_check": project.get("global_check"),
+        "names": names,
+        "favorites": [n for n in names if n.get("is_favorite")],
+        "top_scored": names[:5] if names else []
+    }
+    
+    return {"report": report, "format": "json", "note": "Para gerar PDF, use uma biblioteca como jsPDF no frontend"}
+
 @api_router.post("/brands/{brand_id}/naming")
 async def create_naming_project(brand_id: str, data: NamingProject, user: dict = Depends(get_current_user)):
     """Create a new naming project"""
