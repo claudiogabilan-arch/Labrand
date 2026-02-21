@@ -61,6 +61,31 @@ Web application for brand management covering diagnosis, strategy creation, exec
 
 ---
 
+#### ✅ COMPLETED: Melhorias de UX e Clareza (Quick Wins)
+
+**Correções sem custo de créditos:**
+
+1. **Mensagens MOCK Atualizadas:**
+   - PDF Report: "✅ Relatório PDF real gerado com ReportLab"
+   - Social Listening: "⚡ Preview com dados de demonstração"
+   - Ads/CRM: Banners amarelos explicando modo Preview
+
+2. **Mensagens de Erro Específicas:**
+   - Erros genéricos substituídos por mensagens claras
+   - Ex: "Erro ao conectar. Verifique suas credenciais."
+   - Ex: "Erro na análise. Verifique seus créditos de IA."
+
+3. **Badges "Preview" nas Integrações:**
+   - Ads Integration: Badge + banner explicativo
+   - CRM Integration: Badge + banner explicativo
+   - Deixa claro que dados são de demonstração
+
+4. **Toasts Informativos:**
+   - Sucesso: Descrições claras do que aconteceu
+   - Erro: Sugestões de como resolver
+
+---
+
 #### ✅ COMPLETED: Limpeza de Código e Correção de Arquitetura
 
 **Ações realizadas:**
