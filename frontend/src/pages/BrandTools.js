@@ -197,9 +197,9 @@ export default function BrandTools() {
         toast({ title: 'Análise concluída!', description: `${compList.length} concorrentes analisados` });
       } else {
         const err = await res.json();
-        toast({ title: 'Erro', description: err.detail, variant: 'destructive' });
+        toast({ title: 'Erro na análise', description: err.detail || 'Verifique seus créditos de IA', variant: 'destructive' });
       }
-    } catch (e) { toast({ title: 'Erro', variant: 'destructive' }); }
+    } catch (e) { toast({ title: 'Erro de conexão', description: 'Não foi possível realizar a análise', variant: 'destructive' }); }
     setLoading(l => ({ ...l, competitors: false }));
   };
 
@@ -220,12 +220,12 @@ export default function BrandTools() {
       });
       if (res.ok) {
         setGeneratedContent(await res.json());
-        toast({ title: 'Conteúdo gerado!' });
+        toast({ title: 'Conteúdo gerado!', description: 'Use o botão de copiar para utilizar' });
       } else {
         const err = await res.json();
-        toast({ title: 'Erro', description: err.detail, variant: 'destructive' });
+        toast({ title: 'Erro ao gerar', description: err.detail || 'Verifique seus créditos de IA', variant: 'destructive' });
       }
-    } catch (e) { toast({ title: 'Erro', variant: 'destructive' }); }
+    } catch (e) { toast({ title: 'Erro de conexão', description: 'Não foi possível gerar o conteúdo', variant: 'destructive' }); }
     setLoading(l => ({ ...l, content: false }));
   };
 
