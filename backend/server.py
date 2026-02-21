@@ -3785,6 +3785,263 @@ async def get_touchpoints_analysis(brand_id: str, user: dict = Depends(get_curre
     analysis = await db.touchpoint_analysis.find_one({"brand_id": brand_id}, {"_id": 0})
     return analysis or {}
 
+# ==================== NAMING MODULE (Estúdio Onomástico) ====================
+
+class NamingContext(BaseModel):
+    """Essência Decode - Brand context for naming"""
+    business_description: str
+    mission: Optional[str] = None
+    values: List[str] = []
+    target_audience: str
+    competitors: List[str] = []
+    desired_perception: List[str] = []  # segurança, inovação, tradição, etc.
+    tone: str = "moderno"  # moderno, clássico, divertido, sério
+    name_style: str = "criativo"  # criativo, descritivo, abstrato, acronimo
+
+class NamingScore(BaseModel):
+    name_id: str
+    scores: Dict[str, int]  # criterio -> nota 1-10
+
+class NamingProject(BaseModel):
+    project_name: str
+    context: NamingContext
+
+NAMING_CRITERIA = [
+    {"id": "memorabilidade", "name": "Memorabilidade", "description": "Fácil de lembrar", "weight": 3},
+    {"id": "pronuncia", "name": "Pronúncia", "description": "Fácil de falar", "weight": 3},
+    {"id": "escrita", "name": "Escrita", "description": "Fácil de escrever", "weight": 2},
+    {"id": "unicidade", "name": "Unicidade", "description": "Diferenciação no mercado", "weight": 3},
+    {"id": "significado", "name": "Significado", "description": "Conexão com o negócio", "weight": 2},
+    {"id": "sonoridade", "name": "Sonoridade", "description": "Som agradável", "weight": 2},
+    {"id": "extensibilidade", "name": "Extensibilidade", "description": "Permite expansão da marca", "weight": 1},
+]
+
+@api_router.get("/naming/criteria")
+async def get_naming_criteria():
+    """Get naming evaluation criteria"""
+    return {"criteria": NAMING_CRITERIA}
+
+@api_router.get("/brands/{brand_id}/naming")
+async def get_naming_projects(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get all naming projects for a brand"""
+    projects = await db.naming_projects.find(
+        {"brand_id": brand_id}, {"_id": 0}
+    ).sort("created_at", -1).to_list(20)
+    return {"projects": projects}
+
+@api_router.get("/brands/{brand_id}/naming/{project_id}")
+async def get_naming_project(brand_id: str, project_id: str, user: dict = Depends(get_current_user)):
+    """Get a specific naming project with names and scores"""
+    project = await db.naming_projects.find_one(
+        {"brand_id": brand_id, "project_id": project_id}, {"_id": 0}
+    )
+    if not project:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    names = await db.naming_names.find(
+        {"project_id": project_id}, {"_id": 0}
+    ).sort("total_score", -1).to_list(100)
+    
+    return {"project": project, "names": names}
+
+@api_router.post("/brands/{brand_id}/naming")
+async def create_naming_project(brand_id: str, data: NamingProject, user: dict = Depends(get_current_user)):
+    """Create a new naming project"""
+    project_doc = {
+        "project_id": f"naming_{uuid.uuid4().hex[:12]}",
+        "brand_id": brand_id,
+        "user_id": user["user_id"],
+        "project_name": data.project_name,
+        "context": data.context.dict(),
+        "status": "draft",
+        "names_generated": 0,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.naming_projects.insert_one(project_doc)
+    del project_doc["_id"]
+    return project_doc
+
+@api_router.post("/brands/{brand_id}/naming/{project_id}/generate")
+async def generate_names(brand_id: str, project_id: str, user: dict = Depends(get_current_user)):
+    """Generate name suggestions using AI (costs 3 credits)"""
+    project = await db.naming_projects.find_one({"project_id": project_id, "brand_id": brand_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    # Check and deduct credits
+    success, result = await deduct_ai_credits(user["user_id"], "naming_generation", 3)
+    if not success:
+        raise HTTPException(status_code=402, detail=result)
+    
+    try:
+        context = project.get("context", {})
+        
+        prompt = f"""Você é um especialista em naming de marcas. Com base no contexto abaixo, gere 10 sugestões de nomes criativos e memoráveis.
+
+CONTEXTO DO NEGÓCIO:
+- Descrição: {context.get('business_description', '')}
+- Missão: {context.get('mission', 'Não informada')}
+- Valores: {', '.join(context.get('values', []))}
+- Público-alvo: {context.get('target_audience', '')}
+- Concorrentes: {', '.join(context.get('competitors', []))}
+- Percepção desejada: {', '.join(context.get('desired_perception', []))}
+- Tom: {context.get('tone', 'moderno')}
+- Estilo de nome: {context.get('name_style', 'criativo')}
+
+Para cada nome, forneça:
+1. O nome sugerido
+2. Significado/conceito por trás
+3. Por que funciona para este negócio
+
+Responda em formato JSON:
+{{
+  "names": [
+    {{"name": "NomeExemplo", "meaning": "Explicação do conceito", "rationale": "Por que funciona"}}
+  ]
+}}
+
+Seja criativo! Misture técnicas como:
+- Neologismos (palavras inventadas)
+- Blends (fusão de palavras)
+- Acrônimos
+- Palavras em outros idiomas
+- Metáforas"""
+
+        response = await call_llm(prompt)
+        
+        # Parse response
+        import re
+        json_match = re.search(r'\{[\s\S]*\}', response)
+        if json_match:
+            names_data = json.loads(json_match.group())
+            names_list = names_data.get("names", [])
+        else:
+            names_list = []
+        
+        # Save generated names
+        saved_names = []
+        for idx, name_item in enumerate(names_list[:10]):
+            name_doc = {
+                "name_id": f"name_{uuid.uuid4().hex[:8]}",
+                "project_id": project_id,
+                "brand_id": brand_id,
+                "name": name_item.get("name", f"Nome {idx+1}"),
+                "meaning": name_item.get("meaning", ""),
+                "rationale": name_item.get("rationale", ""),
+                "scores": {},
+                "total_score": 0,
+                "is_favorite": False,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.naming_names.insert_one(name_doc)
+            del name_doc["_id"]
+            saved_names.append(name_doc)
+        
+        # Update project
+        await db.naming_projects.update_one(
+            {"project_id": project_id},
+            {"$set": {
+                "status": "generated",
+                "names_generated": len(saved_names),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        return {
+            "success": True,
+            "names": saved_names,
+            "credits_used": 3
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.put("/brands/{brand_id}/naming/{project_id}/names/{name_id}/score")
+async def score_name(
+    brand_id: str, 
+    project_id: str, 
+    name_id: str, 
+    scores: NamingScore,
+    user: dict = Depends(get_current_user)
+):
+    """Score a name based on criteria"""
+    # Calculate weighted total
+    total = 0
+    for criterion in NAMING_CRITERIA:
+        score = scores.scores.get(criterion["id"], 5)
+        total += score * criterion["weight"]
+    
+    max_possible = sum(c["weight"] * 10 for c in NAMING_CRITERIA)
+    normalized_score = round((total / max_possible) * 100, 1)
+    
+    await db.naming_names.update_one(
+        {"name_id": name_id, "project_id": project_id},
+        {"$set": {
+            "scores": scores.scores,
+            "total_score": normalized_score,
+            "scored_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "total_score": normalized_score}
+
+@api_router.put("/brands/{brand_id}/naming/{project_id}/names/{name_id}/favorite")
+async def toggle_favorite(brand_id: str, project_id: str, name_id: str, user: dict = Depends(get_current_user)):
+    """Toggle favorite status for a name"""
+    name = await db.naming_names.find_one({"name_id": name_id})
+    if not name:
+        raise HTTPException(status_code=404, detail="Nome não encontrado")
+    
+    new_status = not name.get("is_favorite", False)
+    await db.naming_names.update_one(
+        {"name_id": name_id},
+        {"$set": {"is_favorite": new_status}}
+    )
+    
+    return {"success": True, "is_favorite": new_status}
+
+@api_router.post("/brands/{brand_id}/naming/{project_id}/names")
+async def add_custom_name(
+    brand_id: str, 
+    project_id: str, 
+    name: str = "",
+    meaning: str = "",
+    user: dict = Depends(get_current_user)
+):
+    """Add a custom name to the project"""
+    name_doc = {
+        "name_id": f"name_{uuid.uuid4().hex[:8]}",
+        "project_id": project_id,
+        "brand_id": brand_id,
+        "name": name,
+        "meaning": meaning,
+        "rationale": "Adicionado manualmente",
+        "scores": {},
+        "total_score": 0,
+        "is_favorite": False,
+        "is_custom": True,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.naming_names.insert_one(name_doc)
+    del name_doc["_id"]
+    
+    return name_doc
+
+@api_router.delete("/brands/{brand_id}/naming/{project_id}/names/{name_id}")
+async def delete_name(brand_id: str, project_id: str, name_id: str, user: dict = Depends(get_current_user)):
+    """Delete a name from the project"""
+    await db.naming_names.delete_one({"name_id": name_id, "project_id": project_id})
+    return {"success": True}
+
+@api_router.delete("/brands/{brand_id}/naming/{project_id}")
+async def delete_naming_project(brand_id: str, project_id: str, user: dict = Depends(get_current_user)):
+    """Delete a naming project and all its names"""
+    await db.naming_projects.delete_one({"project_id": project_id, "brand_id": brand_id})
+    await db.naming_names.delete_many({"project_id": project_id})
+    return {"success": True}
+
 # ==================== ADMIN DASHBOARD ====================
 
 async def get_admin_user(request: Request) -> dict:
