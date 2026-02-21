@@ -1119,6 +1119,7 @@ async def get_benchmark(brand_id: str, user: dict = Depends(get_current_user)):
     """Benchmark setorial da marca"""
     pillars = await db.pillars.find_one({"brand_id": brand_id}, {"_id": 0})
     valuation = await db.valuations.find_one({"brand_id": brand_id}, {"_id": 0})
+    brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
     
     # Determinar setor
     sector = pillars.get("start", {}).get("industry", "default") if pillars else "default"
@@ -1132,12 +1133,145 @@ async def get_benchmark(brand_id: str, user: dict = Depends(get_current_user)):
     # Calcular percentil (simplificado - baseado no brand strength)
     percentile = min(95, max(5, brand_strength + 10))
     
+    # Get competitor groups
+    comp_groups = await db.competitor_groups.find({"brand_id": brand_id}, {"_id": 0}).to_list(10)
+    
     return {
         "sector": sector,
         "brand_strength": brand_strength,
         "rbi": rbi,
-        "percentile": percentile
+        "percentile": percentile,
+        "competitor_groups": comp_groups,
+        "brand_name": brand.get("name") if brand else ""
     }
+
+# ==================== TEMPLATES & EXAMPLES ====================
+
+PILLAR_TEMPLATES = {
+    "purpose": {
+        "tecnologia": [
+            "Democratizar o acesso à tecnologia para transformar negócios",
+            "Simplificar a complexidade digital para que empresas cresçam",
+            "Conectar pessoas e empresas através de soluções inovadoras"
+        ],
+        "saude": [
+            "Promover saúde e bem-estar através de cuidado humanizado",
+            "Transformar a experiência de saúde com inovação e empatia",
+            "Democratizar o acesso à saúde de qualidade"
+        ],
+        "varejo": [
+            "Facilitar a vida das pessoas através de experiências de compra memoráveis",
+            "Conectar produtos que transformam o dia a dia das pessoas",
+            "Democratizar o acesso a produtos de qualidade"
+        ],
+        "default": [
+            "Transformar positivamente a vida das pessoas através do nosso trabalho",
+            "Criar valor sustentável para clientes, colaboradores e sociedade",
+            "Ser referência em excelência e inovação no que fazemos"
+        ]
+    },
+    "values": {
+        "tecnologia": ["Inovação", "Agilidade", "Transparência", "Colaboração", "Excelência"],
+        "saude": ["Empatia", "Ética", "Excelência", "Humanização", "Inovação"],
+        "varejo": ["Cliente no centro", "Simplicidade", "Agilidade", "Integridade", "Paixão"],
+        "default": ["Integridade", "Inovação", "Excelência", "Respeito", "Colaboração"]
+    },
+    "promise": {
+        "tecnologia": [
+            "Entregar soluções que simplificam e potencializam seu negócio",
+            "Tecnologia que funciona, suporte que resolve",
+            "Inovação acessível para sua empresa crescer"
+        ],
+        "saude": [
+            "Cuidar de você com atenção, respeito e competência",
+            "Sua saúde em boas mãos, sempre",
+            "Excelência médica com atendimento humanizado"
+        ],
+        "default": [
+            "Entregar mais do que prometemos, sempre",
+            "Qualidade e confiança em cada entrega",
+            "Seu sucesso é o nosso compromisso"
+        ]
+    },
+    "positioning": {
+        "tecnologia": [
+            "A solução mais simples e eficiente para [problema específico]",
+            "Líder em [categoria] para empresas que buscam [benefício]",
+            "A escolha de [tipo de empresa] que valorizam [atributo]"
+        ],
+        "default": [
+            "A marca preferida de [público] que buscam [benefício]",
+            "Referência em [categoria] para [segmento]",
+            "A alternativa [adjetivo] para quem não aceita [dor]"
+        ]
+    }
+}
+
+@api_router.get("/templates/pillars")
+async def get_pillar_templates(sector: str = "default"):
+    """Get pillar templates by sector"""
+    sector_lower = sector.lower()
+    templates = {}
+    for pillar, sectors in PILLAR_TEMPLATES.items():
+        templates[pillar] = sectors.get(sector_lower, sectors.get("default", []))
+    return {"sector": sector, "templates": templates}
+
+@api_router.get("/templates/sectors")
+async def get_sector_list():
+    """Get available sectors"""
+    return {"sectors": [
+        {"id": "tecnologia", "name": "Tecnologia"},
+        {"id": "saude", "name": "Saúde"},
+        {"id": "educacao", "name": "Educação"},
+        {"id": "varejo", "name": "Varejo"},
+        {"id": "servicos_financeiros", "name": "Serviços Financeiros"},
+        {"id": "industria", "name": "Indústria"},
+        {"id": "consultoria", "name": "Consultoria"},
+        {"id": "agronegocio", "name": "Agronegócio"},
+        {"id": "alimenticio", "name": "Alimentício"},
+        {"id": "moda", "name": "Moda e Beleza"},
+        {"id": "construcao", "name": "Construção"},
+        {"id": "logistica", "name": "Logística"}
+    ]}
+
+# ==================== COMPETITOR GROUPS ====================
+
+@api_router.get("/brands/{brand_id}/competitor-groups")
+async def get_competitor_groups(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get competitor groups for benchmarking"""
+    groups = await db.competitor_groups.find({"brand_id": brand_id}, {"_id": 0}).to_list(20)
+    return {"groups": groups}
+
+@api_router.post("/brands/{brand_id}/competitor-groups")
+async def create_competitor_group(brand_id: str, name: str, segment: str = "", region: str = "", user: dict = Depends(get_current_user)):
+    """Create a competitor group"""
+    group_doc = {
+        "group_id": f"cg_{uuid.uuid4().hex[:8]}",
+        "brand_id": brand_id,
+        "name": name,
+        "segment": segment,
+        "region": region,
+        "competitors": [],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.competitor_groups.insert_one(group_doc)
+    del group_doc["_id"]
+    return group_doc
+
+@api_router.put("/brands/{brand_id}/competitor-groups/{group_id}")
+async def update_competitor_group(brand_id: str, group_id: str, competitors: List[dict] = [], user: dict = Depends(get_current_user)):
+    """Update competitors in a group"""
+    await db.competitor_groups.update_one(
+        {"group_id": group_id, "brand_id": brand_id},
+        {"$set": {"competitors": competitors, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"success": True}
+
+@api_router.delete("/brands/{brand_id}/competitor-groups/{group_id}")
+async def delete_competitor_group(brand_id: str, group_id: str, user: dict = Depends(get_current_user)):
+    """Delete a competitor group"""
+    await db.competitor_groups.delete_one({"group_id": group_id, "brand_id": brand_id})
+    return {"success": True}
 
 @api_router.get("/brands/{brand_id}/decisions")
 async def get_decisions(brand_id: str, user: dict = Depends(get_current_user)):
