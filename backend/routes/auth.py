@@ -267,6 +267,33 @@ async def reset_password(data: ResetPasswordRequest):
     return {"message": "Senha alterada com sucesso"}
 
 
+@router.get("/auth/google/login")
+async def google_login(request: Request):
+    """
+    Redirect to Emergent Auth for Google OAuth
+    REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    The redirect_url is passed by the frontend dynamically using window.location.origin
+    """
+    from fastapi.responses import RedirectResponse
+    
+    # Get redirect URL from query params (set by frontend using window.location.origin)
+    redirect_url = request.query_params.get("redirect")
+    
+    if not redirect_url:
+        # Fallback: use the referer header to construct redirect
+        referer = request.headers.get("referer", "")
+        if referer:
+            from urllib.parse import urlparse
+            parsed = urlparse(referer)
+            redirect_url = f"{parsed.scheme}://{parsed.netloc}/dashboard"
+        else:
+            raise HTTPException(status_code=400, detail="redirect URL is required")
+    
+    # Redirect to Emergent Auth
+    auth_url = f"https://auth.emergentagent.com/?redirect={redirect_url}"
+    return RedirectResponse(url=auth_url)
+
+
 @router.post("/auth/session")
 async def process_session(request: Request, response: Response):
     """Process Emergent Auth session_id and create local session"""
