@@ -137,6 +137,38 @@ O backend foi refatorado de um arquivo monolítico (5300+ linhas) para arquitetu
 
 **Frontend:** Nova aba "Equity" em /brand-tools (primeira aba)
 
+#### ✅ COMPLETED: Testes Automatizados (Pytest)
+
+**Criados 17 testes cobrindo todos os módulos:**
+```
+/app/backend/tests/
+├── conftest.py          # Configuração pytest
+├── pytest.ini           # Configuração asyncio
+├── test_api.py          # Suite principal (17 testes)
+├── test_auth.py         # Testes de auth (async)
+├── test_brands.py       # Testes de brands (async)
+├── test_brand_tools.py  # Testes de brand tools (async)
+└── test_maturity_diagnosis.py  # Testes de maturidade
+```
+
+**Rodar testes:** `cd /app/backend && pytest tests/test_api.py -v`
+
+**Cobertura:** Auth, Brands, Brand Score, Brand Equity, Social Listening, Naming, CRM, Ads, Touchpoints, Intelligence
+
+#### ✅ COMPLETED: Google OAuth (Emergent Auth)
+
+**Implementação:**
+- `GET /api/auth/google/login` - Redireciona para Emergent Auth
+- `POST /api/auth/session` - Processa retorno do OAuth
+- Frontend: Botão "Continuar com Google" na tela de login
+- AuthCallback: Processa `session_id` retornado pela URL
+
+**Fluxo:**
+1. Usuário clica "Continuar com Google"
+2. Redireciona para `https://auth.emergentagent.com/?redirect={dashboard_url}`
+3. Após autenticação, retorna com `?session_id=xxx`
+4. Frontend processa sessão e autentica usuário
+
 ---
 
 ### 2026-02-18 (Session 5)
