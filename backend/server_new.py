@@ -21,6 +21,12 @@ from routes.plans import router as plans_router
 from routes.stripe import router as stripe_router
 from routes.maturity import router as maturity_router
 from routes.brand_tools import router as brand_tools_router
+from routes.ads import router as ads_router
+from routes.crm import router as crm_router
+from routes.touchpoints import router as touchpoints_router
+from routes.admin import router as admin_router
+from routes.extras import router as extras_router
+from routes.naming import router as naming_router
 
 # Create the main app
 app = FastAPI(title="LaBrand - Brand OS API")
@@ -50,6 +56,12 @@ api_router.include_router(plans_router)
 api_router.include_router(stripe_router)
 api_router.include_router(maturity_router)
 api_router.include_router(brand_tools_router)
+api_router.include_router(ads_router)
+api_router.include_router(crm_router)
+api_router.include_router(touchpoints_router)
+api_router.include_router(admin_router)
+api_router.include_router(extras_router)
+api_router.include_router(naming_router)
 
 # Include the main API router
 app.include_router(api_router)
