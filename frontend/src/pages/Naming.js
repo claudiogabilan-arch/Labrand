@@ -47,7 +47,9 @@ const STEPS = [
   { id: 2, name: "Propulsor", icon: Zap, description: "Arquétipo e tensão" },
   { id: 3, name: "Semântico", icon: Network, description: "Mapa de conceitos" },
   { id: 4, name: "Geração", icon: Wand2, description: "Criar nomes com IA" },
-  { id: 5, name: "Avaliação", icon: Star, description: "Pontuar e selecionar" },
+  { id: 5, name: "Sonoro", icon: Volume2, description: "Análise fonética" },
+  { id: 6, name: "Global", icon: Globe, description: "Teste internacional" },
+  { id: 7, name: "Avaliação", icon: Star, description: "Pontuar e selecionar" },
 ];
 
 export default function Naming() {
