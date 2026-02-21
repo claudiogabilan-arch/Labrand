@@ -2546,6 +2546,9 @@ async def get_upload(filename: str):
 
 @api_router.get("/brands/{brand_id}/reports/{report_type}")
 async def generate_report(brand_id: str, report_type: str, format: str = "pdf", user: dict = Depends(get_current_user)):
+    # Exclude 'history' and 'executive-pdf' from this route - they have dedicated endpoints
+    if report_type in ["history", "executive-pdf"]:
+        raise HTTPException(status_code=404, detail="Use dedicated endpoint for this report type")
     from reportlab.lib.pagesizes import A4
     from reportlab.lib import colors
     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
