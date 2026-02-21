@@ -27,6 +27,7 @@ from routes.touchpoints import router as touchpoints_router
 from routes.admin import router as admin_router
 from routes.extras import router as extras_router
 from routes.naming import router as naming_router
+from routes.reports import router as reports_router
 
 # Create the main app
 app = FastAPI(title="LaBrand - Brand OS API")
