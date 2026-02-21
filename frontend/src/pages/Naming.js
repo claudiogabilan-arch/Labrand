@@ -14,7 +14,8 @@ import { toast } from 'sonner';
 import { 
   Sparkles, Plus, Trash2, Loader2, Star, StarOff,
   Wand2, Target, Lightbulb, ChevronRight, Save,
-  Zap, Brain, Network, X, Check
+  Zap, Brain, Network, X, Check, Volume2, Globe,
+  Download, ExternalLink, AlertTriangle, CheckCircle
 } from 'lucide-react';
 import axios from 'axios';
 
