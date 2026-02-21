@@ -78,7 +78,7 @@ Web application for brand management covering diagnosis, strategy creation, exec
    - `POST /api/brands/{id}/reports/executive-pdf` - Gera relatório
    - `GET /api/brands/{id}/reports/history` - Histórico de relatórios
    - Executive summary com pontos fortes, áreas de melhoria, ações prioritárias
-   - **Note:** Download real de PDF em desenvolvimento (MOCK)
+   - **REAL PDF Generation com ReportLab** ✅
 
 3. **Alertas por Email**
    - `GET/POST /api/brands/{id}/alerts/config` - Configuração de alertas
