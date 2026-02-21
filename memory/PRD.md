@@ -78,6 +78,34 @@ Web application for brand management covering diagnosis, strategy creation, exec
   - `DELETE /api/brands/{id}/competitor-groups/{id}` - Remover grupo
   - Frontend: Criar grupos por segmento/região, adicionar concorrentes com scores
 
+#### ✅ COMPLETED: Ads Integration (Meta & Google)
+- **Backend endpoints:**
+  - `GET /api/brands/{id}/ads/providers` - Listar provedores e status
+  - `POST /api/brands/{id}/ads/connect` - Conectar provedor
+  - `DELETE /api/brands/{id}/ads/{provider}` - Desconectar
+  - `POST /api/brands/{id}/ads/{provider}/sync` - Sincronizar dados (MOCK)
+  - `GET /api/brands/{id}/ads/{provider}/metrics` - Buscar métricas
+
+- **Frontend features:**
+  - Cards de Meta Ads e Google Ads
+  - Métricas: Investimento, Impressões, Cliques, Conversões, CTR, ROAS
+  - Tabela de métricas diárias (30 dias)
+  - Tab comparativo entre plataformas
+  - Dialog de conexão com credenciais
+
+- **Note:** Sync é MOCK - gera dados simulados. Integração real requer credenciais das APIs.
+
+#### ✅ COMPLETED: Intelligence Dashboard Melhorado
+- **Backend endpoint:**
+  - `GET /api/brands/{id}/intelligence/summary` - Resumo unificado de todas as fontes
+
+- **Frontend features:**
+  - Status de fontes conectadas (GA, Meta Ads, Google Ads, CRM)
+  - Saúde da marca (completude dos pilares)
+  - Métricas consolidadas de marketing
+  - Insights automáticos baseados nos dados
+  - Ações rápidas para navegação
+
 #### ✅ SYSTEM HEALTH
 - Frontend: RUNNING
 - Backend: RUNNING  
