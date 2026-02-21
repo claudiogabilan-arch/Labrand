@@ -473,6 +473,18 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/crm"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <CRMIntegration />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
