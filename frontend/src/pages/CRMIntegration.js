@@ -167,7 +167,18 @@ export default function CRMIntegration() {
           <h1 className="text-2xl font-bold">Integrações CRM</h1>
           <p className="text-muted-foreground">Conecte seus CRMs e importe contatos</p>
         </div>
+        <Badge variant="outline" className="ml-auto text-amber-600 border-amber-300">
+          Preview
+        </Badge>
       </div>
+
+      <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200">
+        <CardContent className="py-3">
+          <p className="text-sm text-amber-800 dark:text-amber-200">
+            ⚡ <strong>Modo Preview:</strong> Os dados importados são de demonstração. Para sincronizar contatos reais, insira suas credenciais de API do CRM.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* CRM Cards */}
       <div className="grid md:grid-cols-3 gap-4">
