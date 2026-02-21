@@ -84,56 +84,35 @@ Web application for brand management covering diagnosis, strategy creation, exec
 - Frontend: Todas as 6 abas verificadas funcionando
 - Bug corrigido: ordenação de rotas em `/reports/history`
 
-#### ⚙️ IN PROGRESS: Refatoração do server.py
+#### ⚙️ COMPLETED: Refatoração do server.py
 
-**Status da Arquitetura Modular:**
+**Migração Concluída com Sucesso!**
 
-O projeto possui uma estrutura modular preparada em `/app/backend/routes/` com 91 rotas:
+O backend foi refatorado de um arquivo monolítico (5300+ linhas) para arquitetura modular:
+
 ```
 /app/backend/
-├── config.py           # DB, JWT, Plans, AI Costs
-├── server.py           # MONOLÍTICO ATUAL (5300+ linhas, 161 rotas) - EM USO
-├── server_new.py       # MODULAR (91 rotas) - PRONTO PARA MIGRAÇÃO
-├── routes/
-│   ├── auth.py         # 11 rotas (login, register, reset, etc.)
-│   ├── brands.py       # 8 rotas (CRUD marcas)
-│   ├── pillars.py      # 30 rotas (7 pilares + tasks/decisions)
-│   ├── ai.py           # 7 rotas (insights, mentor, risk)
-│   ├── credits.py      # 3 rotas (saldo, histórico, compra)
-│   ├── plans.py        # 4 rotas (planos, upgrade)
-│   ├── stripe.py       # 5 rotas (checkout, webhook)
-│   ├── maturity.py     # 5 rotas (diagnóstico maturidade)
-│   └── brand_tools.py  # 12 rotas (6 features novas)
-├── models/
-│   └── schemas.py      # Pydantic models
-└── utils/
-    └── helpers.py      # Auth, email, LLM helpers
+├── server.py               # MODULAR - 143 rotas (em uso)
+├── server_monolith_backup.py  # Backup do antigo monolítico
+└── routes/
+    ├── auth.py            # 11 rotas - Login, register, reset
+    ├── brands.py          # 8 rotas - CRUD marcas
+    ├── pillars.py         # 30 rotas - 7 pilares + tasks/decisions
+    ├── ai.py              # 7 rotas - Insights, mentor, risk
+    ├── credits.py         # 3 rotas - Saldo, histórico, compra
+    ├── plans.py           # 4 rotas - Planos, upgrade
+    ├── stripe.py          # 5 rotas - Checkout, webhook
+    ├── maturity.py        # 5 rotas - Diagnóstico maturidade
+    ├── brand_tools.py     # 12 rotas - 6 features novas
+    ├── ads.py             # 6 rotas - Meta & Google Ads (MOCK)
+    ├── crm.py             # 6 rotas - RD Station, HubSpot, Kommo (MOCK)
+    ├── touchpoints.py     # 8 rotas - Jornada do cliente
+    ├── naming.py          # 16 rotas - Estúdio Onomástico
+    ├── extras.py          # 12 rotas - Templates, competitor groups, narratives
+    └── admin.py           # 3 rotas - Dashboard administrativo
 ```
 
-**Rotas Faltantes no server_new.py (70 rotas):**
-- CRM Integration (6 rotas)
-- Ads Integration (5 rotas)
-- Naming Module (14 rotas)
-- Touchpoints (9 rotas)
-- Competitor Groups (4 rotas)
-- Executive Summary & Benchmark (6 rotas)
-- Admin Dashboard (3 rotas)
-- Templates (2 rotas)
-- Intelligence Summary (1 rota)
-- Outras rotas menores (~20 rotas)
-
-**Estratégia de Migração:**
-1. **Fase 1 (Concluída):** Estrutura modular criada
-2. **Fase 2 (Pendente):** Migrar rotas faltantes para módulos
-3. **Fase 3 (Pendente):** Trocar supervisor de server.py → server_new.py
-4. **Fase 4 (Pendente):** Remover server.py antigo
-
-**Para ativar a versão modular:**
-```bash
-# Em /etc/supervisor/conf.d/backend.conf
-# Mudar de: command=uvicorn server:app
-# Para:     command=uvicorn server_new:app
-```
+**Testes:** 100% backend (21 testes) + 100% frontend (Dashboard, brand-tools, naming)
 
 ---
 
