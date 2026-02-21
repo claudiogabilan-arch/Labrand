@@ -250,6 +250,7 @@ export default function BrandTools() {
       fetchBrandScore();
       fetchReportHistory();
       fetchAlertConfig();
+      fetchAlertsHistory();
       fetchContentTypes();
     }
   }, [currentBrand, token]);
