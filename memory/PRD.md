@@ -31,6 +31,36 @@ Web application for brand management covering diagnosis, strategy creation, exec
 
 ### 2026-02-21 (Session 7 - Current)
 
+#### ✅ COMPLETED: Integração Real de Email com Resend
+
+**Implementação completa de alertas por email:**
+
+1. **Serviço de Email (`/app/backend/services/email_service.py`):**
+   - Templates HTML profissionais para cada tipo de alerta
+   - Envio assíncrono não-bloqueante usando `asyncio.to_thread`
+   - Logging de todos os emails enviados no MongoDB
+   - Remetente: `alertas@labrand.com.br`
+
+2. **Tipos de Alertas:**
+   - ⚠️ **Consistência** - Pilares incompletos, touchpoints com baixa performance, score abaixo do ideal
+   - 🚨 **Risco** - Riscos identificados, maturidade organizacional baixa
+   - 💡 **Oportunidades** - Sugestões de melhorias (logo, naming, conteúdo, concorrentes)
+   - ✅ **Teste** - Email de verificação da configuração
+
+3. **Novos Endpoints:**
+   - `POST /api/brands/{id}/alerts/send-test` - Envia email de teste REAL
+   - `POST /api/brands/{id}/alerts/send` - Envia alerta específico por tipo
+   - `GET /api/brands/{id}/alerts/history` - Histórico de emails enviados
+
+4. **Frontend Atualizado:**
+   - Seção "Enviar Alerta Agora" com 3 botões
+   - Histórico de alertas enviados (últimos 5)
+   - Indicador de integração ativa com Resend
+
+**Testado e funcionando com emails reais enviados!**
+
+---
+
 #### ✅ COMPLETED: Limpeza de Código e Correção de Arquitetura
 
 **Ações realizadas:**
