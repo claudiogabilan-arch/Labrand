@@ -367,7 +367,8 @@ async def get_brand_equity_score(brand_id: str, user: dict = Depends(get_current
             "your_position": "acima da média" if total_equity > industry_benchmark["average"] else "abaixo da média",
             "industry_average": industry_benchmark["average"],
             "industry_top_10": industry_benchmark["top_10"],
-            "percentile": min(99, max(1, int((total_equity / 100) * 100)))
+            "percentile": min(99, max(1, int((total_equity / 100) * 100))),
+            "gap_to_average": total_equity - industry_benchmark["average"]
         },
         "calculated_at": datetime.now(timezone.utc).isoformat()
     }
