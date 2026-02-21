@@ -289,6 +289,100 @@ export default function Naming() {
     }
   };
 
+  const handleSoundAnalysis = async () => {
+    if (names.length === 0) {
+      toast.error('Gere nomes primeiro');
+      return;
+    }
+    
+    setGenerating(true);
+    try {
+      const nameList = names.slice(0, 10).map(n => n.name);
+      const response = await axios.post(
+        `${API}/brands/${currentBrand.brand_id}/naming/${currentProject.project_id}/sound-lab?${nameList.map(n => `names=${encodeURIComponent(n)}`).join('&')}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      setSoundAnalysis(response.data.sound_analysis);
+      toast.success(`Análise sonora concluída! (${response.data.credits_used} crédito)`);
+      setStep(6);
+    } catch (error) {
+      if (error.response?.status === 402) {
+        toast.error('Créditos insuficientes');
+      } else {
+        toast.error('Erro na análise sonora');
+      }
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleGlobalCheck = async () => {
+    if (names.length === 0) {
+      toast.error('Gere nomes primeiro');
+      return;
+    }
+    
+    setGenerating(true);
+    try {
+      const nameList = names.slice(0, 10).map(n => n.name);
+      const response = await axios.post(
+        `${API}/brands/${currentBrand.brand_id}/naming/${currentProject.project_id}/global-check?${nameList.map(n => `names=${encodeURIComponent(n)}`).join('&')}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      setGlobalCheck(response.data.global_check);
+      toast.success(`Verificação global concluída! (${response.data.credits_used} créditos)`);
+      setStep(7);
+    } catch (error) {
+      if (error.response?.status === 402) {
+        toast.error('Créditos insuficientes');
+      } else {
+        toast.error('Erro na verificação global');
+      }
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleCheckAvailability = async (name) => {
+    setCheckingAvailability(name);
+    try {
+      const response = await axios.get(
+        `${API}/brands/${currentBrand.brand_id}/naming/${currentProject.project_id}/check-availability?name=${encodeURIComponent(name)}`,
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      setAvailability(prev => ({ ...prev, [name]: response.data }));
+    } catch (error) {
+      toast.error('Erro ao verificar disponibilidade');
+    } finally {
+      setCheckingAvailability(null);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      const response = await axios.get(
+        `${API}/brands/${currentBrand.brand_id}/naming/${currentProject.project_id}/export-pdf`,
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      
+      // Create downloadable JSON (in production, would generate actual PDF)
+      const dataStr = JSON.stringify(response.data.report, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `naming_${currentProject.project_name.replace(/\s+/g, '_')}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      toast.success('Relatório exportado!');
+    } catch (error) {
+      toast.error('Erro ao exportar');
+    }
+  };
+
   const handleScore = async () => {
     if (!scoringName) return;
     
