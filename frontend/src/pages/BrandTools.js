@@ -82,11 +82,11 @@ export default function BrandTools() {
         toast({ title: 'Relatório baixado!', description: 'PDF gerado e baixado com sucesso' });
         fetchReportHistory();
       } else {
-        toast({ title: 'Erro', description: 'Falha ao gerar relatório', variant: 'destructive' });
+        toast({ title: 'Erro ao gerar PDF', description: 'Verifique se a marca tem dados suficientes', variant: 'destructive' });
       }
     } catch (e) { 
       console.error(e);
-      toast({ title: 'Erro', description: 'Falha ao gerar relatório', variant: 'destructive' }); 
+      toast({ title: 'Erro de conexão', description: 'Não foi possível gerar o relatório. Tente novamente.', variant: 'destructive' }); 
     }
     setLoading(l => ({ ...l, report: false }));
   };
