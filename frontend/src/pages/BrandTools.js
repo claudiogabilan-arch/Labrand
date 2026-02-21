@@ -119,7 +119,7 @@ export default function BrandTools() {
         toast({ title: 'Configuração salva!', description: 'Alertas configurados com sucesso' });
         setAlertConfig((await res.json()).config);
       }
-    } catch (e) { toast({ title: 'Erro', variant: 'destructive' }); }
+    } catch (e) { toast({ title: 'Erro ao salvar', description: 'Não foi possível salvar a configuração', variant: 'destructive' }); }
     setLoading(l => ({ ...l, alerts: false }));
   };
 
