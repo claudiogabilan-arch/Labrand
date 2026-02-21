@@ -33,6 +33,7 @@ export default function BrandTools() {
   const [brandScore, setBrandScore] = useState(null);
   const [reportHistory, setReportHistory] = useState([]);
   const [alertConfig, setAlertConfig] = useState(null);
+  const [alertsHistory, setAlertsHistory] = useState([]);
   const [socialMentions, setSocialMentions] = useState(null);
   const [competitorAnalysis, setCompetitorAnalysis] = useState(null);
   const [contentTypes, setContentTypes] = useState([]);
