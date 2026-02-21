@@ -49,6 +49,7 @@ import Touchpoints from "./pages/Touchpoints";
 import CRMIntegration from "./pages/CRMIntegration";
 import Naming from "./pages/Naming";
 import AdsIntegration from "./pages/AdsIntegration";
+import BrandTools from "./pages/BrandTools";
 import "./App.css";
 
 // Router wrapper to handle auth callback
@@ -506,6 +507,18 @@ function AppRouter() {
             <BrandProvider>
               <MainLayout>
                 <AdsIntegration />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/brand-tools"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <BrandTools />
               </MainLayout>
             </BrandProvider>
           </ProtectedRoute>
