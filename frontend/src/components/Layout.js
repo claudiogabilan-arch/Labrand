@@ -56,6 +56,7 @@ const navigationItems = [
   { name: 'Diagnóstico', href: '/maturity', icon: ClipboardCheck, featureId: 'maturity', pro: true },
   { type: 'divider', label: 'Pilares de Marca' },
   { name: 'Jeito de Ser', href: '/brand-way', icon: Heart, featureId: 'brand_way' },
+  { name: 'Naming', href: '/naming', icon: Sparkles, featureId: 'naming', pro: true },
   { name: 'Start', href: '/pillars/start', icon: Target, pillar: 'start', featureId: 'start' },
   { name: 'Valores', href: '/pillars/values', icon: Heart, pillar: 'values', featureId: 'values' },
   { name: 'Propósito', href: '/pillars/purpose', icon: Compass, pillar: 'purpose', featureId: 'purpose' },
