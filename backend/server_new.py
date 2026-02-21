@@ -20,6 +20,7 @@ from routes.credits import router as credits_router
 from routes.plans import router as plans_router
 from routes.stripe import router as stripe_router
 from routes.maturity import router as maturity_router
+from routes.brand_tools import router as brand_tools_router
 
 # Create the main app
 app = FastAPI(title="LaBrand - Brand OS API")
@@ -48,6 +49,7 @@ api_router.include_router(credits_router)
 api_router.include_router(plans_router)
 api_router.include_router(stripe_router)
 api_router.include_router(maturity_router)
+api_router.include_router(brand_tools_router)
 
 # Include the main API router
 app.include_router(api_router)
