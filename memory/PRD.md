@@ -281,11 +281,32 @@ O backend foi refatorado de um arquivo monolítico (5300+ linhas) para arquitetu
   - Insights automáticos baseados nos dados
   - Ações rápidas para navegação
 
-#### ✅ SYSTEM HEALTH
-- Frontend: RUNNING
-- Backend: RUNNING  
-- MongoDB: RUNNING
+#### ✅ SYSTEM HEALTH (Updated 2026-02-21)
+- Frontend: RUNNING ✅
+- Backend: RUNNING ✅ (server.py → server_new.py bridge)
+- MongoDB: RUNNING ✅
+- PDF Generation: WORKING ✅ (ReportLab)
 - All APIs responding correctly
+
+---
+
+## Roadmap / Backlog
+
+### P1 - Próximas Tarefas
+- [ ] Converter CRM de MOCK para APIs reais (RD Station, HubSpot)
+- [ ] Converter Ads de MOCK para APIs reais (Meta, Google)
+- [ ] Alertas por Email - Integrar Resend para envio real
+
+### P2 - Melhorias
+- [ ] Colaboração & Governança (roles granulares, workflows de aprovação)
+- [ ] Social Listening real (APIs do Twitter/Instagram)
+- [ ] Dashboards configuráveis
+- [ ] Share of Voice
+
+### Futuro
+- [ ] White-labeling para enterprise
+- [ ] "Visão de Mercados" e "Oportunidades de Mercado"
+- [ ] Multi-idioma (além de pt-BR)
 
 ---
 
