@@ -295,6 +295,195 @@ export default function Benchmark() {
             </ul>
           </CardContent>
         </Card>
+
+        {/* Competitor Groups */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" /> Grupos de Concorrentes
+                </CardTitle>
+                <CardDescription>Compare sua marca com concorrentes específicos</CardDescription>
+              </div>
+              <Button onClick={() => setShowNewGroup(true)}>
+                <Plus className="h-4 w-4 mr-2" /> Novo Grupo
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {groups.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                Crie grupos de concorrentes para comparações personalizadas
+              </p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {groups.map(group => (
+                  <Card key={group.group_id} className="bg-muted/30">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">{group.name}</CardTitle>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="ghost" onClick={() => setEditingGroup(group)}>
+                            Editar
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => handleDeleteGroup(group.group_id)}>
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </div>
+                      {(group.segment || group.region) && (
+                        <div className="flex gap-2">
+                          {group.segment && <Badge variant="outline" className="text-xs">{group.segment}</Badge>}
+                          {group.region && <Badge variant="outline" className="text-xs">{group.region}</Badge>}
+                        </div>
+                      )}
+                    </CardHeader>
+                    <CardContent className="pt-2">
+                      {(group.competitors || []).length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Nenhum concorrente</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {/* My brand */}
+                          <div className="flex items-center justify-between p-2 bg-primary/10 rounded">
+                            <span className="font-medium text-sm">{data?.brand_name || 'Minha marca'}</span>
+                            <div className="flex gap-3 text-xs">
+                              <span>Força: {brandStrength}</span>
+                              <span>RBI: {rbi}%</span>
+                            </div>
+                          </div>
+                          {/* Competitors */}
+                          {group.competitors.map(comp => (
+                            <div key={comp.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                              <span className="text-sm">{comp.name}</span>
+                              <div className="flex gap-3 text-xs text-muted-foreground">
+                                <span>Força: {comp.strength}</span>
+                                <span>RBI: {comp.rbi}%</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* New Group Dialog */}
+        <Dialog open={showNewGroup} onOpenChange={setShowNewGroup}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Novo Grupo de Concorrentes</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Nome do Grupo *</Label>
+                <Input 
+                  placeholder="Ex: Concorrentes Diretos SP"
+                  value={newGroup.name}
+                  onChange={(e) => setNewGroup({...newGroup, name: e.target.value})}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Segmento</Label>
+                  <Input 
+                    placeholder="Ex: Premium"
+                    value={newGroup.segment}
+                    onChange={(e) => setNewGroup({...newGroup, segment: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Região</Label>
+                  <Input 
+                    placeholder="Ex: São Paulo"
+                    value={newGroup.region}
+                    onChange={(e) => setNewGroup({...newGroup, region: e.target.value})}
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowNewGroup(false)}>Cancelar</Button>
+              <Button onClick={handleCreateGroup}>Criar Grupo</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Group Dialog */}
+        <Dialog open={!!editingGroup} onOpenChange={() => setEditingGroup(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Editar: {editingGroup?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {/* Add competitor form */}
+              <div className="space-y-3 p-3 bg-muted/50 rounded-lg">
+                <Label>Adicionar Concorrente</Label>
+                <Input 
+                  placeholder="Nome do concorrente"
+                  value={newCompetitor.name}
+                  onChange={(e) => setNewCompetitor({...newCompetitor, name: e.target.value})}
+                />
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Brand Strength</span>
+                    <span>{newCompetitor.strength}</span>
+                  </div>
+                  <Slider 
+                    value={[newCompetitor.strength]} 
+                    onValueChange={([v]) => setNewCompetitor({...newCompetitor, strength: v})}
+                    max={100}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>RBI (%)</span>
+                    <span>{newCompetitor.rbi}%</span>
+                  </div>
+                  <Slider 
+                    value={[newCompetitor.rbi]} 
+                    onValueChange={([v]) => setNewCompetitor({...newCompetitor, rbi: v})}
+                    max={100}
+                  />
+                </div>
+                <Button onClick={handleAddCompetitor} className="w-full" size="sm">
+                  <Plus className="h-4 w-4 mr-2" /> Adicionar
+                </Button>
+              </div>
+
+              {/* Competitors list */}
+              <div className="space-y-2">
+                <Label>Concorrentes no grupo</Label>
+                {(editingGroup?.competitors || []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum concorrente ainda</p>
+                ) : (
+                  <div className="space-y-2">
+                    {editingGroup?.competitors.map(comp => (
+                      <div key={comp.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                        <span className="text-sm font-medium">{comp.name}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-muted-foreground">
+                            {comp.strength} | {comp.rbi}%
+                          </span>
+                          <Button size="sm" variant="ghost" onClick={() => handleRemoveCompetitor(comp.id)}>
+                            <Trash2 className="h-3 w-3 text-red-500" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setEditingGroup(null)}>Fechar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </TooltipProvider>
   );
