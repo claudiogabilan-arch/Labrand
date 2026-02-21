@@ -23,7 +23,7 @@ import {
 const API = process.env.REACT_APP_BACKEND_URL;
 
 export default function BrandTools() {
-  const { selectedBrand } = useBrand();
+  const { currentBrand } = useBrand();
   const { token } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('score');
@@ -47,10 +47,10 @@ export default function BrandTools() {
 
   // Fetch brand score
   const fetchBrandScore = async () => {
-    if (!selectedBrand) return;
+    if (!currentBrand) return;
     setLoading(l => ({ ...l, score: true }));
     try {
-      const res = await fetch(`${API}/api/brands/${selectedBrand.brand_id}/brand-score`, { headers });
+      const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/brand-score`, { headers });
       if (res.ok) setBrandScore(await res.json());
     } catch (e) { console.error(e); }
     setLoading(l => ({ ...l, score: false }));
@@ -58,10 +58,10 @@ export default function BrandTools() {
 
   // Generate PDF Report
   const generateReport = async () => {
-    if (!selectedBrand) return;
+    if (!currentBrand) return;
     setLoading(l => ({ ...l, report: true }));
     try {
-      const res = await fetch(`${API}/api/brands/${selectedBrand.brand_id}/reports/executive-pdf`, {
+      const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/reports/executive-pdf`, {
         method: 'POST', headers, body: JSON.stringify({ sections: ['score', 'pillars', 'recommendations'] })
       });
       if (res.ok) {
@@ -74,27 +74,27 @@ export default function BrandTools() {
   };
 
   const fetchReportHistory = async () => {
-    if (!selectedBrand) return;
+    if (!currentBrand) return;
     try {
-      const res = await fetch(`${API}/api/brands/${selectedBrand.brand_id}/reports/history`, { headers });
+      const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/reports/history`, { headers });
       if (res.ok) setReportHistory((await res.json()).reports || []);
     } catch (e) { console.error(e); }
   };
 
   // Alert config
   const fetchAlertConfig = async () => {
-    if (!selectedBrand) return;
+    if (!currentBrand) return;
     try {
-      const res = await fetch(`${API}/api/brands/${selectedBrand.brand_id}/alerts/config`, { headers });
+      const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/alerts/config`, { headers });
       if (res.ok) setAlertConfig(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const saveAlertConfig = async (config) => {
-    if (!selectedBrand) return;
+    if (!currentBrand) return;
     setLoading(l => ({ ...l, alerts: true }));
     try {
-      const res = await fetch(`${API}/api/brands/${selectedBrand.brand_id}/alerts/config`, {
+      const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/alerts/config`, {
         method: 'POST', headers, body: JSON.stringify(config)
       });
       if (res.ok) {
@@ -106,10 +106,10 @@ export default function BrandTools() {
   };
 
   const sendTestAlert = async () => {
-    if (!selectedBrand) return;
+    if (!currentBrand) return;
     setLoading(l => ({ ...l, testAlert: true }));
     try {
-      const res = await fetch(`${API}/api/brands/${selectedBrand.brand_id}/alerts/send-test`, { method: 'POST', headers });
+      const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/alerts/send-test`, { method: 'POST', headers });
       if (res.ok) {
         const data = await res.json();
         toast({ title: 'Email enviado!', description: data.message });
@@ -120,10 +120,10 @@ export default function BrandTools() {
 
   // Social Listening
   const fetchSocialMentions = async () => {
-    if (!selectedBrand) return;
+    if (!currentBrand) return;
     setLoading(l => ({ ...l, social: true }));
     try {
-      const res = await fetch(`${API}/api/brands/${selectedBrand.brand_id}/social-listening/mentions?days=30`, { headers });
+      const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/social-listening/mentions?days=30`, { headers });
       if (res.ok) setSocialMentions(await res.json());
     } catch (e) { console.error(e); }
     setLoading(l => ({ ...l, social: false }));
@@ -131,11 +131,11 @@ export default function BrandTools() {
 
   // Competitor Analysis
   const analyzeCompetitors = async () => {
-    if (!selectedBrand || !competitors.trim()) return;
+    if (!currentBrand || !competitors.trim()) return;
     setLoading(l => ({ ...l, competitors: true }));
     try {
       const compList = competitors.split(',').map(c => c.trim()).filter(Boolean);
-      const res = await fetch(`${API}/api/brands/${selectedBrand.brand_id}/competitors/analyze-ai`, {
+      const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/competitors/analyze-ai`, {
         method: 'POST', headers, body: JSON.stringify({ competitors: compList, analysis_depth: 'basic' })
       });
       if (res.ok) {
@@ -158,10 +158,10 @@ export default function BrandTools() {
   };
 
   const generateContent = async () => {
-    if (!selectedBrand) return;
+    if (!currentBrand) return;
     setLoading(l => ({ ...l, content: true }));
     try {
-      const res = await fetch(`${API}/api/brands/${selectedBrand.brand_id}/content-generator/generate`, {
+      const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/content-generator/generate`, {
         method: 'POST', headers, body: JSON.stringify({ content_type: contentType, tone: contentTone })
       });
       if (res.ok) {
@@ -181,15 +181,15 @@ export default function BrandTools() {
   };
 
   useEffect(() => {
-    if (selectedBrand && token) {
+    if (currentBrand && token) {
       fetchBrandScore();
       fetchReportHistory();
       fetchAlertConfig();
       fetchContentTypes();
     }
-  }, [selectedBrand, token]);
+  }, [currentBrand, token]);
 
-  if (!selectedBrand) {
+  if (!currentBrand) {
     return (
       <div className="flex items-center justify-center h-64" data-testid="brand-tools-no-brand">
         <p className="text-muted-foreground">Selecione uma marca para acessar as ferramentas</p>
@@ -204,7 +204,7 @@ export default function BrandTools() {
           <h1 className="text-2xl font-bold">Ferramentas de Marca</h1>
           <p className="text-muted-foreground">Análises avançadas e geração de conteúdo</p>
         </div>
-        <Badge variant="outline" className="text-sm">{selectedBrand.name}</Badge>
+        <Badge variant="outline" className="text-sm">{currentBrand.name}</Badge>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
