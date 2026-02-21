@@ -4,10 +4,10 @@ from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
 
-from config.database import db, AI_COSTS
-from config.auth import get_current_user
+from config import db
+from utils.helpers import get_current_user
 
-router = APIRouter(prefix="/api", tags=["brand-tools"])
+router = APIRouter(tags=["brand-tools"])
 
 class PDFReportRequest(BaseModel):
     sections: List[str] = ["score", "pillars", "recommendations"]
