@@ -146,7 +146,18 @@ export default function AdsIntegration() {
           <h1 className="text-2xl font-bold">Integrações de Ads</h1>
           <p className="text-muted-foreground">Meta Ads e Google Ads em um só lugar</p>
         </div>
+        <Badge variant="outline" className="ml-auto text-amber-600 border-amber-300">
+          Preview
+        </Badge>
       </div>
+
+      <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200">
+        <CardContent className="py-3">
+          <p className="text-sm text-amber-800 dark:text-amber-200">
+            ⚡ <strong>Modo Preview:</strong> Os dados exibidos são de demonstração. Para conectar suas contas reais, insira suas credenciais de API.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Provider Cards */}
       <div className="grid md:grid-cols-2 gap-4">
