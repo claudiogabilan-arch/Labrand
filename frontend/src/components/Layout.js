@@ -74,6 +74,7 @@ const navigationItems = [
   { name: 'Avaliação de Marca', href: '/valuation', icon: DollarSign, featureId: 'valuation', pro: true },
   { type: 'divider', label: 'Inteligência' },
   { name: 'Google Analytics', href: '/google-integration', icon: BarChart3, featureId: 'google_integration', pro: true },
+  { name: 'CRM', href: '/crm', icon: Building2, featureId: 'crm', pro: true },
   { name: 'Audiência', href: '/audience', icon: UserCheck, featureId: 'audience' },
   { type: 'divider', label: 'Gestão' },
   { name: 'Intelligence', href: '/intelligence', icon: Target, featureId: 'intelligence' },
