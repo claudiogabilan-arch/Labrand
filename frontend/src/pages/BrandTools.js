@@ -131,9 +131,45 @@ export default function BrandTools() {
       if (res.ok) {
         const data = await res.json();
         toast({ title: 'Email enviado!', description: data.message });
+        fetchAlertsHistory(); // Refresh history
+      } else {
+        const err = await res.json();
+        toast({ title: 'Erro', description: err.detail, variant: 'destructive' });
       }
-    } catch (e) { toast({ title: 'Erro', variant: 'destructive' }); }
+    } catch (e) { toast({ title: 'Erro ao enviar email', variant: 'destructive' }); }
     setLoading(l => ({ ...l, testAlert: false }));
+  };
+
+  const sendSpecificAlert = async (alertType) => {
+    if (!currentBrand) return;
+    setLoading(l => ({ ...l, sendAlert: true }));
+    try {
+      const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/alerts/send`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ alert_type: alertType })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        toast({ title: 'Alerta enviado!', description: data.message });
+        fetchAlertsHistory(); // Refresh history
+      } else {
+        const err = await res.json();
+        toast({ title: 'Erro', description: err.detail, variant: 'destructive' });
+      }
+    } catch (e) { toast({ title: 'Erro ao enviar alerta', variant: 'destructive' }); }
+    setLoading(l => ({ ...l, sendAlert: false }));
+  };
+
+  const fetchAlertsHistory = async () => {
+    if (!currentBrand) return;
+    try {
+      const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/alerts/history`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setAlertsHistory(data.alerts || []);
+      }
+    } catch (e) { console.error(e); }
   };
 
   // Social Listening
