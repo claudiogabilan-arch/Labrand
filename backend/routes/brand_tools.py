@@ -1,11 +1,18 @@
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
 
 from config import db
 from utils.helpers import get_current_user
+from services.email_service import (
+    send_test_alert, 
+    send_brand_alert,
+    generate_consistency_alert_data,
+    generate_risk_alert_data,
+    generate_opportunities_alert_data
+)
 
 router = APIRouter(tags=["brand-tools"])
 
@@ -17,6 +24,10 @@ class EmailAlertConfig(BaseModel):
     alert_types: List[str] = ["consistency", "risk", "opportunities"]
     frequency: str = "weekly"
     recipients: List[str] = []
+
+class SendAlertRequest(BaseModel):
+    alert_type: str = "consistency"
+    recipients: Optional[List[EmailStr]] = None
 
 class CompetitorAnalysisRequest(BaseModel):
     competitors: List[str]
