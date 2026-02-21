@@ -3889,6 +3889,76 @@ async def get_naming_project(brand_id: str, project_id: str, user: dict = Depend
     
     return {"project": project, "names": names}
 
+@api_router.put("/brands/{brand_id}/naming/{project_id}/propulsor")
+async def update_propulsor(brand_id: str, project_id: str, archetype: str = "", tension: str = "", user: dict = Depends(get_current_user)):
+    """Update Fator Propulsor (Step 2) - archetype and tension"""
+    await db.naming_projects.update_one(
+        {"project_id": project_id, "brand_id": brand_id},
+        {"$set": {
+            "propulsor": {"archetype": archetype, "tension": tension},
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    return {"success": True}
+
+@api_router.post("/brands/{brand_id}/naming/{project_id}/semantic-map")
+async def generate_semantic_map(brand_id: str, project_id: str, keywords: List[str] = [], user: dict = Depends(get_current_user)):
+    """Generate semantic map from keywords (Step 3 - Arquétipos Vivos) - 1 credit"""
+    if not keywords:
+        raise HTTPException(status_code=400, detail="Insira pelo menos uma palavra-chave")
+    
+    # Check credits
+    success, result = await deduct_ai_credits(user["user_id"], "semantic_map", 1)
+    if not success:
+        raise HTTPException(status_code=402, detail=result)
+    
+    try:
+        prompt = f"""A partir das palavras-chave abaixo, gere um mapa semântico expandido para naming de marca.
+
+PALAVRAS-CHAVE: {', '.join(keywords)}
+
+Para cada palavra-chave, forneça:
+1. 5 conceitos relacionados
+2. 3 metáforas ou analogias
+3. 2 palavras em outros idiomas (latim, grego, inglês) que capturam a essência
+
+Responda em JSON:
+{{
+  "map": [
+    {{
+      "keyword": "palavra",
+      "concepts": ["conceito1", "conceito2", ...],
+      "metaphors": ["metáfora1", ...],
+      "foreign": [{{"word": "palavra", "language": "latim", "meaning": "significado"}}]
+    }}
+  ],
+  "combinations": ["sugestão de blend 1", "sugestão 2", ...]
+}}"""
+
+        response = await call_llm(prompt)
+        
+        import re
+        json_match = re.search(r'\{[\s\S]*\}', response)
+        if json_match:
+            semantic_data = json.loads(json_match.group())
+        else:
+            semantic_data = {"map": [], "combinations": []}
+        
+        # Save to project
+        await db.naming_projects.update_one(
+            {"project_id": project_id},
+            {"$set": {
+                "semantic_map": semantic_data,
+                "keywords": keywords,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        return {"success": True, "semantic_map": semantic_data, "credits_used": 1}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.post("/brands/{brand_id}/naming")
 async def create_naming_project(brand_id: str, data: NamingProject, user: dict = Depends(get_current_user)):
     """Create a new naming project"""
