@@ -284,7 +284,7 @@ export const LoginPage = () => {
                 </TabsContent>
               </Tabs>
 
-              {/* Google OAuth - desativado temporariamente
+              {/* Google OAuth - Emergent Auth */}
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t" />
@@ -321,7 +321,6 @@ export const LoginPage = () => {
                 </svg>
                 Continuar com Google
               </Button>
-              */}
             </CardContent>
           </Card>
         </div>
