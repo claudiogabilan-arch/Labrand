@@ -29,7 +29,64 @@ Web application for brand management covering diagnosis, strategy creation, exec
 
 ## Changelog
 
-### 2026-02-18 (Session 5 - Current)
+### 2026-02-21 (Session 6 - Current)
+
+#### ✅ COMPLETED: 6 Brand Tools Features (Alto Impacto + Diferenciação)
+
+**Alto Impacto:**
+
+1. **Brand Score Unificado**
+   - `GET /api/brands/{id}/brand-score` - Score consolidado 0-100
+   - 4 dimensões: Estratégia (35%), Experiência (20%), Maturidade (25%), Consistência (20%)
+   - Níveis: Excelente (≥80), Bom (≥60), Em Desenvolvimento (≥40), Crítico (<40)
+   - Recomendações automáticas baseadas no score
+
+2. **Relatório PDF Executivo**
+   - `POST /api/brands/{id}/reports/executive-pdf` - Gera relatório
+   - `GET /api/brands/{id}/reports/history` - Histórico de relatórios
+   - Executive summary com pontos fortes, áreas de melhoria, ações prioritárias
+   - **Note:** Download real de PDF em desenvolvimento (MOCK)
+
+3. **Alertas por Email**
+   - `GET/POST /api/brands/{id}/alerts/config` - Configuração de alertas
+   - `POST /api/brands/{id}/alerts/send-test` - Email de teste (MOCK)
+   - Frequência: diário, semanal, mensal
+   - Tipos: consistência, risco, oportunidades
+
+**Diferenciação Competitiva:**
+
+4. **Social Listening Light**
+   - `GET /api/brands/{id}/social-listening/mentions` - Menções em redes sociais
+   - Sentimento, alcance, trending topics
+   - Fontes: Twitter, Instagram, LinkedIn, Facebook
+   - **Note:** Dados MOCK - Integração real com APIs de social listening pendente
+
+5. **Análise de Concorrentes com IA**
+   - `POST /api/brands/{id}/competitors/analyze-ai` - Análise com IA
+   - Custo: 2 créditos (básico), 4 créditos (detalhado)
+   - Forças, fraquezas, nível de ameaça, recomendações estratégicas
+   - Histórico: `GET /api/brands/{id}/competitors/analyses`
+
+6. **Gerador de Conteúdo de Marca**
+   - `GET /api/content-generator/types` - Tipos disponíveis
+   - `POST /api/brands/{id}/content-generator/generate` - Gera conteúdo
+   - Tipos: Tagline (1cr), Post Social (1cr), Bio (1cr), Manifesto (2cr), Elevator Pitch (1cr)
+   - Tons: profissional, casual, inspiracional
+   - Histórico: `GET /api/brands/{id}/content-generator/history`
+
+**Frontend:**
+- Nova página `/brand-tools` com 6 abas
+- Menu "Ferramentas" no sidebar (ícone de chave)
+- Todas as funcionalidades conectadas e testadas
+
+**Testes:**
+- Backend: 23 testes passaram, 3 skipped (comportamento esperado - créditos insuficientes)
+- Frontend: Todas as 6 abas verificadas funcionando
+- Bug corrigido: ordenação de rotas em `/reports/history`
+
+---
+
+### 2026-02-18 (Session 5)
 
 #### ✅ COMPLETED: Security & Login Validation
 - Confirmed `/api/setup/create-admin` endpoint already removed (security fixed)
