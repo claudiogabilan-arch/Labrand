@@ -3,9 +3,16 @@ import { useBrand } from '../contexts/BrandContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 import { Progress } from '../components/ui/progress';
-import { Loader2, TrendingUp, TrendingDown, Minus, Info } from 'lucide-react';
+import { Slider } from '../components/ui/slider';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Loader2, TrendingUp, TrendingDown, Minus, Info, Plus, Users, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
+import { toast } from 'sonner';
+import axios from 'axios';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
