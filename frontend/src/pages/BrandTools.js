@@ -26,7 +26,7 @@ export default function BrandTools() {
   const { currentBrand } = useBrand();
   const { token } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('score');
+  const [activeTab, setActiveTab] = useState('equity');
   const [loading, setLoading] = useState({});
 
   // States para cada feature
