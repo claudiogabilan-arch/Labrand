@@ -3816,6 +3816,51 @@ NAMING_CRITERIA = [
     {"id": "extensibilidade", "name": "Extensibilidade", "description": "Permite expansão da marca", "weight": 1},
 ]
 
+# Arquétipos de marca (Carl Jung adaptados para branding)
+ARCHETYPES = [
+    {"id": "heroi", "name": "Herói", "essence": "Coragem e superação", "brands": ["Nike", "FedEx", "BMW"], 
+     "keywords": ["força", "vitória", "determinação", "conquista", "poder"]},
+    {"id": "mago", "name": "Mago", "essence": "Transformação e visão", "brands": ["Apple", "Disney", "Tesla"],
+     "keywords": ["magia", "inovação", "visão", "transformação", "possibilidade"]},
+    {"id": "rebelde", "name": "Rebelde", "essence": "Revolução e liberdade", "brands": ["Harley-Davidson", "Virgin", "Diesel"],
+     "keywords": ["liberdade", "revolução", "ousadia", "ruptura", "autenticidade"]},
+    {"id": "explorador", "name": "Explorador", "essence": "Descoberta e aventura", "brands": ["Jeep", "The North Face", "Starbucks"],
+     "keywords": ["aventura", "descoberta", "jornada", "exploração", "horizonte"]},
+    {"id": "sabio", "name": "Sábio", "essence": "Conhecimento e verdade", "brands": ["Google", "BBC", "Harvard"],
+     "keywords": ["conhecimento", "sabedoria", "verdade", "expertise", "clareza"]},
+    {"id": "inocente", "name": "Inocente", "essence": "Simplicidade e otimismo", "brands": ["Coca-Cola", "McDonald's", "Dove"],
+     "keywords": ["pureza", "simplicidade", "felicidade", "otimismo", "confiança"]},
+    {"id": "criador", "name": "Criador", "essence": "Inovação e expressão", "brands": ["Lego", "Adobe", "Pinterest"],
+     "keywords": ["criatividade", "imaginação", "arte", "expressão", "originalidade"]},
+    {"id": "governante", "name": "Governante", "essence": "Controle e liderança", "brands": ["Mercedes-Benz", "Rolex", "Microsoft"],
+     "keywords": ["liderança", "poder", "status", "controle", "excelência"]},
+    {"id": "cuidador", "name": "Cuidador", "essence": "Proteção e serviço", "brands": ["Johnson & Johnson", "Volvo", "UNICEF"],
+     "keywords": ["proteção", "cuidado", "segurança", "conforto", "apoio"]},
+    {"id": "cara_comum", "name": "Cara Comum", "essence": "Pertencimento e autenticidade", "brands": ["IKEA", "Gap", "Budweiser"],
+     "keywords": ["pertencimento", "comunidade", "autenticidade", "igualdade", "conexão"]},
+    {"id": "amante", "name": "Amante", "essence": "Paixão e intimidade", "brands": ["Chanel", "Victoria's Secret", "Häagen-Dazs"],
+     "keywords": ["paixão", "desejo", "beleza", "prazer", "sedução"]},
+    {"id": "bobo", "name": "Bobo da Corte", "essence": "Alegria e espontaneidade", "brands": ["M&M's", "Old Spice", "Fanta"],
+     "keywords": ["diversão", "humor", "alegria", "irreverência", "leveza"]},
+]
+
+# Exemplos de tensões criativas para inspiração
+TENSION_EXAMPLES = [
+    {"tension": "Tradição vs Inovação", "example": "Como ser moderno sem perder raízes?"},
+    {"tension": "Local vs Global", "example": "Como parecer internacional mantendo identidade local?"},
+    {"tension": "Premium vs Acessível", "example": "Como comunicar qualidade sem parecer elitista?"},
+    {"tension": "Técnico vs Humano", "example": "Como ser especialista sem ser frio?"},
+    {"tension": "Segurança vs Ousadia", "example": "Como transmitir confiança sendo disruptivo?"},
+    {"tension": "Simplicidade vs Sofisticação", "example": "Como ser elegante sem complicar?"},
+    {"tension": "Velocidade vs Qualidade", "example": "Como ser ágil sem parecer descuidado?"},
+    {"tension": "Exclusividade vs Comunidade", "example": "Como ser especial sendo inclusivo?"},
+]
+
+@api_router.get("/naming/archetypes")
+async def get_archetypes():
+    """Get brand archetypes for Fator Propulsor step"""
+    return {"archetypes": ARCHETYPES, "tension_examples": TENSION_EXAMPLES}
+
 @api_router.get("/naming/criteria")
 async def get_naming_criteria():
     """Get naming evaluation criteria"""
