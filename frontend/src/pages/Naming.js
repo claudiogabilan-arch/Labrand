@@ -7,16 +7,14 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Slider } from '../components/ui/slider';
-import { Progress } from '../components/ui/progress';
 import { toast } from 'sonner';
 import { 
   Sparkles, Plus, Trash2, Loader2, Star, StarOff,
-  Wand2, Target, Users, Building2, Lightbulb, 
-  ArrowRight, CheckCircle2, ChevronRight, Save
+  Wand2, Target, Lightbulb, ChevronRight, Save,
+  Zap, Brain, Network, X, Check
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -44,6 +42,14 @@ const PERCEPTIONS = [
   "Simplicidade", "Sofisticação", "Acessibilidade", "Premium", "Tecnologia"
 ];
 
+const STEPS = [
+  { id: 1, name: "Essência", icon: Target, description: "Contexto do negócio" },
+  { id: 2, name: "Propulsor", icon: Zap, description: "Arquétipo e tensão" },
+  { id: 3, name: "Semântico", icon: Network, description: "Mapa de conceitos" },
+  { id: 4, name: "Geração", icon: Wand2, description: "Criar nomes com IA" },
+  { id: 5, name: "Avaliação", icon: Star, description: "Pontuar e selecionar" },
+];
+
 export default function Naming() {
   const { token } = useAuth();
   const { currentBrand } = useBrand();
@@ -54,10 +60,15 @@ export default function Naming() {
   const [currentProject, setCurrentProject] = useState(null);
   const [names, setNames] = useState([]);
   const [criteria, setCriteria] = useState([]);
+  const [archetypes, setArchetypes] = useState([]);
+  const [tensionExamples, setTensionExamples] = useState([]);
   const [step, setStep] = useState(1);
   const [showNewProject, setShowNewProject] = useState(false);
   const [scoringName, setScoringName] = useState(null);
   const [scores, setScores] = useState({});
+  const [semanticMap, setSemanticMap] = useState(null);
+  const [keywords, setKeywords] = useState([]);
+  const [newKeyword, setNewKeyword] = useState('');
   
   const [formData, setFormData] = useState({
     project_name: '',
@@ -70,11 +81,17 @@ export default function Naming() {
     tone: 'moderno',
     name_style: 'criativo'
   });
+  
+  const [propulsor, setPropulsor] = useState({
+    archetype: '',
+    tension: ''
+  });
 
   useEffect(() => {
     if (currentBrand) {
       loadData();
       loadCriteria();
+      loadArchetypes();
     }
   }, [currentBrand]);
 
@@ -102,15 +119,34 @@ export default function Naming() {
     }
   };
 
+  const loadArchetypes = async () => {
+    try {
+      const response = await axios.get(`${API}/naming/archetypes`);
+      setArchetypes(response.data.archetypes || []);
+      setTensionExamples(response.data.tension_examples || []);
+    } catch (error) {
+      console.error('Error loading archetypes');
+    }
+  };
+
   const loadProject = async (projectId) => {
     try {
       const response = await axios.get(
         `${API}/brands/${currentBrand.brand_id}/naming/${projectId}`,
         { headers: { Authorization: `Bearer ${token}` }}
       );
-      setCurrentProject(response.data.project);
+      const project = response.data.project;
+      setCurrentProject(project);
       setNames(response.data.names || []);
-      setStep(response.data.project.status === 'draft' ? 1 : 2);
+      setPropulsor(project.propulsor || { archetype: '', tension: '' });
+      setSemanticMap(project.semantic_map || null);
+      setKeywords(project.keywords || []);
+      
+      // Determine current step
+      if (response.data.names?.length > 0) setStep(5);
+      else if (project.semantic_map) setStep(4);
+      else if (project.propulsor?.archetype) setStep(3);
+      else setStep(2);
     } catch (error) {
       toast.error('Erro ao carregar projeto');
     }
@@ -148,11 +184,69 @@ export default function Naming() {
       setShowNewProject(false);
       setCurrentProject(response.data);
       setNames([]);
+      setStep(2);
       loadData();
     } catch (error) {
       toast.error('Erro ao criar projeto');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSavePropulsor = async () => {
+    if (!propulsor.archetype) {
+      toast.error('Selecione um arquétipo');
+      return;
+    }
+    
+    try {
+      await axios.put(
+        `${API}/brands/${currentBrand.brand_id}/naming/${currentProject.project_id}/propulsor?archetype=${propulsor.archetype}&tension=${encodeURIComponent(propulsor.tension)}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      toast.success('Fator Propulsor salvo!');
+      setStep(3);
+    } catch (error) {
+      toast.error('Erro ao salvar');
+    }
+  };
+
+  const handleAddKeyword = () => {
+    if (newKeyword.trim() && !keywords.includes(newKeyword.trim())) {
+      setKeywords([...keywords, newKeyword.trim()]);
+      setNewKeyword('');
+    }
+  };
+
+  const handleRemoveKeyword = (kw) => {
+    setKeywords(keywords.filter(k => k !== kw));
+  };
+
+  const handleGenerateSemanticMap = async () => {
+    if (keywords.length === 0) {
+      toast.error('Adicione pelo menos uma palavra-chave');
+      return;
+    }
+    
+    setGenerating(true);
+    try {
+      const response = await axios.post(
+        `${API}/brands/${currentBrand.brand_id}/naming/${currentProject.project_id}/semantic-map?${keywords.map(k => `keywords=${encodeURIComponent(k)}`).join('&')}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      setSemanticMap(response.data.semantic_map);
+      toast.success(`Mapa gerado! (${response.data.credits_used} crédito)`);
+      setStep(4);
+    } catch (error) {
+      if (error.response?.status === 402) {
+        toast.error('Créditos insuficientes');
+      } else {
+        toast.error('Erro ao gerar mapa');
+      }
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -168,7 +262,7 @@ export default function Naming() {
       );
       
       setNames(response.data.names || []);
-      setStep(2);
+      setStep(5);
       toast.success(`${response.data.names?.length || 0} nomes gerados! (${response.data.credits_used} créditos)`);
       loadData();
     } catch (error) {
@@ -249,6 +343,8 @@ export default function Naming() {
     });
   };
 
+  const selectedArchetype = archetypes.find(a => a.id === propulsor.archetype);
+
   if (!currentBrand) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -289,7 +385,7 @@ export default function Naming() {
             <CardContent className="py-12 text-center">
               <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
               <h3 className="text-lg font-medium mb-2">Nenhum projeto de naming</h3>
-              <p className="text-muted-foreground mb-4">Crie seu primeiro projeto para começar a gerar nomes</p>
+              <p className="text-muted-foreground mb-4">Crie seu primeiro projeto para começar</p>
               <Button onClick={() => setShowNewProject(true)}>
                 <Plus className="h-4 w-4 mr-2" /> Criar Projeto
               </Button>
@@ -306,21 +402,20 @@ export default function Naming() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{project.project_name}</CardTitle>
-                    <Badge variant={project.status === 'generated' ? 'default' : 'secondary'}>
-                      {project.status === 'generated' ? 'Gerado' : 'Rascunho'}
+                    <Badge variant={project.names_generated > 0 ? 'default' : 'secondary'}>
+                      {project.names_generated > 0 ? `${project.names_generated} nomes` : 'Rascunho'}
                     </Badge>
                   </div>
-                  <CardDescription>
-                    {project.names_generated} nomes gerados
-                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground line-clamp-2">
                     {project.context?.business_description}
                   </p>
-                  <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
-                    <span>{new Date(project.created_at).toLocaleDateString('pt-BR')}</span>
-                  </div>
+                  {project.propulsor?.archetype && (
+                    <Badge variant="outline" className="mt-2">
+                      {archetypes.find(a => a.id === project.propulsor.archetype)?.name || project.propulsor.archetype}
+                    </Badge>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -332,10 +427,10 @@ export default function Naming() {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Wand2 className="h-5 w-5" /> Novo Projeto de Naming
+                <Target className="h-5 w-5" /> Etapa 1: Essência Decode®
               </DialogTitle>
               <DialogDescription>
-                Preencha o contexto do negócio para gerar sugestões de nomes
+                Preencha o contexto do negócio para começar a jornada de naming
               </DialogDescription>
             </DialogHeader>
             
@@ -422,26 +517,18 @@ export default function Naming() {
                 <div className="space-y-2">
                   <Label>Tom da Marca</Label>
                   <Select value={formData.tone} onValueChange={(v) => setFormData({...formData, tone: v})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {TONES.map(t => (
-                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                      ))}
+                      {TONES.map(t => (<SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Estilo de Nome</Label>
                   <Select value={formData.name_style} onValueChange={(v) => setFormData({...formData, name_style: v})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {STYLES.map(s => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                      ))}
+                      {STYLES.map(s => (<SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -451,8 +538,8 @@ export default function Naming() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowNewProject(false)}>Cancelar</Button>
               <Button onClick={handleCreateProject} disabled={saving}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                Criar Projeto
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ChevronRight className="h-4 w-4 mr-2" />}
+                Próxima Etapa
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -461,79 +548,301 @@ export default function Naming() {
     );
   }
 
-  // Project detail view
+  // Project detail view with steps
   return (
     <div className="space-y-6" data-testid="naming-project">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => { setCurrentProject(null); setNames([]); }}>
+          <Button variant="ghost" size="sm" onClick={() => { setCurrentProject(null); setNames([]); setSemanticMap(null); setKeywords([]); }}>
             ← Voltar
           </Button>
           <div>
             <h1 className="text-2xl font-bold">{currentProject.project_name}</h1>
-            <p className="text-muted-foreground text-sm">
-              {currentProject.context?.business_description?.slice(0, 100)}...
+            <p className="text-muted-foreground text-sm line-clamp-1">
+              {currentProject.context?.business_description}
             </p>
           </div>
         </div>
-        <Badge variant={currentProject.status === 'generated' ? 'default' : 'secondary'}>
-          {names.length} nomes
-        </Badge>
       </div>
 
-      {/* Steps */}
-      <div className="flex items-center gap-4">
-        <div className={`flex items-center gap-2 ${step >= 1 ? 'text-primary' : 'text-muted-foreground'}`}>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-primary text-white' : 'bg-muted'}`}>
-            1
-          </div>
-          <span className="font-medium">Contexto</span>
-        </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        <div className={`flex items-center gap-2 ${step >= 2 ? 'text-primary' : 'text-muted-foreground'}`}>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-primary text-white' : 'bg-muted'}`}>
-            2
-          </div>
-          <span className="font-medium">Gerar Nomes</span>
-        </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        <div className={`flex items-center gap-2 ${step >= 3 ? 'text-primary' : 'text-muted-foreground'}`}>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-primary text-white' : 'bg-muted'}`}>
-            3
-          </div>
-          <span className="font-medium">Avaliar</span>
-        </div>
+      {/* Steps Navigation */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2">
+        {STEPS.map((s, idx) => {
+          const StepIcon = s.icon;
+          const isActive = step === s.id;
+          const isCompleted = step > s.id;
+          
+          return (
+            <div key={s.id} className="flex items-center">
+              <button
+                onClick={() => s.id <= step && setStep(s.id)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                  isActive ? 'bg-primary text-white' : 
+                  isCompleted ? 'bg-primary/10 text-primary cursor-pointer' : 
+                  'bg-muted text-muted-foreground'
+                }`}
+              >
+                {isCompleted ? <Check className="h-4 w-4" /> : <StepIcon className="h-4 w-4" />}
+                <span className="text-sm font-medium whitespace-nowrap">{s.name}</span>
+              </button>
+              {idx < STEPS.length - 1 && <ChevronRight className="h-4 w-4 text-muted-foreground mx-1" />}
+            </div>
+          );
+        })}
       </div>
 
-      {/* Step 1: Context Summary */}
-      {step === 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Contexto do Projeto</CardTitle>
-            <CardDescription>Revise as informações antes de gerar os nomes</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-muted-foreground">Público-alvo</Label>
-                <p>{currentProject.context?.target_audience}</p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">Tom</Label>
-                <p className="capitalize">{currentProject.context?.tone}</p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">Estilo</Label>
-                <p className="capitalize">{currentProject.context?.name_style}</p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">Percepções</Label>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {currentProject.context?.desired_perception?.map(p => (
-                    <Badge key={p} variant="secondary" className="text-xs">{p}</Badge>
+      {/* Step 2: Fator Propulsor */}
+      {step === 2 && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5" /> Etapa 2: Fator Propulsor®
+              </CardTitle>
+              <CardDescription>
+                Defina o arquétipo da marca e a tensão criativa central
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Archetype Selection */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Escolha o Arquétipo da Marca</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {archetypes.map(arch => (
+                    <Card 
+                      key={arch.id}
+                      className={`cursor-pointer transition-all ${
+                        propulsor.archetype === arch.id 
+                          ? 'border-primary bg-primary/5 ring-2 ring-primary' 
+                          : 'hover:border-primary/50'
+                      }`}
+                      onClick={() => setPropulsor({...propulsor, archetype: arch.id})}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium">{arch.name}</span>
+                          {propulsor.archetype === arch.id && <Check className="h-4 w-4 text-primary" />}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{arch.essence}</p>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
+              </div>
+
+              {/* Selected Archetype Details */}
+              {selectedArchetype && (
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardContent className="p-4">
+                    <h4 className="font-medium mb-2">Arquétipo: {selectedArchetype.name}</h4>
+                    <p className="text-sm text-muted-foreground mb-3">{selectedArchetype.essence}</p>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {selectedArchetype.keywords.map(kw => (
+                        <Badge key={kw} variant="secondary" className="text-xs">{kw}</Badge>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Marcas exemplo: {selectedArchetype.brands.join(', ')}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Tension */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Tensão Criativa Central</Label>
+                <p className="text-sm text-muted-foreground">
+                  Qual é o paradoxo ou tensão que define sua marca?
+                </p>
+                <Textarea
+                  placeholder="Ex: Ser inovador mantendo tradição, ser premium sendo acessível..."
+                  value={propulsor.tension}
+                  onChange={(e) => setPropulsor({...propulsor, tension: e.target.value})}
+                  rows={2}
+                />
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground font-medium">Exemplos de tensões:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {tensionExamples.map((t, idx) => (
+                      <Badge 
+                        key={idx} 
+                        variant="outline" 
+                        className="cursor-pointer hover:bg-primary/10"
+                        onClick={() => setPropulsor({...propulsor, tension: t.tension})}
+                      >
+                        {t.tension}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <Button onClick={handleSavePropulsor} className="w-full">
+                <ChevronRight className="h-4 w-4 mr-2" /> Próxima Etapa
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Step 3: Mapa Semântico */}
+      {step === 3 && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Network className="h-5 w-5" /> Etapa 3: Arquétipos Vivos®
+              </CardTitle>
+              <CardDescription>
+                Explore conceitos e palavras relacionadas ao universo da marca
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Add Keywords */}
+              <div className="space-y-2">
+                <Label>Adicione palavras-chave do universo da marca</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Ex: transformação, conexão, velocidade..."
+                    value={newKeyword}
+                    onChange={(e) => setNewKeyword(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddKeyword()}
+                  />
+                  <Button onClick={handleAddKeyword} variant="outline">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Keywords List */}
+              {keywords.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {keywords.map(kw => (
+                    <Badge key={kw} variant="secondary" className="gap-1">
+                      {kw}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveKeyword(kw)} />
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              {/* Suggest from archetype */}
+              {selectedArchetype && (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Sugestões do arquétipo {selectedArchetype.name}:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedArchetype.keywords.filter(k => !keywords.includes(k)).map(kw => (
+                      <Badge 
+                        key={kw} 
+                        variant="outline" 
+                        className="cursor-pointer hover:bg-primary/10"
+                        onClick={() => setKeywords([...keywords, kw])}
+                      >
+                        + {kw}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Button 
+                onClick={handleGenerateSemanticMap} 
+                disabled={generating || keywords.length === 0}
+                className="w-full"
+              >
+                {generating ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Gerando mapa...</>
+                ) : (
+                  <><Brain className="h-4 w-4 mr-2" /> Gerar Mapa Semântico (1 crédito)</>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Semantic Map Results */}
+          {semanticMap && semanticMap.map && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Mapa Semântico</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {semanticMap.map.map((item, idx) => (
+                  <div key={idx} className="space-y-2 p-3 bg-muted/50 rounded-lg">
+                    <h4 className="font-medium text-primary">{item.keyword}</h4>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Conceitos:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {item.concepts?.map((c, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs">{c}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                    {item.metaphors?.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Metáforas:</p>
+                        <p className="text-sm">{item.metaphors.join(' • ')}</p>
+                      </div>
+                    )}
+                    {item.foreign?.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Palavras estrangeiras:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {item.foreign.map((f, i) => (
+                            <span key={i} className="text-sm">
+                              <strong>{f.word}</strong> ({f.language}) - {f.meaning}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                
+                {semanticMap.combinations?.length > 0 && (
+                  <div className="space-y-2 p-3 bg-primary/5 rounded-lg">
+                    <h4 className="font-medium">Sugestões de Combinações</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {semanticMap.combinations.map((c, i) => (
+                        <Badge key={i} variant="outline">{c}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <Button onClick={() => setStep(4)} className="w-full">
+                  <ChevronRight className="h-4 w-4 mr-2" /> Ir para Geração de Nomes
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Step 4: Generate Names */}
+      {step === 4 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wand2 className="h-5 w-5" /> Etapa 4: Geração de Nomes
+            </CardTitle>
+            <CardDescription>
+              A IA vai gerar sugestões baseadas em todo o contexto coletado
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-3 gap-4 text-sm">
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="text-muted-foreground">Arquétipo</p>
+                <p className="font-medium">{selectedArchetype?.name || 'Não definido'}</p>
+              </div>
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="text-muted-foreground">Tensão</p>
+                <p className="font-medium line-clamp-1">{propulsor.tension || 'Não definida'}</p>
+              </div>
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="text-muted-foreground">Palavras-chave</p>
+                <p className="font-medium">{keywords.length} palavras</p>
               </div>
             </div>
             
@@ -541,18 +850,20 @@ export default function Naming() {
               {generating ? (
                 <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Gerando nomes...</>
               ) : (
-                <><Wand2 className="h-4 w-4 mr-2" /> Gerar Nomes com IA (3 créditos)</>
+                <><Sparkles className="h-4 w-4 mr-2" /> Gerar Nomes com IA (3 créditos)</>
               )}
             </Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Step 2+: Names List */}
-      {step >= 2 && (
+      {/* Step 5: Names List & Evaluation */}
+      {step === 5 && names.length > 0 && (
         <>
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Nomes Gerados</h2>
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Star className="h-5 w-5" /> Etapa 5: Avaliação
+            </h2>
             <Button variant="outline" onClick={handleGenerate} disabled={generating}>
               {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
               Gerar mais
@@ -560,7 +871,7 @@ export default function Naming() {
           </div>
 
           <div className="grid gap-4">
-            {names.map((name, idx) => (
+            {names.map((name) => (
               <Card key={name.name_id} className={name.is_favorite ? 'border-yellow-500' : ''}>
                 <CardContent className="py-4">
                   <div className="flex items-start justify-between">
@@ -580,25 +891,13 @@ export default function Naming() {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleToggleFavorite(name.name_id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleToggleFavorite(name.name_id)}>
                         {name.is_favorite ? <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" /> : <StarOff className="h-4 w-4" />}
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => { setScoringName(name); setScores(name.scores || {}); }}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => { setScoringName(name); setScores(name.scores || {}); }}>
                         Avaliar
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleDeleteName(name.name_id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteName(name.name_id)}>
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
