@@ -46,33 +46,23 @@ Web application for brand management covering diagnosis, strategy creation, exec
 - **Frontend features:** Cards, import, stats, contacts table
 - **Note:** Import is currently MOCK data. Real API integration pending.
 
-#### ✅ COMPLETED: Naming Module "Estúdio Onomástico" (NEW)
-- **Backend endpoints:**
-  - `GET /api/naming/criteria` - Evaluation criteria (7 criteria with weights)
-  - `GET /api/naming/archetypes` - 12 archetypes + 8 tension examples (NEW)
-  - `GET /api/brands/{id}/naming` - List naming projects
-  - `GET /api/brands/{id}/naming/{id}` - Get project with names
-  - `POST /api/brands/{id}/naming` - Create project
-  - `PUT /api/brands/{id}/naming/{id}/propulsor` - Save archetype/tension (NEW)
-  - `POST /api/brands/{id}/naming/{id}/semantic-map` - Generate semantic map (1 credit) (NEW)
-  - `POST /api/brands/{id}/naming/{id}/generate` - Generate names with AI (3 credits)
-  - `PUT /api/brands/{id}/naming/{id}/names/{id}/score` - Score a name
-  - `PUT /api/brands/{id}/naming/{id}/names/{id}/favorite` - Toggle favorite
-  - `DELETE /api/brands/{id}/naming/{id}/names/{id}` - Delete name
-  - `DELETE /api/brands/{id}/naming/{id}` - Delete project
-
-- **5 Etapas Implementadas:**
+#### ✅ COMPLETED: Naming Module "Estúdio Onomástico" - COMPLETO
+- **7 Etapas Implementadas:**
   1. **Essência Decode®** - Formulário de contexto (negócio, missão, valores, público)
   2. **Fator Propulsor®** - Seleção de arquétipo (12 opções) + tensão criativa (8 exemplos)
-  3. **Arquétipos Vivos®** - Mapa semântico com IA (keywords, conceitos, metáforas, palavras estrangeiras)
-  4. **Geração** - Criação de nomes com IA
-  5. **Avaliação** - Scoring com 7 critérios ponderados + favoritos
+  3. **Arquétipos Vivos®** - Mapa semântico com IA (keywords, conceitos, metáforas) - 1 crédito
+  4. **Geração de Nomes** - Criação de nomes com IA - 3 créditos
+  5. **Laboratório Sonoro®** - Análise fonética (sílabas, ritmo, pronúncia) - 1 crédito
+  6. **Fricção Global®** - Verificação em 7 idiomas (alertas de pronúncia/conotação) - 2 créditos
+  7. **Avaliação Final** - Scoring com 7 critérios + favoritos + disponibilidade domínio/redes
 
-- **12 Arquétipos de Marca:** Herói, Mago, Rebelde, Explorador, Sábio, Inocente, Criador, Governante, Cuidador, Cara Comum, Amante, Bobo da Corte
-
-- **Custo de IA:**
-  - Mapa Semântico: 1 crédito
-  - Geração de Nomes: 3 créditos
+- **Backend endpoints:** 14 endpoints completos
+- **Features extras:**
+  - Mock verificação de domínios (.com, .com.br, .io, .co)
+  - Mock verificação redes sociais (Instagram, Twitter, LinkedIn, Facebook, TikTok)
+  - Exportação de relatório (JSON)
+  - 12 Arquétipos de marca com keywords e exemplos
+  - 8 exemplos de tensões criativas
 
 #### ✅ SYSTEM HEALTH
 - Frontend: RUNNING
