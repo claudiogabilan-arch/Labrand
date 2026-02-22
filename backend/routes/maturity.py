@@ -107,6 +107,7 @@ async def get_maturity_diagnosis(brand_id: str, user: dict = Depends(get_current
 async def save_maturity_diagnosis(brand_id: str, data: dict, user: dict = Depends(get_current_user)):
     """Save maturity diagnosis answers and calculate scores"""
     answers = data.get("answers", {})
+    frontend_results = data.get("results", None)  # Preserve frontend results
     
     # Calculate scores for each dimension
     dimension_scores = {}
@@ -145,12 +146,15 @@ async def save_maturity_diagnosis(brand_id: str, data: dict, user: dict = Depend
     
     diagnosis_data = {
         "brand_id": brand_id,
+        "user_id": user["user_id"],
         "answers": answers,
+        "results": frontend_results,  # Save frontend results
         "dimension_scores": dimension_scores,
         "overall_score": overall_score,
         "maturity_level": maturity_level["level"],
         "maturity_description": maturity_level["description"],
         "completed_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "status": "completed"
     }
     
