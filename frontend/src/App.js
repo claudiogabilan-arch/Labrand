@@ -50,6 +50,7 @@ import CRMIntegration from "./pages/CRMIntegration";
 import Naming from "./pages/Naming";
 import AdsIntegration from "./pages/AdsIntegration";
 import BrandTools from "./pages/BrandTools";
+import AcceptInvite from "./pages/AcceptInvite";
 import "./App.css";
 
 // Router wrapper to handle auth callback
