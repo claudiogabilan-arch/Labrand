@@ -85,12 +85,14 @@ export default function MaturityDiagnosis() {
         `${API}/brands/${currentBrand.brand_id}/maturity-diagnosis`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (response.data && response.data.results) {
-        setResults(response.data);
-        setAnswers(response.data.answers || {});
+      const data = response.data;
+      // Check if diagnosis was completed (has results or status completed)
+      if (data && (data.results || data.status === 'completed')) {
+        setResults(data);
+        setAnswers(data.answers || {});
         setShowResults(true);
-        if (response.data.recommendations) {
-          setRecommendations(response.data.recommendations);
+        if (data.recommendations) {
+          setRecommendations(data.recommendations);
         }
       }
     } catch (error) {
