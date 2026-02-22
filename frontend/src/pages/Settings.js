@@ -186,6 +186,150 @@ export const Settings = () => {
     }
   }, [user]);
 
+  // Fetch team members when brand changes
+  useEffect(() => {
+    if (currentBrand?.brand_id) {
+      fetchTeamMembers();
+      fetchPendingInvites();
+    }
+  }, [currentBrand?.brand_id]);
+
+  const fetchTeamMembers = async () => {
+    if (!currentBrand?.brand_id) return;
+    try {
+      const response = await axios.get(`${API}/team/members/${currentBrand.brand_id}`, {
+        headers: getAuthHeaders()
+      });
+      setTeamOwner(response.data.owner);
+      setTeamMembers(response.data.members || []);
+    } catch (error) {
+      console.error('Error fetching team:', error);
+    }
+  };
+
+  const fetchPendingInvites = async () => {
+    if (!currentBrand?.brand_id) return;
+    try {
+      const response = await axios.get(`${API}/team/invites/${currentBrand.brand_id}`, {
+        headers: getAuthHeaders()
+      });
+      setPendingInvites(response.data.invites || []);
+    } catch (error) {
+      console.error('Error fetching invites:', error);
+    }
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo: 2MB');
+      return;
+    }
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Formato inválido. Use JPG, PNG ou WebP');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await axios.post(`${API}/users/me/avatar`, formData, {
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      toast.success('Foto atualizada!');
+      // Refresh page to update avatar everywhere
+      window.location.reload();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao fazer upload');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      await axios.delete(`${API}/users/me/avatar`, {
+        headers: getAuthHeaders()
+      });
+      toast.success('Foto removida');
+      window.location.reload();
+    } catch (error) {
+      toast.error('Erro ao remover foto');
+    }
+  };
+
+  const handleInviteMember = async () => {
+    if (!inviteEmail || !currentBrand?.brand_id) return;
+
+    setIsInviting(true);
+    try {
+      await axios.post(`${API}/team/invite`, {
+        email: inviteEmail,
+        role: inviteRole,
+        brand_id: currentBrand.brand_id
+      }, {
+        headers: getAuthHeaders()
+      });
+
+      toast.success(`Convite enviado para ${inviteEmail}!`);
+      setInviteEmail('');
+      fetchPendingInvites();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao enviar convite');
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
+  const handleCancelInvite = async (inviteId) => {
+    try {
+      await axios.delete(`${API}/team/invites/${inviteId}`, {
+        headers: getAuthHeaders()
+      });
+      toast.success('Convite cancelado');
+      fetchPendingInvites();
+    } catch (error) {
+      toast.error('Erro ao cancelar convite');
+    }
+  };
+
+  const handleRemoveMember = async (memberId) => {
+    if (!window.confirm('Remover este membro da equipe?')) return;
+    try {
+      await axios.delete(`${API}/team/members/${memberId}`, {
+        headers: getAuthHeaders()
+      });
+      toast.success('Membro removido');
+      fetchTeamMembers();
+    } catch (error) {
+      toast.error('Erro ao remover membro');
+    }
+  };
+
+  const handleUpdateMemberRole = async (memberId, newRole) => {
+    try {
+      await axios.put(`${API}/team/members/${memberId}`, { role: newRole }, {
+        headers: getAuthHeaders()
+      });
+      toast.success('Papel atualizado');
+      fetchTeamMembers();
+    } catch (error) {
+      toast.error('Erro ao atualizar papel');
+    }
+  };
+
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
