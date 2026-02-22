@@ -77,6 +77,14 @@ async def serve_avatar(filename: str):
         return FileResponse(filepath)
     return JSONResponse({"error": "File not found"}, status_code=404)
 
+# Serve uploaded files (logos)
+@api_router.get("/uploads/logos/{filename}")
+async def serve_logo(filename: str):
+    filepath = f"/app/backend/uploads/logos/{filename}"
+    if os.path.exists(filepath):
+        return FileResponse(filepath)
+    return JSONResponse({"error": "File not found"}, status_code=404)
+
 # Include the main API router
 app.include_router(api_router)
 
