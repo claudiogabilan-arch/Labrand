@@ -298,12 +298,15 @@ export default function MaturityDiagnosis() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {r.strengths?.map((s, i) => (
-                <div key={s.id} className="flex items-center justify-between p-2 bg-white dark:bg-background rounded">
-                  <span>{s.name}</span>
-                  <Badge className="bg-green-500">{s.score}%</Badge>
-                </div>
-              ))}
+              {r.strengths?.map((s, i) => {
+                const sScore = typeof s.score === 'object' ? s.score?.score : s.score;
+                return (
+                  <div key={s.id || i} className="flex items-center justify-between p-2 bg-white dark:bg-background rounded">
+                    <span>{s.name}</span>
+                    <Badge className="bg-green-500">{Math.round(sScore || 0)}%</Badge>
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
         </div>
