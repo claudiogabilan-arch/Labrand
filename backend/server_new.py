@@ -67,6 +67,15 @@ api_router.include_router(admin_router)
 api_router.include_router(extras_router)
 api_router.include_router(naming_router)
 api_router.include_router(reports_router)
+api_router.include_router(team_router)
+
+# Serve uploaded files (avatars)
+@api_router.get("/uploads/avatars/{filename}")
+async def serve_avatar(filename: str):
+    filepath = f"/app/backend/uploads/avatars/{filename}"
+    if os.path.exists(filepath):
+        return FileResponse(filepath)
+    return JSONResponse({"error": "File not found"}, status_code=404)
 
 # Include the main API router
 app.include_router(api_router)
