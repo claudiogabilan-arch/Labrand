@@ -245,7 +245,9 @@ export default function MaturityDiagnosis() {
           </CardHeader>
           <CardContent className="space-y-4">
             {DIMENSIONS.map(dim => {
-              const score = r.dimension_scores?.[dim.id] || 0;
+              const dimData = r.dimension_scores?.[dim.id];
+              // Handle both formats: number or object with score property
+              const score = typeof dimData === 'object' ? (dimData?.score || 0) : (dimData || 0);
               const Icon = dim.icon;
               return (
                 <div key={dim.id} className="space-y-2">
@@ -254,7 +256,7 @@ export default function MaturityDiagnosis() {
                       <Icon className={`h-5 w-5 ${dim.color}`} />
                       <span className="font-medium">{dim.name}</span>
                     </div>
-                    <span className="font-bold">{score}%</span>
+                    <span className="font-bold">{Math.round(score)}%</span>
                   </div>
                   <Progress value={score} className="h-2" />
                 </div>
