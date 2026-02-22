@@ -471,7 +471,7 @@ export const Settings = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
           <TabsTrigger value="profile" className="gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Perfil</span>
@@ -483,6 +483,10 @@ export const Settings = () => {
           <TabsTrigger value="brands" className="gap-2">
             <Building2 className="h-4 w-4" />
             <span className="hidden sm:inline">Marcas</span>
+          </TabsTrigger>
+          <TabsTrigger value="team" className="gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Equipe</span>
           </TabsTrigger>
           <TabsTrigger value="integrations" className="gap-2">
             <Link2 className="h-4 w-4" />
