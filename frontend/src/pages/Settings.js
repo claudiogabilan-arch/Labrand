@@ -1026,6 +1026,161 @@ export const Settings = () => {
           </Card>
         </TabsContent>
 
+        {/* Team Tab */}
+        <TabsContent value="team" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Equipe</CardTitle>
+                  <CardDescription>
+                    Gerencie os membros da equipe
+                    {currentBrand && <span className="font-medium"> de {currentBrand.name}</span>}
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {!currentBrand ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Selecione uma marca para gerenciar a equipe</p>
+                </div>
+              ) : (
+                <>
+                  {/* Invite Member */}
+                  <div className="border rounded-lg p-4 space-y-4">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <UserPlus className="h-4 w-4" />
+                      Convidar Membro
+                    </h4>
+                    <div className="flex gap-3">
+                      <div className="flex-1">
+                        <Input
+                          type="email"
+                          placeholder="email@exemplo.com"
+                          value={inviteEmail}
+                          onChange={(e) => setInviteEmail(e.target.value)}
+                          data-testid="invite-email-input"
+                        />
+                      </div>
+                      <Select value={inviteRole} onValueChange={setInviteRole}>
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                          <SelectItem value="editor">Editor</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button onClick={handleInviteMember} disabled={isInviting || !inviteEmail} data-testid="send-invite-btn">
+                        {isInviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+                        Enviar
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Administrador: acesso total | Editor: pode editar, não pode excluir
+                    </p>
+                  </div>
+
+                  {/* Pending Invites */}
+                  {pendingInvites.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-sm text-muted-foreground">Convites Pendentes</h4>
+                      {pendingInvites.map((invite) => (
+                        <div key={invite.invite_id} className="flex items-center justify-between p-3 border rounded-lg bg-amber-50 dark:bg-amber-950/20">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-amber-200 dark:bg-amber-800 flex items-center justify-center">
+                              <Mail className="h-5 w-5 text-amber-700 dark:text-amber-300" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{invite.email}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Convidado como {invite.role === 'admin' ? 'Administrador' : 'Editor'}
+                              </p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => handleCancelInvite(invite.invite_id)}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <Separator />
+
+                  {/* Team Members */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm text-muted-foreground">Membros da Equipe</h4>
+                    
+                    {/* Owner */}
+                    {teamOwner && (
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={teamOwner.picture ? `${process.env.REACT_APP_BACKEND_URL}${teamOwner.picture}` : undefined} />
+                            <AvatarFallback>{getInitials(teamOwner.name)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium flex items-center gap-2">
+                              {teamOwner.name}
+                              <Crown className="h-4 w-4 text-amber-500" />
+                            </p>
+                            <p className="text-xs text-muted-foreground">{teamOwner.email}</p>
+                          </div>
+                        </div>
+                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+                          Dono
+                        </Badge>
+                      </div>
+                    )}
+
+                    {/* Other Members */}
+                    {teamMembers.map((member) => (
+                      <div key={member.member_id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={member.picture ? `${process.env.REACT_APP_BACKEND_URL}${member.picture}` : undefined} />
+                            <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{member.name}</p>
+                            <p className="text-xs text-muted-foreground">{member.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Select 
+                            value={member.role} 
+                            onValueChange={(value) => handleUpdateMemberRole(member.member_id, value)}
+                          >
+                            <SelectTrigger className="w-[130px] h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin">Administrador</SelectItem>
+                              <SelectItem value="editor">Editor</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button variant="ghost" size="sm" onClick={() => handleRemoveMember(member.member_id)} className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {teamMembers.length === 0 && (
+                      <p className="text-center py-4 text-muted-foreground text-sm">
+                        Nenhum membro adicional na equipe
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Integrations Tab */}
         <TabsContent value="integrations" className="space-y-6">
           <Card>
