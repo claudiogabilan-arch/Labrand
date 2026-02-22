@@ -137,7 +137,7 @@ async def upload_brand_logo(
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=400, 
-            detail=f"Formato não suportado. Use: JPG, PNG, WebP ou SVG (máx. 5MB)"
+            detail="Formato não suportado. Use: JPG, PNG, WebP ou SVG (máx. 5MB)"
         )
     
     # Read and check file size
