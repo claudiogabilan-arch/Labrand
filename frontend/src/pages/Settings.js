@@ -508,18 +508,41 @@ export const Settings = () => {
             <CardContent className="space-y-6">
               {/* Avatar Section */}
               <div className="flex items-center gap-6">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={user?.picture} alt={user?.name} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                    {getInitials(profile.name)}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative group">
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage src={user?.picture ? `${process.env.REACT_APP_BACKEND_URL}${user.picture}` : undefined} alt={user?.name} />
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+                      {getInitials(profile.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                    {isUploadingAvatar ? (
+                      <Loader2 className="h-6 w-6 text-white animate-spin" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-white" />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                      disabled={isUploadingAvatar}
+                    />
+                  </label>
+                </div>
                 <div>
                   <h3 className="font-medium">{profile.name}</h3>
                   <p className="text-sm text-muted-foreground">{profile.email}</p>
-                  <Badge variant="outline" className="mt-2 capitalize">
-                    {user?.role || 'Usuário'}
-                  </Badge>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge variant="outline" className="capitalize">
+                      {user?.role || 'Usuário'}
+                    </Badge>
+                    {user?.picture && (
+                      <Button variant="ghost" size="sm" onClick={handleRemoveAvatar} className="text-xs text-muted-foreground hover:text-destructive">
+                        Remover foto
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
 
