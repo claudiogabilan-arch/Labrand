@@ -38,7 +38,13 @@ import {
   Link2,
   Unlink,
   CheckCircle2,
-  ExternalLink
+  ExternalLink,
+  Users,
+  Upload,
+  Camera,
+  UserPlus,
+  Crown,
+  X
 } from 'lucide-react';
 import axios from 'axios';
 
