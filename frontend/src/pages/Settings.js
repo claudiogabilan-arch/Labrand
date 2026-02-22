@@ -164,17 +164,17 @@ export const Settings = () => {
       reports: false
     },
     sidebar: 'expanded',
+    dateFormat: 'DD/MM/YYYY'
+  });
 
   // Team state
   const [teamMembers, setTeamMembers] = useState([]);
+  const [teamOwner, setTeamOwner] = useState(null);
   const [pendingInvites, setPendingInvites] = useState([]);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('editor');
   const [isInviting, setIsInviting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const avatarInputRef = useState(null);
-    dateFormat: 'DD/MM/YYYY'
-  });
 
   useEffect(() => {
     if (user) {
