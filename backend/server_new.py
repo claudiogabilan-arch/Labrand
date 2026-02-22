@@ -5,9 +5,11 @@ Main Application Entry Point
 This file has been refactored from a 3000+ line monolithic file into modular routers.
 """
 from fastapi import FastAPI, APIRouter
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 import logging
+import os
 
 from config import db, client, logger
 
@@ -28,6 +30,7 @@ from routes.admin import router as admin_router
 from routes.extras import router as extras_router
 from routes.naming import router as naming_router
 from routes.reports import router as reports_router
+from routes.team import router as team_router
 
 # Create the main app
 app = FastAPI(title="LaBrand - Brand OS API")
