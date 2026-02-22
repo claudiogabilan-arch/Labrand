@@ -348,6 +348,8 @@ O backend foi refatorado de um arquivo monolítico (5300+ linhas) para arquitetu
 ## Roadmap / Backlog
 
 ### P1 - Próximas Tarefas
+- [x] Upload de Foto de Perfil ✅
+- [x] Sistema de Convite de Equipe ✅
 - [ ] Converter CRM de MOCK para APIs reais (RD Station, HubSpot)
 - [ ] Converter Ads de MOCK para APIs reais (Meta, Google)
 - [ ] Alertas por Email - Integrar Resend para envio real
