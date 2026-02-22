@@ -1,15 +1,23 @@
 """
 LaBrand - Brand Management Routes
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from datetime import datetime, timezone
 import uuid
+import os
 
 from config import db
 from models.schemas import BrandCreate
 from utils.helpers import get_current_user
 
 router = APIRouter(tags=["Brands"])
+
+UPLOAD_DIR = "/app/backend/uploads/logos"
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB for logos
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".svg"}
+
+# Ensure upload directory exists
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 @router.post("/brands", response_model=dict)
