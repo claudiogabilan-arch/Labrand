@@ -80,6 +80,7 @@ function AppRouter() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/invite/:token" element={<AcceptInvite />} />
       <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
       <Route
         path="/dashboard"
