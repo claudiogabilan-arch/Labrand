@@ -867,10 +867,17 @@ export const Settings = () => {
                     <div className="flex items-center gap-4">
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg,image/png,image/webp,image/svg+xml"
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (!file || !editingBrand) return;
+                          
+                          // Validate file size (5MB max)
+                          if (file.size > 5 * 1024 * 1024) {
+                            toast.error('Arquivo muito grande. Máximo: 5MB');
+                            return;
+                          }
+                          
                           const formData = new FormData();
                           formData.append('file', file);
                           try {
@@ -880,13 +887,16 @@ export const Settings = () => {
                             toast.success('Logo enviado!');
                             window.location.reload();
                           } catch (err) {
-                            toast.error('Erro ao enviar logo');
+                            toast.error(err.response?.data?.detail || 'Erro ao enviar logo');
                           }
                         }}
                         className="text-sm"
                         disabled={!editingBrand}
                       />
-                      {!editingBrand && <span className="text-xs text-muted-foreground">Salve a marca primeiro</span>}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Formatos: JPG, PNG, WebP, SVG (máx. 5MB)
+                      </p>
+                      {!editingBrand && <span className="text-xs text-amber-600">Salve a marca primeiro para enviar o logo</span>}
                     </div>
                   </div>
 
