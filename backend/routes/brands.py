@@ -117,6 +117,89 @@ async def delete_brand(brand_id: str, user: dict = Depends(get_current_user)):
     return {"message": "Marca excluída com sucesso"}
 
 
+@router.post("/brands/{brand_id}/logo")
+async def upload_brand_logo(
+    brand_id: str,
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user)
+):
+    """Upload brand logo"""
+    # Check brand ownership
+    brand = await db.brands.find_one(
+        {"brand_id": brand_id, "$or": [{"owner_id": user["user_id"]}, {"team_members": user["user_id"]}]},
+        {"_id": 0}
+    )
+    if not brand:
+        raise HTTPException(status_code=404, detail="Marca não encontrada")
+    
+    # Validate file extension
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Formato não suportado. Use: JPG, PNG, WebP ou SVG (máx. 5MB)"
+        )
+    
+    # Read and check file size
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="Arquivo muito grande. Tamanho máximo: 5MB")
+    
+    # Generate unique filename
+    filename = f"{brand_id}_{uuid.uuid4().hex[:8]}{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+    
+    # Delete old logo if exists
+    old_logo = brand.get("logo_url")
+    if old_logo and old_logo.startswith("/api/uploads/logos/"):
+        old_filename = old_logo.split("/")[-1]
+        old_path = os.path.join(UPLOAD_DIR, old_filename)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+    
+    # Save new file
+    with open(filepath, "wb") as f:
+        f.write(contents)
+    
+    # Update brand in database
+    logo_url = f"/api/uploads/logos/{filename}"
+    await db.brands.update_one(
+        {"brand_id": brand_id},
+        {"$set": {"logo_url": logo_url, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {
+        "success": True,
+        "logo_url": logo_url,
+        "message": "Logo atualizado com sucesso!"
+    }
+
+
+@router.delete("/brands/{brand_id}/logo")
+async def delete_brand_logo(brand_id: str, user: dict = Depends(get_current_user)):
+    """Remove brand logo"""
+    brand = await db.brands.find_one(
+        {"brand_id": brand_id, "owner_id": user["user_id"]},
+        {"_id": 0}
+    )
+    if not brand:
+        raise HTTPException(status_code=404, detail="Marca não encontrada")
+    
+    old_logo = brand.get("logo_url")
+    if old_logo and old_logo.startswith("/api/uploads/logos/"):
+        old_filename = old_logo.split("/")[-1]
+        old_path = os.path.join(UPLOAD_DIR, old_filename)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+    
+    await db.brands.update_one(
+        {"brand_id": brand_id},
+        {"$set": {"logo_url": None, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"success": True, "message": "Logo removido"}
+
+
 # ==================== EXECUTIVE SUMMARY & BENCHMARK ====================
 
 @router.get("/brands/{brand_id}/executive-summary")
