@@ -164,6 +164,15 @@ export const Settings = () => {
       reports: false
     },
     sidebar: 'expanded',
+
+  // Team state
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [pendingInvites, setPendingInvites] = useState([]);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('editor');
+  const [isInviting, setIsInviting] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const avatarInputRef = useState(null);
     dateFormat: 'DD/MM/YYYY'
   });
 
