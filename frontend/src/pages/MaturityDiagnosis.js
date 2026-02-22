@@ -275,15 +275,18 @@ export default function MaturityDiagnosis() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {r.priorities?.map((p, i) => (
-                <div key={p.id} className="flex items-center justify-between p-2 bg-white dark:bg-background rounded">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">{i + 1}º</Badge>
-                    <span>{p.name}</span>
+              {r.priorities?.map((p, i) => {
+                const pScore = typeof p.score === 'object' ? p.score?.score : p.score;
+                return (
+                  <div key={p.id || i} className="flex items-center justify-between p-2 bg-white dark:bg-background rounded">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{i + 1}º</Badge>
+                      <span>{p.name}</span>
+                    </div>
+                    <Badge variant="destructive">{Math.round(pScore || 0)}%</Badge>
                   </div>
-                  <Badge variant="destructive">{p.score}%</Badge>
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
 
