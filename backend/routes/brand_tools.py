@@ -203,20 +203,8 @@ async def get_alerts_history(brand_id: str, limit: int = 20, user: dict = Depend
         "total": len(alerts)
     }
 
-@router.get("/brands/{brand_id}/social-listening/mentions")
-async def get_social_mentions(brand_id: str, days: int = 30, user: dict = Depends(get_current_user)):
-    brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
-    brand_name = brand.get("name", "Marca") if brand else "Marca"
-    
-    mock_mentions = [
-        {"source": "Twitter", "text": f"Acabei de conhecer a {brand_name}, adorei!", "sentiment": "positive", "date": "2025-12-18", "reach": 1250},
-        {"source": "Instagram", "text": f"@{brand_name.lower().replace(' ','')} muito bom atendimento", "sentiment": "positive", "date": "2025-12-17", "reach": 3400},
-        {"source": "LinkedIn", "text": f"A {brand_name} está revolucionando", "sentiment": "positive", "date": "2025-12-16", "reach": 890},
-        {"source": "Twitter", "text": f"Problema com {brand_name}, mas resolveram", "sentiment": "neutral", "date": "2025-12-15", "reach": 450},
-        {"source": "Facebook", "text": f"Recomendo a {brand_name}!", "sentiment": "positive", "date": "2025-12-14", "reach": 2100},
-    ]
-    
-    return {"brand_id": brand_id, "period_days": days, "total_mentions": len(mock_mentions), "sentiment_summary": {"positive": 4, "neutral": 1, "negative": 0}, "sentiment_score": 85, "reach_total": sum(m["reach"] for m in mock_mentions), "mentions": mock_mentions, "trending_topics": ["atendimento", "inovação", "qualidade"], "note": "MOCK"}
+# Social listening endpoint moved to /routes/social_listening.py
+# Use GET /api/brands/{brand_id}/social-listening/dashboard for full social listening data
 
 @router.post("/brands/{brand_id}/competitors/analyze-ai")
 async def analyze_competitors_ai(brand_id: str, request: CompetitorAnalysisRequest, user: dict = Depends(get_current_user)):
