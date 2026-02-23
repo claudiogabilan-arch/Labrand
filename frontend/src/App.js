@@ -530,6 +530,54 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/brand-tracking"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <BrandTracking />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/disaster-check"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <DisasterCheck />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/value-waves"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <ValueWaves />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/brand-funnel"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <BrandFunnel />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
