@@ -97,7 +97,7 @@ async def verify_email(data: VerifyEmailRequest):
                 <p style="color: white; margin: 0; font-size: 14px;">Seu plano atual</p>
                 <p style="color: white; margin: 8px 0 0; font-size: 24px; font-weight: bold;">Founder + {TRIAL_DAYS} dias grátis</p>
             </div>
-            <a href="https://labrand.com.br/dashboard" style="display: inline-block; background: #1a1a1a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 16px;">Acessar Plataforma</a>
+            <a href="{os.environ.get('FRONTEND_URL', 'https://labrand.com.br')}/dashboard" style="display: inline-block; background: #1a1a1a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 16px;">Acessar Plataforma</a>
         </div>
     </div>
     """
