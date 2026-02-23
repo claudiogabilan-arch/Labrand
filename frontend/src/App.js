@@ -51,6 +51,10 @@ import Naming from "./pages/Naming";
 import AdsIntegration from "./pages/AdsIntegration";
 import BrandTools from "./pages/BrandTools";
 import AcceptInvite from "./pages/AcceptInvite";
+import BrandTracking from "./pages/BrandTracking";
+import DisasterCheck from "./pages/DisasterCheck";
+import ValueWaves from "./pages/ValueWaves";
+import BrandFunnel from "./pages/BrandFunnel";
 import "./App.css";
 
 // Router wrapper to handle auth callback
