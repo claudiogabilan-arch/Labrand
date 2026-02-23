@@ -40,6 +40,7 @@ from routes.social_listening import router as social_listening_router
 from routes.share_of_voice import router as share_of_voice_router
 from routes.conversion_attributes import router as conversion_attributes_router
 from routes.bvs import router as bvs_router
+from routes.brand_health import router as brand_health_router
 
 # Create the main app
 app = FastAPI(title="LaBrand - Brand OS API")
