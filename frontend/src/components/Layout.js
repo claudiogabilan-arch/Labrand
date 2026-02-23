@@ -87,6 +87,7 @@ const navigationItems = [
   { name: 'Avaliação de Marca', href: '/valuation', icon: DollarSign, featureId: 'valuation', pro: true },
   { type: 'divider', label: 'Inteligência' },
   { name: 'Dashboard Intel', href: '/intelligence', icon: BarChart3, featureId: 'intelligence' },
+  { name: 'Integrações', href: '/integrations', icon: Plug, featureId: 'integrations', pro: true },
   { name: 'Google Analytics', href: '/google-integration', icon: Globe, featureId: 'google_integration', pro: true },
   { name: 'Meta & Google Ads', href: '/ads', icon: TrendingUp, featureId: 'ads', pro: true },
   { name: 'CRM', href: '/crm', icon: Building2, featureId: 'crm', pro: true },
