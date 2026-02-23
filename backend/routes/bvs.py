@@ -237,7 +237,7 @@ def generate_bvs_insights(components: dict, overall_bvs: float) -> List[dict]:
     insights.append({
         "type": "success",
         "title": f"Ponto forte: {strongest[1]['name']}",
-        "message": f"Score de {strongest[1]['score']} - {strongest[1]['description']}"
+        "message": f"Score de {strongest[1]['score']} pontos"
     })
     
     # Find weakest component
@@ -255,6 +255,12 @@ def generate_bvs_insights(components: dict, overall_bvs: float) -> List[dict]:
             "type": "info",
             "title": "BVS acima da média do mercado",
             "message": "Sua marca está bem posicionada. Mantenha a consistência."
+        })
+    elif overall_bvs < 40:
+        insights.append({
+            "type": "critical",
+            "title": "BVS abaixo do ideal",
+            "message": "Sua marca precisa de investimentos estratégicos urgentes."
         })
     
     return insights
