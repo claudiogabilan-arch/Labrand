@@ -608,6 +608,54 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/social-listening"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <SocialListening />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/share-of-voice"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <ShareOfVoice />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/conversion-attributes"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <ConversionAttributes />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bvs"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <BVS />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
