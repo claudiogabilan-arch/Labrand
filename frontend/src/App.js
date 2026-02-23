@@ -55,6 +55,7 @@ import BrandTracking from "./pages/BrandTracking";
 import DisasterCheck from "./pages/DisasterCheck";
 import ValueWaves from "./pages/ValueWaves";
 import BrandFunnel from "./pages/BrandFunnel";
+import BrandHealth from "./pages/BrandHealth";
 import "./App.css";
 
 // Router wrapper to handle auth callback
