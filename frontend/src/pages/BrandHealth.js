@@ -91,9 +91,9 @@ export default function BrandHealth() {
         if (trackingRes.data?.current?.brand_score) scores.push(trackingRes.data.current.brand_score);
         if (wavesRes.data?.assessment?.overall_score) scores.push(wavesRes.data.assessment.overall_score);
         if (funnelRes.data?.funnel?.health_score) scores.push(funnelRes.data.funnel.health_score);
-      
-      const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
-      setOverallHealth(avgScore);
+        const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+        setOverallHealth(avgScore);
+      }
       
     } catch (error) {
       console.error('Error loading health data');
