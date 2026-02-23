@@ -87,3 +87,85 @@ async def get_ai_usage_details(days: int = 30, user: dict = Depends(get_admin_us
     return {"period_days": days, "total_calls": len(calls), "total_credits_consumed": total_credits,
             "estimated_cost_usd": round(total_credits * 0.001, 2), "estimated_cost_brl": round(total_credits * 0.001 * 5.5, 2),
             "by_action": by_action, "recent_calls": calls[:100]}
+
+
+
+# ===========================================
+# ENDPOINT TEMPORÁRIO PARA RESET DO BANCO
+# REMOVER APÓS A APRESENTAÇÃO!
+# ===========================================
+
+@router.delete("/admin/reset-database")
+async def reset_database(secret_key: str):
+    """
+    Reset completo do banco de dados.
+    Acesse: /api/admin/reset-database?secret_key=LABRAND2024RESET
+    
+    ⚠️ CUIDADO: Isso apaga TODOS os dados!
+    """
+    # Chave secreta para proteção
+    if secret_key != "LABRAND2024RESET":
+        raise HTTPException(status_code=403, detail="Chave secreta inválida")
+    
+    # Coleções a serem limpas
+    collections_to_clear = [
+        "users",
+        "brands", 
+        "pillars",
+        "touchpoints",
+        "maturity_diagnosis",
+        "maturity_results",
+        "naming_projects",
+        "ai_credits",
+        "ai_credits_history",
+        "brand_scores",
+        "brand_equity",
+        "brand_equity_history",
+        "consistency_alerts",
+        "social_mentions",
+        "bvs_scores",
+        "value_waves",
+        "brand_funnel",
+        "disaster_checks",
+        "share_of_voice",
+        "crm_contacts",
+        "ads_metrics",
+        "integrations",
+        "team_invites",
+        "email_alerts",
+        "payment_transactions"
+    ]
+    
+    results = {}
+    for collection in collections_to_clear:
+        try:
+            result = await db[collection].delete_many({})
+            results[collection] = result.deleted_count
+        except Exception as e:
+            results[collection] = f"Erro: {str(e)}"
+    
+    return {
+        "status": "success",
+        "message": "Banco de dados limpo com sucesso!",
+        "deleted_counts": results
+    }
+
+
+@router.get("/admin/database-status")
+async def database_status():
+    """Verifica o status atual do banco de dados (não precisa de autenticação)"""
+    try:
+        users_count = await db.users.count_documents({})
+        brands_count = await db.brands.count_documents({})
+        
+        return {
+            "status": "connected",
+            "users": users_count,
+            "brands": brands_count,
+            "message": f"Banco conectado. {users_count} usuários, {brands_count} marcas."
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
