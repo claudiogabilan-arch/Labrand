@@ -7,6 +7,7 @@ import uuid
 
 from config import db
 from utils.helpers import get_current_user
+from services.brand_data_service import calculate_bvs_from_real_data, get_brand_metrics
 
 router = APIRouter(tags=["BVS - Branding Value Score"])
 
