@@ -100,54 +100,25 @@ async def reset_database(secret_key: str):
     """
     Reset completo do banco de dados.
     Acesse: /api/admin/reset-database?secret_key=LABRAND2024RESET
-    
-    ⚠️ CUIDADO: Isso apaga TODOS os dados!
     """
-    # Chave secreta para proteção
     if secret_key != "LABRAND2024RESET":
         raise HTTPException(status_code=403, detail="Chave secreta inválida")
     
-    # Coleções a serem limpas
-    collections_to_clear = [
-        "users",
-        "brands", 
-        "pillars",
-        "touchpoints",
-        "maturity_diagnosis",
-        "maturity_results",
-        "naming_projects",
-        "ai_credits",
-        "ai_credits_history",
-        "brand_scores",
-        "brand_equity",
-        "brand_equity_history",
-        "consistency_alerts",
-        "social_mentions",
-        "bvs_scores",
-        "value_waves",
-        "brand_funnel",
-        "disaster_checks",
-        "share_of_voice",
-        "crm_contacts",
-        "ads_metrics",
-        "integrations",
-        "team_invites",
-        "email_alerts",
-        "payment_transactions"
-    ]
-    
+    # Deletar apenas as coleções principais primeiro
     results = {}
-    for collection in collections_to_clear:
-        try:
-            result = await db[collection].delete_many({})
-            results[collection] = result.deleted_count
-        except Exception as e:
-            results[collection] = f"Erro: {str(e)}"
+    
+    # Usuários
+    result = await db.users.delete_many({})
+    results["users"] = result.deleted_count
+    
+    # Marcas
+    result = await db.brands.delete_many({})
+    results["brands"] = result.deleted_count
     
     return {
         "status": "success",
-        "message": "Banco de dados limpo com sucesso!",
-        "deleted_counts": results
+        "message": "Usuários e marcas deletados!",
+        "deleted": results
     }
 
 
