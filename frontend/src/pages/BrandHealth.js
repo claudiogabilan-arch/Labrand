@@ -57,6 +57,15 @@ export default function BrandHealth() {
   const loadAllData = async () => {
     setLoading(true);
     try {
+      // Try new consolidated endpoint first
+      let healthResponse = null;
+      try {
+        healthResponse = await axios.get(`${API}/brands/${currentBrand.brand_id}/brand-health`, 
+          { headers: { Authorization: `Bearer ${token}` }});
+      } catch (e) {
+        console.log('Using legacy endpoints');
+      }
+      
       const [trackingRes, wavesRes, funnelRes, checksRes] = await Promise.all([
         axios.get(`${API}/brands/${currentBrand.brand_id}/tracking/comparison`, 
           { headers: { Authorization: `Bearer ${token}` }}).catch(() => ({ data: null })),
@@ -73,11 +82,15 @@ export default function BrandHealth() {
       setFunnel(funnelRes.data?.funnel);
       setDisasterChecks(checksRes.data?.checks || []);
       
-      // Calculate overall health score
-      const scores = [];
-      if (trackingRes.data?.current?.brand_score) scores.push(trackingRes.data.current.brand_score);
-      if (wavesRes.data?.assessment?.overall_score) scores.push(wavesRes.data.assessment.overall_score);
-      if (funnelRes.data?.funnel?.health_score) scores.push(funnelRes.data.funnel.health_score);
+      // Use consolidated health score if available
+      if (healthResponse?.data?.health_score) {
+        setOverallHealth(healthResponse.data.health_score);
+      } else {
+        // Calculate overall health score from individual modules
+        const scores = [];
+        if (trackingRes.data?.current?.brand_score) scores.push(trackingRes.data.current.brand_score);
+        if (wavesRes.data?.assessment?.overall_score) scores.push(wavesRes.data.assessment.overall_score);
+        if (funnelRes.data?.funnel?.health_score) scores.push(funnelRes.data.funnel.health_score);
       
       const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
       setOverallHealth(avgScore);
