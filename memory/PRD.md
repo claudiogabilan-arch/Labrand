@@ -381,9 +381,17 @@ O backend foi refatorado de um arquivo monolítico (5300+ linhas) para arquitetu
 - `GET /api/brands/{id}/brand-funnel/benchmark` - Comparação com benchmark do setor
 - Estágios: Conhecimento → Consideração → Preferência → Compra → Lealdade → Advocacia
 
+**5. Saúde da Marca (Brand Health) - Dashboard Consolidado**
+- Página única que reúne todos os 4 módulos acima
+- Índice de Saúde Geral (média ponderada de Brand Score, Ondas de Valor e Funil)
+- Cards de ação para completar avaliações pendentes
+- Resumo de cada módulo com links para detalhes
+- Banner informando que todas as análises são GRATUITAS (sem créditos IA)
+
 **Frontend:**
 - Nova seção "Frameworks Estratégicos" no sidebar
-- 4 páginas completas com visualizações ricas
+- 5 páginas completas com visualizações ricas
+- **Saúde da Marca** - Dashboard consolidado (NOVO)
 - Brand Tracking com gráficos de evolução temporal
 - Disaster Check com checklist interativo e recomendações
 - Ondas de Valor com questionário e scores por dimensão
