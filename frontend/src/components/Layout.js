@@ -61,6 +61,7 @@ import {
 
 const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, featureId: 'dashboard' },
+  { name: 'BVS Score', href: '/bvs', icon: Gem, featureId: 'bvs', pro: true },
   { name: 'Executivo', href: '/executive', icon: Briefcase, featureId: 'executive', pro: true },
   { name: 'Diagnóstico', href: '/maturity', icon: ClipboardCheck, featureId: 'maturity', pro: true },
   { name: 'Ferramentas', href: '/brand-tools', icon: Wrench, featureId: 'brand_tools', pro: true },
@@ -79,6 +80,10 @@ const navigationItems = [
   { name: 'Ondas de Valor', href: '/value-waves', icon: Waves, featureId: 'value_waves', pro: true },
   { name: 'Funil de Marca', href: '/brand-funnel', icon: Filter, featureId: 'brand_funnel', pro: true },
   { name: 'Disaster Check', href: '/disaster-check', icon: Shield, featureId: 'disaster_check', pro: true },
+  { type: 'divider', label: 'Análise Competitiva' },
+  { name: 'Social Listening', href: '/social-listening', icon: Radio, featureId: 'social_listening', pro: true },
+  { name: 'Share of Voice', href: '/share-of-voice', icon: Volume2, featureId: 'share_of_voice', pro: true },
+  { name: 'Atributos Conversão', href: '/conversion-attributes', icon: BarChart3, featureId: 'conversion_attributes', pro: true },
   { type: 'divider', label: 'Jornada do Cliente' },
   { name: 'Touchpoints', href: '/touchpoints', icon: MapPin, featureId: 'touchpoints' },
   { type: 'divider', label: 'Análise & Risco' },
