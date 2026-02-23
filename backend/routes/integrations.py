@@ -117,7 +117,7 @@ def simple_decrypt(encoded: str) -> str:
     """Simple base64 decoding for credentials"""
     try:
         return base64.b64decode(encoded.encode()).decode()
-    except:
+    except Exception:
         return encoded
 
 
