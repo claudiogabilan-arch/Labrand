@@ -344,15 +344,9 @@ def calculate_funnel_health(stages: List[FunnelStageData], rates: dict) -> int:
 
 async def generate_initial_funnel(brand_id: str) -> dict:
     """Generate initial funnel data based on available metrics"""
-    # Get touchpoints data
-    touchpoints = await db.touchpoints.find({"brand_id": brand_id}).to_list(100)
-    
     # Get ads data
     meta_ads = await db.ads_metrics.find_one({"brand_id": brand_id, "provider": "meta"})
     google_ads = await db.ads_metrics.find_one({"brand_id": brand_id, "provider": "google"})
-    
-    # Get CRM data
-    crm_contacts = await db.crm_contacts.count_documents({"brand_id": brand_id})
     
     # Estimate funnel values
     total_impressions = 0
