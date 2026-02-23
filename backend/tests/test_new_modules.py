@@ -13,7 +13,7 @@ import requests
 import os
 import time
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://labrand-staging-1.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://brand-os-preview.preview.emergentagent.com')
 
 # Test credentials
 TEST_EMAIL = "demo@labrand.com"
