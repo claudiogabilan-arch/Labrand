@@ -57,6 +57,10 @@ import ValueWaves from "./pages/ValueWaves";
 import BrandFunnel from "./pages/BrandFunnel";
 import BrandHealth from "./pages/BrandHealth";
 import Integrations from "./pages/Integrations";
+import SocialListening from "./pages/SocialListening";
+import ShareOfVoice from "./pages/ShareOfVoice";
+import ConversionAttributes from "./pages/ConversionAttributes";
+import BVS from "./pages/BVS";
 import "./App.css";
 
 // Router wrapper to handle auth callback
