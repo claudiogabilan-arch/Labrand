@@ -433,13 +433,14 @@ O backend foi refatorado de um arquivo monolítico (5300+ linhas) para arquitetu
 - [ ] Cases de Sucesso na Landing Page
 
 ### P2 - Melhorias (do Valometry)
-- [ ] BVS (Branding Value Score) - indicador unificado
+- [x] BVS (Branding Value Score) - indicador unificado ✅
+- [x] Social Listening - monitoramento de menções ✅
+- [x] Share of Voice - participação no mercado ✅
 - [ ] Cases de Sucesso na Landing Page
 - [ ] Análise de Atributos de Conversão
 - [ ] Colaboração & Governança (roles granulares, workflows de aprovação)
-- [ ] Social Listening real (APIs do Twitter/Instagram)
+- [ ] Social Listening REAL (APIs do Twitter/Instagram - atual é dados simulados)
 - [ ] Dashboards configuráveis
-- [ ] Share of Voice
 
 ### Futuro
 - [ ] White-labeling para enterprise
