@@ -429,8 +429,8 @@ O backend foi refatorado de um arquivo monolítico (5300+ linhas) para arquitetu
 - [x] Ondas de Valor ✅
 - [x] Funil de Conversão de Marca ✅
 - [x] Saúde da Marca (dashboard consolidado) ✅
-- [ ] Converter CRM de MOCK para APIs reais (RD Station, HubSpot) - Self-service
-- [ ] Converter Ads de MOCK para APIs reais (Meta, Google) - Self-service
+- [x] Sistema Self-Service de Integrações (CRM + Ads) ✅
+- [ ] Cases de Sucesso na Landing Page
 
 ### P2 - Melhorias (do Valometry)
 - [ ] BVS (Branding Value Score) - indicador unificado
