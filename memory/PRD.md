@@ -388,10 +388,30 @@ O backend foi refatorado de um arquivo monolítico (5300+ linhas) para arquitetu
 - Resumo de cada módulo com links para detalhes
 - Banner informando que todas as análises são GRATUITAS (sem créditos IA)
 
+**6. Sistema Self-Service de Integrações (NOVO)**
+- `GET /api/integrations/providers` - Lista todos os provedores disponíveis
+- `GET /api/brands/{id}/integrations` - Listar integrações configuradas
+- `POST /api/brands/{id}/integrations/{category}` - Salvar credenciais
+- `POST /api/brands/{id}/integrations/{category}/{provider}/test` - Testar conexão
+- `POST /api/brands/{id}/integrations/{category}/{provider}/sync` - Sincronizar dados
+- `DELETE /api/brands/{id}/integrations/{category}/{provider}` - Remover integração
+
+**CRMs Suportados:**
+- RD Station
+- HubSpot
+- Pipedrive
+- Kommo (amoCRM)
+
+**Plataformas de Ads Suportadas:**
+- Meta Ads (Facebook/Instagram)
+- Google Ads
+- TikTok Ads
+
 **Frontend:**
 - Nova seção "Frameworks Estratégicos" no sidebar
-- 5 páginas completas com visualizações ricas
-- **Saúde da Marca** - Dashboard consolidado (NOVO)
+- 6 páginas completas com visualizações ricas
+- **Integrações** - Self-service para CRM e Ads (NOVO)
+- **Saúde da Marca** - Dashboard consolidado
 - Brand Tracking com gráficos de evolução temporal
 - Disaster Check com checklist interativo e recomendações
 - Ondas de Valor com questionário e scores por dimensão
