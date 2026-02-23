@@ -95,7 +95,7 @@ async def get_ai_usage_details(days: int = 30, user: dict = Depends(get_admin_us
 # REMOVER APÓS A APRESENTAÇÃO!
 # ===========================================
 
-@router.delete("/admin/reset-database")
+@router.get("/admin/reset-database")
 async def reset_database(secret_key: str):
     """
     Reset completo do banco de dados.
