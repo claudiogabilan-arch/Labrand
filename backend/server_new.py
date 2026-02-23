@@ -77,6 +77,7 @@ api_router.include_router(brand_tracking_router)
 api_router.include_router(disaster_check_router)
 api_router.include_router(value_waves_router)
 api_router.include_router(brand_funnel_router)
+api_router.include_router(integrations_router)
 
 # Serve uploaded files (avatars)
 @api_router.get("/uploads/avatars/{filename}")
