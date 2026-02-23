@@ -45,6 +45,14 @@ from routes.brand_health import router as brand_health_router
 # Create the main app
 app = FastAPI(title="LaBrand - Brand OS API")
 
+
+# Root health check - Required for Kubernetes health probes
+@app.get("/health")
+async def root_health_check():
+    """Health check endpoint for Kubernetes probes"""
+    return {"status": "healthy", "service": "labrand-api"}
+
+
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
