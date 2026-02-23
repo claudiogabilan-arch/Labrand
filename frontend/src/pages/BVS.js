@@ -204,6 +204,38 @@ export default function BVS() {
         </div>
       )}
 
+      {/* Data Sources */}
+      {bvsData?.data_sources && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Info className="h-4 w-4" />
+              Fontes de Dados Conectadas
+            </CardTitle>
+            <CardDescription>
+              O BVS é calculado usando dados reais das fontes abaixo
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(bvsData.data_sources).map(([source, isActive]) => (
+                <Badge 
+                  key={source} 
+                  variant={isActive ? "default" : "outline"}
+                  className={isActive ? "bg-green-100 text-green-800 border-green-300" : ""}
+                >
+                  {isActive && <CheckCircle2 className="h-3 w-3 mr-1" />}
+                  {source.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </Badge>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">
+              ✅ = Dados reais disponíveis | 🔲 = Usando estimativas
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Component Details */}
         <Card>
