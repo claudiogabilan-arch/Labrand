@@ -87,6 +87,7 @@ api_router.include_router(social_listening_router)
 api_router.include_router(share_of_voice_router)
 api_router.include_router(conversion_attributes_router)
 api_router.include_router(bvs_router)
+api_router.include_router(brand_health_router)
 
 # Serve uploaded files (avatars)
 @api_router.get("/uploads/avatars/{filename}")
