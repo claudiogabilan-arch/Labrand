@@ -408,6 +408,7 @@ O backend foi refatorado de um arquivo monolítico (5300+ linhas) para arquitetu
 - [x] Disaster Check (pré-lançamento) ✅
 - [x] Ondas de Valor ✅
 - [x] Funil de Conversão de Marca ✅
+- [x] Saúde da Marca (dashboard consolidado) ✅
 - [ ] Converter CRM de MOCK para APIs reais (RD Station, HubSpot) - Self-service
 - [ ] Converter Ads de MOCK para APIs reais (Meta, Google) - Self-service
 
