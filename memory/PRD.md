@@ -345,16 +345,68 @@ O backend foi refatorado de um arquivo monolítico (5300+ linhas) para arquitetu
 
 ---
 
+### 2026-02-23 (Session 8 - Current)
+
+#### ✅ COMPLETED: Novos Frameworks Estratégicos (Sem custo de créditos IA)
+
+**Baseado em análise competitiva do Valometry**, implementamos 4 novos módulos que não utilizam créditos de IA:
+
+**1. Brand Tracking - Acompanhamento Contínuo**
+- `GET /api/brands/{id}/tracking/history` - Histórico de snapshots (6 meses)
+- `POST /api/brands/{id}/tracking/snapshot` - Criar snapshot manual
+- `GET /api/brands/{id}/tracking/comparison` - Comparação período atual vs anterior
+- `GET /api/brands/{id}/tracking/alerts` - Alertas baseados em mudanças
+- Métricas: Brand Score, Brand Equity, Maturidade, Pilares, Touchpoints, CRM
+
+**2. Disaster Check - Verificação de Risco Pré-Lançamento**
+- `GET /api/disaster-check/template` - Template com 7 categorias e 35 itens
+- `POST /api/brands/{id}/disaster-checks` - Criar novo check
+- `PUT /api/brands/{id}/disaster-checks/{id}/item` - Atualizar item do checklist
+- `GET /api/brands/{id}/disaster-checks/{id}/report` - Relatório com recomendação
+- Categorias: Identidade, Legal/Naming, Mercado, Comunicação, Digital, Crise, Operações
+- Sistema de peso para itens críticos
+
+**3. Ondas de Valor (Value Waves) - Framework de Gestão**
+- `GET /api/value-waves/framework` - Estrutura com 3 ondas e 27 perguntas
+- `POST /api/brands/{id}/value-waves/assess` - Salvar avaliação
+- `GET /api/brands/{id}/value-waves/recommendations` - Recomendações priorizadas
+- Ondas: Marca (awareness, percepção, diferenciação), Negócio (receita, market share, valor cliente), Comunicação (consistência, alcance, engajamento)
+- Score por onda e dimensão com insights automáticos
+
+**4. Funil de Conversão de Marca (Brand Funnel)**
+- `GET /api/brand-funnel/stages` - 6 estágios do funil
+- `GET /api/brands/{id}/brand-funnel` - Dados do funil com estimativas
+- `POST /api/brands/{id}/brand-funnel` - Atualizar dados do funil
+- `GET /api/brands/{id}/brand-funnel/analysis` - Análise de gargalos e oportunidades
+- `GET /api/brands/{id}/brand-funnel/benchmark` - Comparação com benchmark do setor
+- Estágios: Conhecimento → Consideração → Preferência → Compra → Lealdade → Advocacia
+
+**Frontend:**
+- Nova seção "Frameworks Estratégicos" no sidebar
+- 4 páginas completas com visualizações ricas
+- Brand Tracking com gráficos de evolução temporal
+- Disaster Check com checklist interativo e recomendações
+- Ondas de Valor com questionário e scores por dimensão
+- Funil de Marca com visualização de barras coloridas e taxas de conversão
+
+---
+
 ## Roadmap / Backlog
 
 ### P1 - Próximas Tarefas
 - [x] Upload de Foto de Perfil ✅
 - [x] Sistema de Convite de Equipe ✅
-- [ ] Converter CRM de MOCK para APIs reais (RD Station, HubSpot)
-- [ ] Converter Ads de MOCK para APIs reais (Meta, Google)
-- [ ] Alertas por Email - Integrar Resend para envio real
+- [x] Brand Tracking Contínuo ✅
+- [x] Disaster Check (pré-lançamento) ✅
+- [x] Ondas de Valor ✅
+- [x] Funil de Conversão de Marca ✅
+- [ ] Converter CRM de MOCK para APIs reais (RD Station, HubSpot) - Self-service
+- [ ] Converter Ads de MOCK para APIs reais (Meta, Google) - Self-service
 
-### P2 - Melhorias
+### P2 - Melhorias (do Valometry)
+- [ ] BVS (Branding Value Score) - indicador unificado
+- [ ] Cases de Sucesso na Landing Page
+- [ ] Análise de Atributos de Conversão
 - [ ] Colaboração & Governança (roles granulares, workflows de aprovação)
 - [ ] Social Listening real (APIs do Twitter/Instagram)
 - [ ] Dashboards configuráveis
