@@ -175,7 +175,6 @@ async def create_value_waves_assessment(
     """Create or update value waves assessment"""
     # Process answers and calculate scores
     wave_scores = {}
-    dimension_scores = {}
     
     for wave_id, wave_data in VALUE_WAVES_FRAMEWORK.items():
         wave_scores[wave_id] = {"total": 0, "max": 0, "dimensions": {}}
