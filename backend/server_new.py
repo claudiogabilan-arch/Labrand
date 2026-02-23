@@ -35,6 +35,7 @@ from routes.brand_tracking import router as brand_tracking_router
 from routes.disaster_check import router as disaster_check_router
 from routes.value_waves import router as value_waves_router
 from routes.brand_funnel import router as brand_funnel_router
+from routes.integrations import router as integrations_router
 
 # Create the main app
 app = FastAPI(title="LaBrand - Brand OS API")
