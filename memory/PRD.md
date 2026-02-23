@@ -356,10 +356,10 @@ O backend foi refatorado de um arquivo monolítico (5300+ linhas) para arquitetu
    - Força da Marca, Performance de Mercado, Conexão com Cliente, Saúde da Marca
    - Comparativo com mercado e top performers
    - Recomendações baseadas no score
-   - ✅ UI e Backend funcionando
+   - ✅ UI e Backend funcionando COM DADOS REAIS
 
 2. **Social Listening** (`/social-listening`)
-   - Monitoramento de menções (dados simulados)
+   - Monitoramento de menções
    - Sentiment Score, Total de Menções, Engajamento
    - Distribuição por plataforma (Twitter, Instagram, Facebook, LinkedIn)
    - Lista de menções recentes
@@ -374,17 +374,21 @@ O backend foi refatorado de um arquivo monolítico (5300+ linhas) para arquitetu
 
 4. **Saúde da Marca** (`/brand-health`)
    - Dashboard consolidado de todos os módulos
-   - Índice de Saúde Geral
+   - Índice de Saúde Geral calculado com dados reais
    - Cards de resumo de Brand Tracking, Ondas de Valor, Funil
-   - ✅ UI funcionando
+   - ✅ UI e Backend funcionando COM DADOS REAIS
 
 5. **Integrações Self-Service** (`/integrations`)
    - CRMs: RD Station, HubSpot, Pipedrive, Kommo
    - Plataformas de Ads: Meta Ads, Google Ads, TikTok Ads
-   - UI para configurar credenciais próprias
-   - ✅ UI funcionando (backend placeholder)
+   - Backend completo para salvar e testar integrações
+   - ✅ UI e Backend funcionando
 
-**Nota: Todos os módulos usam DADOS SIMULADOS (mock data). Não consomem créditos de IA.**
+**Implementado nesta sessão (P1):**
+- **Brand Data Service** (`/app/backend/services/brand_data_service.py`) - Serviço de consolidação de dados
+- **BVS com dados reais** - Agora usa dados de Touchpoints, Maturity, CRM, Ads, Social
+- **Brand Health endpoint** (`/api/brands/{id}/brand-health`) - Retorna métricas consolidadas
+- **Fontes de dados visíveis** - UI do BVS mostra quais fontes estão conectadas
 
 ---
 
