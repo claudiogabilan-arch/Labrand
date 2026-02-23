@@ -49,7 +49,9 @@ import {
   Shield,
   MapPin,
   Sparkles,
-  Wrench
+  Wrench,
+  Waves,
+  Filter
 } from 'lucide-react';
 
 const navigationItems = [
