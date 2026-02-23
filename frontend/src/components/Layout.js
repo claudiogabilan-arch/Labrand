@@ -53,7 +53,10 @@ import {
   Waves,
   Filter,
   Activity,
-  Plug
+  Plug,
+  Radio,
+  Volume2,
+  Gem
 } from 'lucide-react';
 
 const navigationItems = [
