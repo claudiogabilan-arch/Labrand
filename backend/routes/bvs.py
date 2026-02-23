@@ -43,41 +43,42 @@ BVS_COMPONENTS = {
 
 @router.get("/brands/{brand_id}/bvs")
 async def get_bvs(brand_id: str, user: dict = Depends(get_current_user)):
-    """Get the complete BVS (Branding Value Score) for a brand"""
+    """Get the complete BVS (Branding Value Score) for a brand using real consolidated data"""
     
-    # Collect all component scores
-    components = {}
+    # Use the new consolidated data service
+    bvs_data = await calculate_bvs_from_real_data(brand_id)
     
-    # 1. Brand Strength
-    brand_score_data = await db.brand_scores.find_one({"brand_id": brand_id}, {"_id": 0})
-    brand_equity_data = await db.brand_equity.find_one({"brand_id": brand_id}, {"_id": 0})
-    value_waves_data = await db.value_waves.find_one({"brand_id": brand_id}, {"_id": 0})
+    # Generate insights
+    insights = generate_bvs_insights(bvs_data["components"], bvs_data["bvs_score"])
     
-    brand_score = brand_score_data.get("overall_score", 0) if brand_score_data else 0
-    brand_equity = brand_equity_data.get("total_score", 0) if brand_equity_data else 0
-    vw_brand = value_waves_data.get("wave_scores", {}).get("brand", {}).get("percentage", 0) if value_waves_data else 0
-    
-    brand_strength = calculate_component_score([brand_score, brand_equity, vw_brand])
-    components["brand_strength"] = {
-        **BVS_COMPONENTS["brand_strength"],
-        "score": brand_strength,
-        "details": {
-            "brand_score": brand_score,
-            "brand_equity": brand_equity,
-            "value_waves_brand": vw_brand
-        }
+    # Save BVS snapshot
+    bvs_doc = {
+        "brand_id": brand_id,
+        "bvs_score": bvs_data["bvs_score"],
+        "components": bvs_data["components"],
+        "level": bvs_data["level"],
+        "data_sources": bvs_data["data_sources"],
+        "calculated_at": datetime.now(timezone.utc).isoformat()
     }
     
-    # 2. Market Performance
-    sov_data = await db.share_of_voice.find_one({"brand_id": brand_id}, {"_id": 0})
-    funnel_data = await db.brand_funnel.find_one({"brand_id": brand_id}, {"_id": 0})
-    vw_business = value_waves_data.get("wave_scores", {}).get("business", {}).get("percentage", 0) if value_waves_data else 0
+    await db.bvs_scores.update_one(
+        {"brand_id": brand_id},
+        {"$set": bvs_doc},
+        upsert=True
+    )
     
-    sov_score = sov_data.get("brand_sov", 25) if sov_data else 25  # Default 25%
-    funnel_health = funnel_data.get("health_score", 50) if funnel_data else 50
-    
-    market_performance = calculate_component_score([sov_score * 2, funnel_health, vw_business])  # SOV * 2 to normalize
-    components["market_performance"] = {
+    return {
+        "bvs_score": bvs_data["bvs_score"],
+        "level": bvs_data["level"],
+        "components": bvs_data["components"],
+        "insights": insights,
+        "data_sources": bvs_data["data_sources"],
+        "benchmark": {
+            "industry_avg": 55,
+            "top_performers": 80,
+            "your_position": "above_avg" if bvs_data["bvs_score"] > 55 else "below_avg"
+        }
+    }
         **BVS_COMPONENTS["market_performance"],
         "score": market_performance,
         "details": {
