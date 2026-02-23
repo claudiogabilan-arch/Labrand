@@ -52,7 +52,8 @@ import {
   Wrench,
   Waves,
   Filter,
-  Activity
+  Activity,
+  Plug
 } from 'lucide-react';
 
 const navigationItems = [
