@@ -71,6 +71,7 @@ const navigationItems = [
   { name: 'Personalidade', href: '/pillars/personality', icon: Users, pillar: 'personality', featureId: 'personality', pro: true },
   { name: 'Universal', href: '/pillars/universality', icon: Globe, pillar: 'universality', featureId: 'universality', pro: true },
   { type: 'divider', label: 'Frameworks Estratégicos' },
+  { name: 'Saúde da Marca', href: '/brand-health', icon: Activity, featureId: 'brand_health', pro: true },
   { name: 'Ondas de Valor', href: '/value-waves', icon: Waves, featureId: 'value_waves', pro: true },
   { name: 'Funil de Marca', href: '/brand-funnel', icon: Filter, featureId: 'brand_funnel', pro: true },
   { name: 'Disaster Check', href: '/disaster-check', icon: Shield, featureId: 'disaster_check', pro: true },
