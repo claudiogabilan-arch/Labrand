@@ -277,14 +277,30 @@ async def get_executive_summary(brand_id: str, user: dict = Depends(get_current_
 @router.get("/brands/{brand_id}/benchmark")
 async def get_benchmark(brand_id: str, user: dict = Depends(get_current_user)):
     """Benchmark setorial da marca"""
-    pillars = await db.pillars.find_one({"brand_id": brand_id}, {"_id": 0})
     valuation = await db.valuations.find_one({"brand_id": brand_id}, {"_id": 0})
     
-    sector = pillars.get("start", {}).get("industry", "default") if pillars else "default"
+    # Get pillars from the correct collection structure
+    pillar_types = ["start", "values", "purpose", "promise", "positioning", "personality", "universality"]
+    pillars_data = {}
     
-    pillar_keys = ["start", "values", "purpose", "promise", "positioning", "personality", "universality"]
-    filled = sum(1 for k in pillar_keys if pillars and pillars.get(k) and len(pillars.get(k, {})) > 0)
-    brand_strength = int((filled / len(pillar_keys)) * 100) if pillars else 0
+    # Check pillars collection
+    all_pillars = await db.pillars.find({"brand_id": brand_id}, {"_id": 0}).to_list(20)
+    for p in all_pillars:
+        pt = p.get("pillar_type")
+        if pt and p.get("answers"):
+            pillars_data[pt] = p.get("answers")
+    
+    # Also check legacy pillar_* collections
+    for pt in pillar_types:
+        if pt not in pillars_data:
+            legacy = await db[f"pillar_{pt}"].find_one({"brand_id": brand_id}, {"_id": 0})
+            if legacy:
+                pillars_data[pt] = {k: v for k, v in legacy.items() if k not in ["brand_id", "pillar_id"]}
+    
+    sector = pillars_data.get("start", {}).get("industry", "default") if pillars_data.get("start") else "default"
+    
+    filled = sum(1 for pt in pillar_types if pt in pillars_data and pillars_data[pt])
+    brand_strength = int((filled / len(pillar_types)) * 100)
     rbi = valuation.get("role_of_brand", 50) if valuation else 50
     
     percentile = min(95, max(5, brand_strength + 10))
