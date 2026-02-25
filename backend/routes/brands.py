@@ -297,15 +297,28 @@ async def get_brand_metrics(brand_id: str, user: dict = Depends(get_current_user
         pillar_type = p.get("pillar_type")
         if pillar_type and pillar_type in pillar_types:
             answers = p.get("answers", {})
-            filled_fields = sum(1 for v in answers.values() if v) if answers else 0
             
-            if filled_fields >= 3:
+            # Count non-empty fields (including arrays and nested objects)
+            filled_fields = 0
+            for k, v in answers.items():
+                if v:
+                    if isinstance(v, list) and len(v) > 0:
+                        filled_fields += 1
+                    elif isinstance(v, dict) and any(v.values()):
+                        filled_fields += 1
+                    elif isinstance(v, str) and len(v.strip()) > 0:
+                        filled_fields += 1
+                    elif v:  # Any other truthy value
+                        filled_fields += 1
+            
+            # More generous thresholds
+            if filled_fields >= 2:
                 pillar_progress[pillar_type] = 100
                 pillars_completed += 1
-            elif filled_fields >= 2:
-                pillar_progress[pillar_type] = 75
             elif filled_fields >= 1:
-                pillar_progress[pillar_type] = 50
+                pillar_progress[pillar_type] = 75
+            else:
+                pillar_progress[pillar_type] = 0
     
     # SECOND: Check legacy pillar_* collections for any not yet found
     for pillar_type in pillar_types:
