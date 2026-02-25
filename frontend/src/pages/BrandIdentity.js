@@ -24,11 +24,30 @@ const archetypeStyles = {
 };
 
 export default function BrandIdentity() {
-  const { currentBrand, pillars, loading: brandLoading } = useBrand();
+  const { currentBrand, loading: brandLoading } = useBrand();
   const { token } = useAuth();
   const [identity, setIdentity] = useState(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [pillarsData, setPillarsData] = useState({});
+
+  useEffect(() => {
+    const fetchPillars = async () => {
+      if (!currentBrand) return;
+      try {
+        const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/pillars-summary`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setPillarsData(data);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar pilares:', err);
+      }
+    };
+    fetchPillars();
+  }, [currentBrand, token]);
 
   const fetchIdentity = async () => {
     if (!currentBrand) return;
