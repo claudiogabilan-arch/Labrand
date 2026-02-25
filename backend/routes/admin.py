@@ -152,3 +152,34 @@ async def database_status():
             "status": "error",
             "message": str(e)
         }
+
+
+@router.get("/admin/debug-pillars/{brand_id}")
+async def debug_pillars(brand_id: str):
+    """Debug endpoint to see pillar data structure"""
+    result = {}
+    
+    # Check pillars collection
+    pillars = await db.pillars.find({"brand_id": brand_id}, {"_id": 0}).to_list(20)
+    result["pillars_collection"] = []
+    for p in pillars:
+        pillar_type = p.get("pillar_type")
+        answers = p.get("answers", {})
+        filled = sum(1 for k, v in answers.items() if v)
+        result["pillars_collection"].append({
+            "type": pillar_type,
+            "total_answer_keys": len(answers),
+            "filled_answers": filled,
+            "answer_keys": list(answers.keys()) if answers else []
+        })
+    
+    # Check legacy collections
+    for pt in ["start", "values", "purpose", "promise", "positioning", "personality", "universality"]:
+        doc = await db[f"pillar_{pt}"].find_one({"brand_id": brand_id}, {"_id": 0})
+        if doc:
+            result[f"pillar_{pt}"] = {
+                "exists": True,
+                "keys": [k for k in doc.keys() if k != "brand_id"]
+            }
+    
+    return result
