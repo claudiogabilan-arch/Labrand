@@ -185,22 +185,37 @@ export const Dashboard = () => {
                 to={pillar.href}
                 data-testid={`pillar-card-${pillar.key}`}
               >
-                <Card className="h-full card-hover group">
+                <Card className={`h-full card-hover group ${progress === 100 ? 'border-green-300 bg-green-50/30' : progress > 0 ? 'border-amber-200 bg-amber-50/20' : ''}`}>
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className={`w-10 h-10 rounded-lg ${pillar.color} flex items-center justify-center`}>
                         <Icon className="h-5 w-5 text-white" />
                       </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      {progress === 100 ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      )}
                     </div>
                     <h3 className="font-heading font-semibold mb-1">{pillar.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-4">{pillar.description}</p>
-                    <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground mb-3">{pillar.description}</p>
+                    <div className="space-y-2">
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Progresso</span>
-                        <span className="font-medium">{progress}%</span>
+                        <span className={`font-medium ${progress === 100 ? 'text-green-600' : progress > 0 ? 'text-amber-600' : ''}`}>
+                          {progress}%
+                        </span>
                       </div>
-                      <Progress value={progress} className="h-1.5" />
+                      <Progress 
+                        value={progress} 
+                        className={`h-1.5 ${progress === 100 ? '[&>div]:bg-green-500' : progress > 0 ? '[&>div]:bg-amber-500' : ''}`} 
+                      />
+                      {progress === 0 && (
+                        <p className="text-xs text-primary/70 flex items-center gap-1">
+                          <Sparkles className="h-3 w-3" />
+                          +3 pts no BVS ao completar
+                        </p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
