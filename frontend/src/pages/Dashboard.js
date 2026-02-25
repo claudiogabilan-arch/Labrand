@@ -139,10 +139,23 @@ export const Dashboard = () => {
                 {overallProgress >= 70 && overallProgress < 100 && 'Quase lá! Finalize os últimos detalhes.'}
                 {overallProgress === 100 && 'Parabéns! Todos os pilares estão completos.'}
               </p>
+              {/* BVS Impact Indicator */}
+              <div className="mt-3 p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border border-primary/20">
+                <div className="flex items-center gap-2 text-sm">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <span className="text-muted-foreground">Impacto no</span>
+                  <span className="font-semibold text-primary">BVS Score:</span>
+                  <span className="font-bold">
+                    {overallProgress < 30 && '+5-15 pontos ao completar pilares'}
+                    {overallProgress >= 30 && overallProgress < 70 && '+10-20 pontos potenciais'}
+                    {overallProgress >= 70 && '+25 pontos de Força da Marca'}
+                  </span>
+                </div>
+              </div>
             </div>
             <div className="flex gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">{metrics?.tasks?.done || 0}</div>
+                <div className="text-2xl font-bold text-primary">{metrics?.tasks?.completed || 0}</div>
                 <div className="text-xs text-muted-foreground">Tarefas concluídas</div>
               </div>
               <div className="text-center">
