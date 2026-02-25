@@ -291,7 +291,7 @@ export default function BrandWay() {
                   disabled={generating}
                 >
                   {generating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                  Sugerir com IA
+                  Preciso de ajuda
                 </Button>
               </div>
             </CardHeader>
@@ -366,7 +366,7 @@ export default function BrandWay() {
                   disabled={generating}
                 >
                   {generating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                  Sugerir com IA
+                  Preciso de ajuda
                 </Button>
               </div>
             </CardHeader>
@@ -437,7 +437,7 @@ export default function BrandWay() {
                   disabled={generating}
                 >
                   {generating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                  Sugerir com IA
+                  Preciso de ajuda
                 </Button>
               </div>
             </CardHeader>
@@ -526,7 +526,7 @@ export default function BrandWay() {
                   disabled={generating}
                 >
                   {generating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                  Sugerir com IA
+                  Preciso de ajuda
                 </Button>
               </div>
             </CardHeader>
@@ -628,7 +628,7 @@ export default function BrandWay() {
                   disabled={generating}
                 >
                   {generating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                  Sugerir com IA
+                  Preciso de ajuda
                 </Button>
               </div>
             </CardHeader>
@@ -686,7 +686,7 @@ export default function BrandWay() {
           <p className="text-sm text-muted-foreground">
             O "Jeito de Ser" é o DNA da sua marca. Preencha cada dimensão com autenticidade - 
             não existe certo ou errado, existe o que é verdadeiro para sua empresa. 
-            Use o botão "Sugerir com IA" para receber inspirações, mas sempre adapte à sua realidade.
+            Use o botão "Preciso de ajuda" para receber inspirações, mas sempre adapte à sua realidade.
           </p>
         </CardContent>
       </Card>
