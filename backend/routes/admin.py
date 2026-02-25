@@ -98,26 +98,38 @@ async def get_ai_usage_details(days: int = 30, user: dict = Depends(get_admin_us
 @router.get("/admin/reset-database")
 async def reset_database(secret_key: str):
     """
-    Reset completo do banco de dados.
+    Reset COMPLETO - Limpa todos os dados para começar do zero.
     Acesse: /api/admin/reset-database?secret_key=LABRAND2024RESET
     """
     if secret_key != "LABRAND2024RESET":
         raise HTTPException(status_code=403, detail="Chave secreta inválida")
     
-    # Deletar apenas as coleções principais primeiro
     results = {}
     
-    # Usuários
-    result = await db.users.delete_many({})
-    results["users"] = result.deleted_count
+    # Lista de TODAS as coleções para zerar
+    collections = [
+        "users", "brands", "pillars", "touchpoints",
+        "maturity_diagnosis", "maturity_results", "naming_projects",
+        "ai_credits", "ai_credits_history", "brand_scores",
+        "brand_equity", "brand_equity_history", "consistency_alerts",
+        "social_mentions", "bvs_scores", "value_waves", "brand_funnel",
+        "disaster_checks", "share_of_voice", "crm_contacts", "ads_metrics",
+        "integrations", "team_invites", "email_alerts", "payment_transactions",
+        "attribute_surveys", "competitors", "brand_tracking", "reports_history"
+    ]
     
-    # Marcas
-    result = await db.brands.delete_many({})
-    results["brands"] = result.deleted_count
+    for coll in collections:
+        try:
+            r = await db[coll].delete_many({})
+            results[coll] = r.deleted_count
+        except:
+            results[coll] = 0
+    
+    total = sum(v for v in results.values() if isinstance(v, int))
     
     return {
-        "status": "success",
-        "message": "Usuários e marcas deletados!",
+        "status": "success", 
+        "message": f"Plataforma zerada! {total} registros removidos.",
         "deleted": results
     }
 
