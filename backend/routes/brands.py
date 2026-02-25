@@ -206,12 +206,29 @@ async def delete_brand_logo(brand_id: str, user: dict = Depends(get_current_user
 async def get_executive_summary(brand_id: str, user: dict = Depends(get_current_user)):
     """Dashboard executivo com métricas simplificadas"""
     brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
-    pillars = await db.pillars.find_one({"brand_id": brand_id}, {"_id": 0})
     valuation = await db.valuations.find_one({"brand_id": brand_id}, {"_id": 0})
     
-    pillar_keys = ["start", "values", "purpose", "promise", "positioning", "personality", "universality"]
-    filled = sum(1 for k in pillar_keys if pillars and pillars.get(k) and len(pillars.get(k, {})) > 0)
-    brand_strength = int((filled / len(pillar_keys)) * 100) if pillars else 0
+    # Get pillars from the correct collection structure
+    pillar_types = ["start", "values", "purpose", "promise", "positioning", "personality", "universality"]
+    pillars_data = {}
+    
+    # Check pillars collection (multiple documents with pillar_type field)
+    all_pillars = await db.pillars.find({"brand_id": brand_id}, {"_id": 0}).to_list(20)
+    for p in all_pillars:
+        pt = p.get("pillar_type")
+        if pt and p.get("answers"):
+            pillars_data[pt] = p.get("answers")
+    
+    # Also check legacy pillar_* collections
+    for pt in pillar_types:
+        if pt not in pillars_data:
+            legacy = await db[f"pillar_{pt}"].find_one({"brand_id": brand_id}, {"_id": 0})
+            if legacy:
+                pillars_data[pt] = {k: v for k, v in legacy.items() if k not in ["brand_id", "pillar_id"]}
+    
+    # Calculate brand strength based on filled pillars
+    filled = sum(1 for pt in pillar_types if pt in pillars_data and pillars_data[pt])
+    brand_strength = int((filled / len(pillar_types)) * 100)
     
     rbi = valuation.get("role_of_brand", 50) if valuation else 50
     brand_value = valuation.get("total_value", 0) if valuation else 0
@@ -219,17 +236,17 @@ async def get_executive_summary(brand_id: str, user: dict = Depends(get_current_
     risks = []
     opportunities = []
     
-    if not pillars or not pillars.get("values"):
+    if "values" not in pillars_data or not pillars_data.get("values"):
         risks.append("Valores da marca não definidos - risco de inconsistência")
     else:
         opportunities.append("Valores bem definidos fortalecem cultura organizacional")
     
-    if not pillars or not pillars.get("positioning"):
+    if "positioning" not in pillars_data or not pillars_data.get("positioning"):
         risks.append("Posicionamento não estruturado - dificuldade de diferenciação")
     else:
         opportunities.append("Posicionamento claro permite comunicação mais efetiva")
     
-    if not pillars or not pillars.get("purpose"):
+    if "purpose" not in pillars_data or not pillars_data.get("purpose"):
         risks.append("Propósito não definido - engajamento limitado com stakeholders")
     else:
         opportunities.append("Propósito forte atrai talentos e clientes alinhados")
@@ -251,7 +268,9 @@ async def get_executive_summary(brand_id: str, user: dict = Depends(get_current_
         "valuation": brand_value,
         "trend": trend,
         "risks": risks[:3],
-        "opportunities": opportunities[:3]
+        "opportunities": opportunities[:3],
+        "pillars_filled": filled,
+        "pillars_total": len(pillar_types)
     }
 
 
