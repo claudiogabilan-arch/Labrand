@@ -217,9 +217,10 @@ export default function BrandWay() {
                   onClick={() => generateAISuggestions('proposito')}
                   disabled={generating}
                   data-testid="ai-suggest-proposito"
+                  title="Não sabe por onde começar? Clique aqui para receber sugestões personalizadas"
                 >
                   {generating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                  Sugerir com IA
+                  {generating ? 'Gerando...' : 'Preciso de ajuda'}
                 </Button>
               </div>
             </CardHeader>
