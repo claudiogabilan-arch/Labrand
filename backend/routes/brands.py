@@ -280,32 +280,88 @@ async def get_benchmark(brand_id: str, user: dict = Depends(get_current_user)):
 
 @router.get("/brands/{brand_id}/metrics")
 async def get_brand_metrics(brand_id: str, user: dict = Depends(get_current_user)):
-    """Get brand metrics for dashboard"""
+    """Get brand metrics for dashboard with pillar progress"""
     brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
     if not brand:
         raise HTTPException(status_code=404, detail="Marca não encontrada")
     
-    # Count pillars completed
-    pillar_collections = ["pillar_start", "pillar_values", "pillar_purpose", "pillar_promise", 
-                          "pillar_positioning", "pillar_personality", "pillar_universality"]
+    # Pillar collections and their completion check
+    pillar_config = {
+        "start": {"collection": "pillar_start", "required_fields": ["scenarios", "diagnostics"]},
+        "values": {"collection": "pillar_values", "required_fields": ["core_values", "brand_needs"]},
+        "purpose": {"collection": "pillar_purpose", "required_fields": ["purpose_statement", "impact"]},
+        "promise": {"collection": "pillar_promise", "required_fields": ["promise_statement"]},
+        "positioning": {"collection": "pillar_positioning", "required_fields": ["positioning_statement"]},
+        "personality": {"collection": "pillar_personality", "required_fields": ["archetype"]},
+        "universality": {"collection": "pillar_universality", "required_fields": ["accessibility"]}
+    }
+    
+    # Calculate progress for each pillar
+    pillar_progress = {}
     pillars_completed = 0
-    for collection in pillar_collections:
-        pillar = await db[collection].find_one({"brand_id": brand_id})
-        if pillar:
-            pillars_completed += 1
+    
+    for pillar_key, config in pillar_config.items():
+        pillar_data = await db[config["collection"]].find_one({"brand_id": brand_id}, {"_id": 0})
+        
+        if pillar_data:
+            # Calculate % based on filled required fields
+            filled = 0
+            total_fields = len(config["required_fields"])
+            for field in config["required_fields"]:
+                if pillar_data.get(field):
+                    filled += 1
+            
+            # Also check for any other non-empty fields
+            extra_fields = [k for k, v in pillar_data.items() if k not in ["brand_id", "pillar_id", "updated_at", "created_at"] and v]
+            if extra_fields:
+                filled = max(filled, 1)  # At least 1 field filled
+            
+            progress = int((filled / max(total_fields, 1)) * 100) if filled > 0 else 0
+            
+            # If pillar has any substantial data, consider it at least partially complete
+            if len([v for v in pillar_data.values() if v and v not in [brand_id]]) > 2:
+                progress = max(progress, 50)
+            
+            pillar_progress[pillar_key] = progress
+            if progress >= 80:
+                pillars_completed += 1
+        else:
+            pillar_progress[pillar_key] = 0
+    
+    # Also check "pillars" collection (used by BrandWay/Jeito de Ser)
+    brand_way_pillars = await db.pillars.find({"brand_id": brand_id}, {"_id": 0}).to_list(10)
+    for p in brand_way_pillars:
+        pillar_type = p.get("pillar_type")
+        if pillar_type and p.get("answers"):
+            # BrandWay pillar is filled
+            pillar_progress[pillar_type] = 100
+            if pillar_type in pillar_config:
+                pillars_completed += 1
     
     # Get tasks count
-    tasks = await db.tasks.count_documents({"brand_id": brand_id})
+    tasks_total = await db.tasks.count_documents({"brand_id": brand_id})
     tasks_done = await db.tasks.count_documents({"brand_id": brand_id, "status": "done"})
+    tasks_in_progress = await db.tasks.count_documents({"brand_id": brand_id, "status": "in_progress"})
     
-    # Get decisions count
-    decisions = await db.decisions.count_documents({"brand_id": brand_id})
+    # Get decisions count  
+    decisions_total = await db.decisions.count_documents({"brand_id": brand_id})
+    decisions_validated = await db.decisions.count_documents({"brand_id": brand_id, "status": "validated"})
+    
+    # Overall completion (average of all pillar progress)
+    overall = sum(pillar_progress.values()) / len(pillar_progress) if pillar_progress else 0
     
     return {
-        "pillars_total": len(pillar_collections),
+        "pillars_total": len(pillar_config),
         "pillars_completed": pillars_completed,
-        "progress_percentage": round((pillars_completed / len(pillar_collections)) * 100),
-        "tasks_total": tasks,
-        "tasks_completed": tasks_done,
-        "decisions_total": decisions
+        "pillars": pillar_progress,  # Individual pillar progress
+        "overall_completion": round(overall),
+        "tasks": {
+            "total": tasks_total,
+            "completed": tasks_done,
+            "in_progress": tasks_in_progress
+        },
+        "decisions": {
+            "total": decisions_total,
+            "validated": decisions_validated
+        }
     }
