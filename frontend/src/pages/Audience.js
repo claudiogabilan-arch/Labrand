@@ -23,19 +23,35 @@ const formatFollowers = (num) => {
 };
 
 export const Audience = () => {
-  const { currentBrand, pillars } = useBrand();
+  const { currentBrand } = useBrand();
   const { token } = useAuth();
   const [influencers, setInfluencers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [hasEnoughData, setHasEnoughData] = useState(false);
+  const [pillarsProgress, setPillarsProgress] = useState(0);
 
-  // Verificar se tem dados suficientes dos pilares
-  const hasEnoughData = pillars && (
-    pillars.values?.core_values?.length > 0 ||
-    pillars.personality?.archetype ||
-    pillars.positioning?.target_audience ||
-    pillars.start?.industry
-  );
+  // Verificar progresso dos pilares
+  useEffect(() => {
+    const checkPillars = async () => {
+      if (!currentBrand) return;
+      try {
+        const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/metrics`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const progress = data.overall_completion || 0;
+          setPillarsProgress(progress);
+          // Considera que tem dados suficientes se preencheu pelo menos 1 pilar (>14%)
+          setHasEnoughData(progress >= 14);
+        }
+      } catch (err) {
+        console.error('Erro ao verificar pilares:', err);
+      }
+    };
+    checkPillars();
+  }, [currentBrand, token]);
 
   const searchInfluencers = async () => {
     if (!currentBrand || !hasEnoughData) return;
