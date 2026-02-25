@@ -90,9 +90,9 @@ export default function BrandIdentity() {
     }
   };
 
-  const archetype = pillars?.personality?.archetype || 'Sábio';
+  const archetype = pillarsData?.personality?.archetype || 'Sábio';
   const baseStyle = archetypeStyles[archetype] || archetypeStyles['Sábio'];
-  const completionRate = pillars ? Object.keys(pillars).filter(k => pillars[k] && Object.keys(pillars[k]).length > 0).length / 7 * 100 : 0;
+  const completionRate = pillarsData?.completion || 0;
 
   if (brandLoading || loading) {
     return (
