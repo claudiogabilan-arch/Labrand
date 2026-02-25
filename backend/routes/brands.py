@@ -405,3 +405,32 @@ async def get_brand_metrics(brand_id: str, user: dict = Depends(get_current_user
             "validated": decisions_validated
         }
     }
+
+
+
+@router.get("/brands/{brand_id}/pillars-summary")
+async def get_pillars_summary(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get pillars summary for frontend components"""
+    pillar_types = ["start", "values", "purpose", "promise", "positioning", "personality", "universality"]
+    pillars_data = {}
+    
+    # Get all pillars
+    all_pillars = await db.pillars.find({"brand_id": brand_id}, {"_id": 0}).to_list(20)
+    for p in all_pillars:
+        pt = p.get("pillar_type")
+        if pt:
+            pillars_data[pt] = p.get("answers", {})
+    
+    # Check legacy collections
+    for pt in pillar_types:
+        if pt not in pillars_data:
+            legacy = await db[f"pillar_{pt}"].find_one({"brand_id": brand_id}, {"_id": 0})
+            if legacy:
+                pillars_data[pt] = {k: v for k, v in legacy.items() if k not in ["brand_id", "pillar_id", "_id"]}
+    
+    filled = sum(1 for pt in pillar_types if pt in pillars_data and pillars_data[pt])
+    
+    return {
+        **pillars_data,
+        "completion": round((filled / len(pillar_types)) * 100)
+    }
