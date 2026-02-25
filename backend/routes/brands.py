@@ -285,58 +285,50 @@ async def get_brand_metrics(brand_id: str, user: dict = Depends(get_current_user
     if not brand:
         raise HTTPException(status_code=404, detail="Marca não encontrada")
     
-    # Pillar collections and their completion check
-    pillar_config = {
-        "start": {"collection": "pillar_start", "required_fields": ["scenarios", "diagnostics"]},
-        "values": {"collection": "pillar_values", "required_fields": ["core_values", "brand_needs"]},
-        "purpose": {"collection": "pillar_purpose", "required_fields": ["purpose_statement", "impact"]},
-        "promise": {"collection": "pillar_promise", "required_fields": ["promise_statement"]},
-        "positioning": {"collection": "pillar_positioning", "required_fields": ["positioning_statement"]},
-        "personality": {"collection": "pillar_personality", "required_fields": ["archetype"]},
-        "universality": {"collection": "pillar_universality", "required_fields": ["accessibility"]}
-    }
+    # Pillar types we track
+    pillar_types = ["start", "values", "purpose", "promise", "positioning", "personality", "universality"]
     
-    # Calculate progress for each pillar
     pillar_progress = {}
     pillars_completed = 0
     
-    for pillar_key, config in pillar_config.items():
-        pillar_data = await db[config["collection"]].find_one({"brand_id": brand_id}, {"_id": 0})
-        
-        if pillar_data:
-            # Calculate % based on filled required fields
-            filled = 0
-            total_fields = len(config["required_fields"])
-            for field in config["required_fields"]:
-                if pillar_data.get(field):
-                    filled += 1
-            
-            # Also check for any other non-empty fields
-            extra_fields = [k for k, v in pillar_data.items() if k not in ["brand_id", "pillar_id", "updated_at", "created_at"] and v]
-            if extra_fields:
-                filled = max(filled, 1)  # At least 1 field filled
-            
-            progress = int((filled / max(total_fields, 1)) * 100) if filled > 0 else 0
-            
-            # If pillar has any substantial data, consider it at least partially complete
-            if len([v for v in pillar_data.values() if v and v not in [brand_id]]) > 2:
-                progress = max(progress, 50)
-            
-            pillar_progress[pillar_key] = progress
-            if progress >= 80:
-                pillars_completed += 1
-        else:
-            pillar_progress[pillar_key] = 0
-    
-    # Also check "pillars" collection (used by BrandWay/Jeito de Ser)
-    brand_way_pillars = await db.pillars.find({"brand_id": brand_id}, {"_id": 0}).to_list(10)
+    # FIRST: Check "pillars" collection (used by most pages like Propósito, Personalidade, etc.)
+    brand_way_pillars = await db.pillars.find({"brand_id": brand_id}, {"_id": 0}).to_list(20)
     for p in brand_way_pillars:
         pillar_type = p.get("pillar_type")
-        if pillar_type and p.get("answers"):
-            # BrandWay pillar is filled
-            pillar_progress[pillar_type] = 100
-            if pillar_type in pillar_config:
+        if pillar_type and pillar_type in pillar_types:
+            answers = p.get("answers", {})
+            filled_fields = sum(1 for v in answers.values() if v) if answers else 0
+            
+            if filled_fields >= 3:
+                pillar_progress[pillar_type] = 100
                 pillars_completed += 1
+            elif filled_fields >= 2:
+                pillar_progress[pillar_type] = 75
+            elif filled_fields >= 1:
+                pillar_progress[pillar_type] = 50
+    
+    # SECOND: Check legacy pillar_* collections for any not yet found
+    for pillar_type in pillar_types:
+        if pillar_type in pillar_progress:
+            continue  # Already found in pillars collection
+            
+        legacy_collection = f"pillar_{pillar_type}"
+        legacy_doc = await db[legacy_collection].find_one({"brand_id": brand_id}, {"_id": 0})
+        
+        if legacy_doc:
+            filled = sum(1 for k, v in legacy_doc.items() 
+                        if k not in ["brand_id", "pillar_id", "updated_at", "created_at", "_id"] and v)
+            if filled >= 3:
+                pillar_progress[pillar_type] = 100
+                pillars_completed += 1
+            elif filled >= 2:
+                pillar_progress[pillar_type] = 75
+            elif filled >= 1:
+                pillar_progress[pillar_type] = 50
+            else:
+                pillar_progress[pillar_type] = 0
+        else:
+            pillar_progress[pillar_type] = 0
     
     # Get tasks count
     tasks_total = await db.tasks.count_documents({"brand_id": brand_id})
@@ -347,13 +339,13 @@ async def get_brand_metrics(brand_id: str, user: dict = Depends(get_current_user
     decisions_total = await db.decisions.count_documents({"brand_id": brand_id})
     decisions_validated = await db.decisions.count_documents({"brand_id": brand_id, "status": "validated"})
     
-    # Overall completion (average of all pillar progress)
-    overall = sum(pillar_progress.values()) / len(pillar_progress) if pillar_progress else 0
+    # Overall completion
+    overall = sum(pillar_progress.values()) / len(pillar_types) if pillar_progress else 0
     
     return {
-        "pillars_total": len(pillar_config),
+        "pillars_total": len(pillar_types),
         "pillars_completed": pillars_completed,
-        "pillars": pillar_progress,  # Individual pillar progress
+        "pillars": pillar_progress,
         "overall_completion": round(overall),
         "tasks": {
             "total": tasks_total,
