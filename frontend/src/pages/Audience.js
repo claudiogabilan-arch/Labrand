@@ -126,15 +126,7 @@ export const Audience = () => {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2 mb-4">
-                {pillars?.start?.industry && (
-                  <Badge variant="outline">Setor: {pillars.start.industry}</Badge>
-                )}
-                {pillars?.personality?.archetype && (
-                  <Badge variant="outline">Arquétipo: {pillars.personality.archetype}</Badge>
-                )}
-                {pillars?.values?.core_values?.slice(0, 2).map((v, i) => (
-                  <Badge key={i} variant="secondary">{v}</Badge>
-                ))}
+                <Badge variant="outline">Progresso: {pillarsProgress}%</Badge>
               </div>
               <Button onClick={searchInfluencers} disabled={loading}>
                 {loading ? (
