@@ -57,20 +57,43 @@ export const Reports = () => {
     }
     setIsGenerating(true);
     try {
-      const response = await fetch(`${API}/brands/${currentBrand.brand_id}/reports/${reportType}?format=${selectedFormat}`, {
-        headers: getAuthHeaders()
+      // Map report type to sections
+      const sectionMap = {
+        'brand-health': ['summary', 'pillars', 'score'],
+        'pillars': ['pillars'],
+        'performance': ['score', 'recommendations'],
+        'tasks': ['summary', 'recommendations']
+      };
+      
+      const sections = sectionMap[reportType] || ['summary', 'pillars', 'score', 'recommendations'];
+      
+      const response = await fetch(`${API}/brands/${currentBrand.brand_id}/reports/executive-pdf`, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ sections })
       });
-      if (!response.ok) throw new Error('Erro ao gerar');
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.detail || 'Erro ao gerar relatório');
+      }
+      
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${currentBrand.name}_${reportType}_${format(new Date(), 'yyyy-MM-dd')}.${selectedFormat}`;
+      a.download = `${currentBrand.name}_${reportType}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-      toast.success(`Relatório exportado!`);
+      toast.success(`Relatório gerado com sucesso!`);
     } catch (error) {
-      toast.error('Erro ao gerar relatório');
+      console.error('Report error:', error);
+      toast.error(error.message || 'Erro ao gerar relatório');
     } finally {
       setIsGenerating(false);
     }
