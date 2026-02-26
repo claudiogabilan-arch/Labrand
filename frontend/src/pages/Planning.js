@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useBrand } from '../contexts/BrandContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -9,7 +9,7 @@ import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { toast } from 'sonner';
-import { ListTodo, Plus, Loader2, Calendar, User, Flag, GripVertical, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { ListTodo, Plus, Loader2, Calendar, User, Flag, GripVertical, CheckCircle2, Clock, AlertCircle, BarChart3, List } from 'lucide-react';
 
 const statusConfig = {
   backlog: { label: 'Backlog', color: 'bg-gray-100 text-gray-700', icon: Clock },
