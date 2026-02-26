@@ -61,6 +61,7 @@ import SocialListening from "./pages/SocialListening";
 import ShareOfVoice from "./pages/ShareOfVoice";
 import ConversionAttributes from "./pages/ConversionAttributes";
 import BVS from "./pages/BVS";
+import BrandMindmap from "./pages/BrandMindmap";
 import "./App.css";
 
 // Router wrapper to handle auth callback
