@@ -87,6 +87,37 @@ export default function SocialListening() {
   }
 
   const summary = dashboard?.summary || {};
+  const hasData = dashboard?.has_data !== false;
+
+  // Show empty state if no data
+  if (!hasData) {
+    return (
+      <div className="space-y-6" data-testid="social-listening-page">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
+            <Radio className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Social Listening</h1>
+            <p className="text-muted-foreground">Monitoramento de menções e sentimento</p>
+          </div>
+        </div>
+
+        <Card className="border-dashed border-2">
+          <CardContent className="py-12 text-center">
+            <Radio className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Nenhuma rede social conectada</h3>
+            <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+              {dashboard?.message || "Conecte suas redes sociais para começar a monitorar menções à sua marca em tempo real."}
+            </p>
+            <Button onClick={() => window.location.href = '/integrations'}>
+              Conectar Redes Sociais
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" data-testid="social-listening-page">
