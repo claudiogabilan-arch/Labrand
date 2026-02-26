@@ -61,6 +61,7 @@ import {
 
 const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, featureId: 'dashboard' },
+  { name: 'Mapa Mental', href: '/mindmap', icon: Share2, featureId: 'mindmap' },
   { name: 'BVS Score', href: '/bvs', icon: Gem, featureId: 'bvs', pro: true },
   { name: 'Executivo', href: '/executive', icon: Briefcase, featureId: 'executive', pro: true },
   { name: 'Diagnóstico', href: '/maturity', icon: ClipboardCheck, featureId: 'maturity', pro: true },
