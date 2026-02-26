@@ -233,6 +233,60 @@ export default function BrandMindmap() {
     );
   }
 
+  const mindmapContent = (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      fitView
+      fitViewOptions={{ padding: 0.2 }}
+      minZoom={0.3}
+      maxZoom={1.5}
+      attributionPosition="bottom-left"
+    >
+      <Controls />
+      <Background color="#e5e7eb" gap={20} />
+    </ReactFlow>
+  );
+
+  // Modo apresentação (tela cheia)
+  if (isFullscreen) {
+    return (
+      <div className="fixed inset-0 z-50 bg-white" data-testid="mindmap-fullscreen">
+        <div className="absolute top-4 left-4 z-10">
+          <div className="bg-white/90 backdrop-blur rounded-lg p-4 shadow-lg">
+            <h1 className="text-2xl font-bold">{currentBrand.name}</h1>
+            <p className="text-muted-foreground">Mapa Estratégico da Marca</p>
+          </div>
+        </div>
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
+          <Button variant="outline" size="sm" onClick={buildMindmap}>
+            <ZoomIn className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
+          <Button variant="outline" size="sm" onClick={toggleFullscreen}>
+            <X className="h-4 w-4 mr-2" />
+            Sair (ESC)
+          </Button>
+        </div>
+        <div className="absolute bottom-4 left-4 z-10 flex gap-4 text-sm bg-white/90 backdrop-blur rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-[#22c55e]"></div>
+            <span>Preenchido</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+            <span>Pendente</span>
+          </div>
+        </div>
+        <div style={{ height: '100vh', background: '#fafafa' }}>
+          {mindmapContent}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4" data-testid="brand-mindmap-page">
       <div className="flex items-center justify-between">
@@ -245,26 +299,17 @@ export default function BrandMindmap() {
             <ZoomIn className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
+          <Button size="sm" onClick={toggleFullscreen}>
+            <Maximize2 className="h-4 w-4 mr-2" />
+            Modo Apresentação
+          </Button>
         </div>
       </div>
 
       <Card className="overflow-hidden">
         <CardContent className="p-0">
           <div style={{ height: '70vh', background: '#fafafa' }}>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              fitView
-              fitViewOptions={{ padding: 0.2 }}
-              minZoom={0.3}
-              maxZoom={1.5}
-              attributionPosition="bottom-left"
-            >
-              <Controls />
-              <Background color="#e5e7eb" gap={20} />
-            </ReactFlow>
+            {mindmapContent}
           </div>
         </CardContent>
       </Card>
