@@ -290,47 +290,20 @@ def analyze_sentiment(text: str) -> dict:
         return {"label": "neutral", "score": 0.5, "confidence": "rule_based"}
 
 
-async def generate_sample_mentions(brand_id: str) -> list:
-    """Generate sample mentions for demonstration"""
-    brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0, "name": 1})
-    brand_name = brand.get("name", "Marca") if brand else "Marca"
+@router.delete("/brands/{brand_id}/social-listening/clear-mock-data")
+async def clear_mock_data(brand_id: str, user: dict = Depends(get_current_user)):
+    """Clear all sample/mock data from social listening"""
+    # Delete sample mentions
+    result = await db.social_mentions.delete_many({
+        "brand_id": brand_id,
+        "$or": [
+            {"source": "sample"},
+            {"mention_id": {"$regex": "^sample_"}}
+        ]
+    })
     
-    sample_mentions = [
-        {"platform": "twitter", "content": f"Acabei de conhecer a {brand_name}, recomendo muito! Excelente atendimento.", "sentiment": {"label": "positive", "score": 0.8}},
-        {"platform": "instagram", "content": f"Produto da {brand_name} chegou super rápido. Qualidade top!", "sentiment": {"label": "positive", "score": 0.85}},
-        {"platform": "facebook", "content": f"Alguém já usou a {brand_name}? Estou pensando em comprar.", "sentiment": {"label": "neutral", "score": 0.5}},
-        {"platform": "twitter", "content": f"A {brand_name} poderia melhorar o suporte. Demorou para responder.", "sentiment": {"label": "negative", "score": 0.3}},
-        {"platform": "linkedin", "content": f"Parceria de sucesso com a {brand_name}! Resultados incríveis.", "sentiment": {"label": "positive", "score": 0.9}},
-        {"platform": "instagram", "content": f"Novo lançamento da {brand_name} está incrível!", "sentiment": {"label": "positive", "score": 0.85}},
-        {"platform": "twitter", "content": f"Preço justo e boa qualidade. {brand_name} entrega o que promete.", "sentiment": {"label": "positive", "score": 0.75}},
-        {"platform": "facebook", "content": f"Tive um problema mas a {brand_name} resolveu rapidamente.", "sentiment": {"label": "neutral", "score": 0.55}},
-    ]
-    
-    now = datetime.now(timezone.utc)
-    mentions = []
-    
-    for i, sample in enumerate(sample_mentions):
-        mention = {
-            "mention_id": f"sample_{uuid.uuid4().hex[:8]}",
-            "brand_id": brand_id,
-            "platform": sample["platform"],
-            "content": sample["content"],
-            "author": f"@user_{i+1}",
-            "url": f"https://{sample['platform']}.com/post/{i+1}",
-            "engagement": {"likes": 10 + i * 5, "shares": i * 2, "comments": i},
-            "sentiment": sample["sentiment"],
-            "posted_at": (now - timedelta(days=i)).isoformat(),
-            "created_at": (now - timedelta(days=i)).isoformat(),
-            "source": "sample"
-        }
-        mentions.append(mention)
-    
-    # Save sample mentions
-    for m in mentions:
-        await db.social_mentions.update_one(
-            {"brand_id": brand_id, "mention_id": m["mention_id"]},
-            {"$set": m},
-            upsert=True
-        )
-    
-    return mentions
+    return {
+        "deleted": result.deleted_count,
+        "message": f"Removidas {result.deleted_count} menções de demonstração"
+    }
+
