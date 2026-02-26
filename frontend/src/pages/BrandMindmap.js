@@ -11,7 +11,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Loader2, Download, ZoomIn, Share2 } from 'lucide-react';
+import { Loader2, ZoomIn, Maximize2, Minimize2, X } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
