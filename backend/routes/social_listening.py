@@ -155,9 +155,31 @@ async def get_social_dashboard(brand_id: str, days: int = 30, user: dict = Depen
         {"_id": 0}
     ).to_list(1000)
     
+    # Check if integrations are connected
+    integrations = await db.integrations.find(
+        {"brand_id": brand_id, "category": "social", "status": "connected"},
+        {"_id": 0}
+    ).to_list(10)
+    
     if not mentions:
-        # Generate sample data for demo
-        mentions = await generate_sample_mentions(brand_id)
+        # Return empty state - no mock data
+        return {
+            "summary": {
+                "total_mentions": 0,
+                "sentiment_score": 0,
+                "total_engagement": 0,
+                "positive_pct": 0,
+                "negative_pct": 0,
+                "neutral_pct": 0
+            },
+            "by_platform": {},
+            "trend": [],
+            "top_mentions": [],
+            "alerts": [],
+            "has_data": False,
+            "integrations_connected": len(integrations),
+            "message": "Nenhuma menção encontrada. Conecte suas redes sociais em Integrações para começar a monitorar."
+        }
     
     # Aggregate by platform
     by_platform = {}
