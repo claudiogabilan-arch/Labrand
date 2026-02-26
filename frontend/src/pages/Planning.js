@@ -42,6 +42,7 @@ export const Planning = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState('kanban'); // 'kanban' or 'gantt'
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
