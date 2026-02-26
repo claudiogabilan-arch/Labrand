@@ -132,13 +132,34 @@ export const Planning = () => {
             <p className="text-muted-foreground">Gerencie as iniciativas de branding</p>
           </div>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="new-task-btn">
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Tarefa
+        <div className="flex gap-2">
+          <div className="flex border rounded-lg overflow-hidden">
+            <Button 
+              variant={viewMode === 'kanban' ? 'default' : 'ghost'} 
+              size="sm"
+              onClick={() => setViewMode('kanban')}
+              className="rounded-none"
+            >
+              <List className="h-4 w-4 mr-2" />
+              Kanban
             </Button>
-          </DialogTrigger>
+            <Button 
+              variant={viewMode === 'gantt' ? 'default' : 'ghost'} 
+              size="sm"
+              onClick={() => setViewMode('gantt')}
+              className="rounded-none"
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Gantt
+            </Button>
+          </div>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button data-testid="new-task-btn">
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Tarefa
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Nova Tarefa</DialogTitle>
