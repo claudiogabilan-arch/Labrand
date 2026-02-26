@@ -231,7 +231,9 @@ async def get_social_dashboard(brand_id: str, days: int = 30, user: dict = Depen
         "by_platform": by_platform,
         "trend": dict(sorted(trend.items())),
         "top_mentions": top_mentions,
-        "period_days": days
+        "period_days": days,
+        "has_data": True,
+        "integrations_connected": len(integrations) if 'integrations' in dir() else 0
     }
 
 
