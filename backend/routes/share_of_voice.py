@@ -39,11 +39,26 @@ async def get_share_of_voice(brand_id: str, period: int = 30, user: dict = Depen
         "created_at": {"$gte": since.isoformat()}
     })
     
-    # If no real data, generate sample
+    # Check if brand has real mentions
     if brand_mentions == 0:
-        brand_mentions = 150  # Sample value
+        # Return empty state - no mock data
+        return {
+            "sov": {
+                "brand": {
+                    "name": brand_name,
+                    "mentions": 0,
+                    "sov_percentage": 0
+                },
+                "competitors": []
+            },
+            "channels": {},
+            "trend": {},
+            "insights": [],
+            "has_data": False,
+            "message": "Nenhuma menção encontrada. Configure o monitoramento em Social Listening e adicione concorrentes para comparar."
+        }
     
-    # Get competitor data (simulated if not configured)
+    # Get competitor data (only from configured competitors)
     competitors_data = []
     total_mentions = brand_mentions
     
@@ -57,16 +72,6 @@ async def get_share_of_voice(brand_id: str, period: int = 30, user: dict = Depen
                 "keywords": comp["keywords"]
             })
             total_mentions += comp_mentions
-    else:
-        # Default competitors for demo
-        default_competitors = [
-            {"name": "Concorrente A", "mentions": int(brand_mentions * 0.8)},
-            {"name": "Concorrente B", "mentions": int(brand_mentions * 1.2)},
-            {"name": "Concorrente C", "mentions": int(brand_mentions * 0.6)}
-        ]
-        for comp in default_competitors:
-            competitors_data.append(comp)
-            total_mentions += comp["mentions"]
     
     # Calculate SOV percentages
     brand_sov = round((brand_mentions / total_mentions) * 100, 1) if total_mentions > 0 else 0
