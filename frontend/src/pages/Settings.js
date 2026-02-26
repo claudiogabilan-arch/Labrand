@@ -960,6 +960,7 @@ export const Settings = () => {
                         )}
                         <div>
                           <p className="font-medium">{brand.name}</p>
+                          <p className="text-xs text-muted-foreground font-mono mb-1">ID: {brand.brand_id}</p>
                           <div className="flex items-center gap-2 flex-wrap">
                             {brand.industry && (
                               <Badge variant="outline" className="text-xs">{brand.industry}</Badge>
