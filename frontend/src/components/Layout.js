@@ -56,7 +56,8 @@ import {
   Plug,
   Radio,
   Volume2,
-  Gem
+  Gem,
+  Share2
 } from 'lucide-react';
 
 const navigationItems = [
