@@ -115,7 +115,8 @@ async def reset_database(secret_key: str):
         "social_mentions", "bvs_scores", "value_waves", "brand_funnel",
         "disaster_checks", "share_of_voice", "crm_contacts", "ads_metrics",
         "integrations", "team_invites", "email_alerts", "payment_transactions",
-        "attribute_surveys", "competitors", "brand_tracking", "reports_history"
+        "attribute_surveys", "competitors", "brand_tracking", "reports_history",
+        "sov_config", "tasks", "decisions"
     ]
     
     for coll in collections:
