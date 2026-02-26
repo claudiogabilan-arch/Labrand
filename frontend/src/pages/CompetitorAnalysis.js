@@ -152,6 +152,37 @@ export default function CompetitorAnalysis() {
 
   const { advantages, disadvantages } = getCompetitiveAdvantages();
 
+  // Show empty state if no competitors
+  if (competitors.length === 0 && !showAddForm) {
+    return (
+      <div className="space-y-6" data-testid="competitor-analysis-page">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-purple-500 flex items-center justify-center">
+            <BarChart3 className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Comparador de Concorrentes</h1>
+            <p className="text-muted-foreground">Mapeie e compare até 5 concorrentes</p>
+          </div>
+        </div>
+
+        <Card className="border-dashed border-2">
+          <CardContent className="py-12 text-center">
+            <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Nenhum concorrente cadastrado</h3>
+            <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+              Adicione seus principais concorrentes para comparar posicionamento, preços, qualidade e outros atributos.
+            </p>
+            <Button onClick={() => setShowAddForm(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Primeiro Concorrente
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6" data-testid="competitor-analysis-page">
       {/* Header */}
