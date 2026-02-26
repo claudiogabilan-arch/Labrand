@@ -229,9 +229,16 @@ export const Planning = () => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
+      {/* Gantt View */}
+      {viewMode === 'gantt' && (
+        <GanttChart tasks={tasks} onStatusChange={handleStatusChange} />
+      )}
+
       {/* Kanban Board */}
+      {viewMode === 'kanban' && (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {Object.entries(statusConfig).map(([status, config]) => {
           const StatusIcon = config.icon;
@@ -311,7 +318,122 @@ export const Planning = () => {
           );
         })}
       </div>
+      )}
     </div>
+  );
+};
+
+// Gantt Chart Component
+const GanttChart = ({ tasks, onStatusChange }) => {
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      if (!a.due_date && !b.due_date) return 0;
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      return new Date(a.due_date) - new Date(b.due_date);
+    });
+  }, [tasks]);
+
+  const dateRange = useMemo(() => {
+    const today = new Date();
+    const dates = [];
+    for (let i = -7; i <= 30; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      dates.push(d);
+    }
+    return dates;
+  }, []);
+
+  const getTaskPosition = (task) => {
+    if (!task.due_date) return null;
+    const taskDate = new Date(task.due_date);
+    const startDate = dateRange[0];
+    const daysDiff = Math.floor((taskDate - startDate) / (1000 * 60 * 60 * 24));
+    return daysDiff;
+  };
+
+  const todayIndex = 7; // Index of today in our date range
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg">Cronograma de Tarefas</CardTitle>
+        <CardDescription>Visão temporal das entregas</CardDescription>
+      </CardHeader>
+      <CardContent className="overflow-x-auto">
+        <div className="min-w-[900px]">
+          {/* Timeline header */}
+          <div className="flex border-b pb-2 mb-2">
+            <div className="w-48 flex-shrink-0 font-medium text-sm">Tarefa</div>
+            <div className="flex-1 flex">
+              {dateRange.map((date, i) => (
+                <div 
+                  key={i} 
+                  className={`flex-1 text-center text-xs ${i === todayIndex ? 'bg-primary/10 rounded font-bold' : ''}`}
+                >
+                  <div className="text-muted-foreground">{date.toLocaleDateString('pt-BR', { weekday: 'short' })}</div>
+                  <div>{date.getDate()}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Tasks */}
+          {sortedTasks.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Nenhuma tarefa cadastrada</p>
+          ) : (
+            sortedTasks.map((task) => {
+              const position = getTaskPosition(task);
+              const statusColor = {
+                backlog: 'bg-gray-400',
+                in_progress: 'bg-blue-500',
+                review: 'bg-amber-500',
+                done: 'bg-emerald-500'
+              }[task.status];
+
+              return (
+                <div key={task.task_id} className="flex items-center py-2 border-b hover:bg-muted/50">
+                  <div className="w-48 flex-shrink-0 pr-4">
+                    <p className="text-sm font-medium truncate">{task.title}</p>
+                    <div className="flex gap-1 mt-1">
+                      <Badge className={`text-xs ${statusConfig[task.status]?.color}`}>
+                        {statusConfig[task.status]?.label}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex-1 relative h-8 flex">
+                    {dateRange.map((_, i) => (
+                      <div 
+                        key={i} 
+                        className={`flex-1 border-l ${i === todayIndex ? 'border-primary border-l-2' : 'border-gray-100'}`}
+                      />
+                    ))}
+                    {position !== null && position >= 0 && position < dateRange.length && (
+                      <div
+                        className={`absolute top-1 h-6 rounded-full ${statusColor} flex items-center justify-center text-white text-xs font-medium shadow-sm`}
+                        style={{
+                          left: `${(position / dateRange.length) * 100}%`,
+                          width: '80px',
+                          transform: 'translateX(-40px)'
+                        }}
+                      >
+                        {new Date(task.due_date).getDate()}/{new Date(task.due_date).getMonth() + 1}
+                      </div>
+                    )}
+                    {position === null && (
+                      <div className="absolute left-0 top-1 text-xs text-muted-foreground italic">
+                        Sem data definida
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
