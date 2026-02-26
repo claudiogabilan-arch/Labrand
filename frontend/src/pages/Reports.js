@@ -353,16 +353,12 @@ export const Reports = () => {
                         <div className="flex gap-2 mt-4">
                           <Button 
                             size="sm" 
-                            onClick={() => handleGenerateReport(report.title)}
+                            onClick={() => handleGenerateReport(report.id)}
                             disabled={isGenerating}
                             data-testid={`generate-${report.id}-btn`}
                           >
                             {isGenerating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
-                            Gerar
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Eye className="h-4 w-4 mr-2" />
-                            Prévia
+                            Gerar PDF
                           </Button>
                         </div>
                       </div>
