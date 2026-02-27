@@ -203,6 +203,9 @@ export default function Benchmark() {
         <div>
           <h1 className="text-2xl font-bold">Benchmark Setorial</h1>
           <p className="text-muted-foreground">Comparação com o setor: <Badge variant="outline">{sector}</Badge></p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {data?.message || `Baseado em ${data?.pillars_filled || 0}/${data?.pillars_total || 7} pilares preenchidos`}
+          </p>
         </div>
 
         {/* Percentil */}
