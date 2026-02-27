@@ -150,12 +150,17 @@ export const Audience = () => {
           </Card>
 
           {searched && influencers.length === 0 && (
-            <Card>
+            <Card className="border-dashed border-2">
               <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">
-                  Nenhum influenciador encontrado para o perfil da sua marca. 
-                  Tente adicionar mais informações nos pilares.
+                <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum influenciador encontrado</h3>
+                <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                  Para sugerir influenciadores, é necessário conectar suas redes sociais (Instagram, YouTube, etc.) 
+                  na seção de Integrações. Sem conexão com APIs sociais, não é possível buscar perfis compatíveis.
                 </p>
+                <Button variant="outline" onClick={() => window.location.href = '/integrations'}>
+                  Ir para Integrações
+                </Button>
               </CardContent>
             </Card>
           )}
