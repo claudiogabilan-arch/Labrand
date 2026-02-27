@@ -164,6 +164,10 @@ async def clean_all_mock_data(brand_id: str):
     r = await db.social_config.delete_many({"brand_id": brand_id})
     results["social_config"] = r.deleted_count
     
+    # 6. Remove estimated/initial funnel data 
+    r = await db.brand_funnel.delete_many({"brand_id": brand_id, "period": "initial"})
+    results["estimated_funnel"] = r.deleted_count
+    
     total = sum(v for v in results.values())
     
     return {
