@@ -80,8 +80,17 @@ async def get_attributes_analysis(brand_id: str, user: dict = Depends(get_curren
     surveys = await db.attribute_surveys.find({"brand_id": brand_id}, {"_id": 0}).to_list(500)
     
     if not surveys or len(surveys) < 5:
-        # Generate sample data for demo
-        surveys = await generate_sample_surveys(brand_id)
+        # Return empty state - no sample data
+        return {
+            "attributes": [],
+            "top_conversion_drivers": [],
+            "weaknesses": [],
+            "recommendations": [],
+            "total_surveys": len(surveys),
+            "conversion_rate": 0,
+            "has_data": False,
+            "message": "Dados insuficientes. São necessárias pelo menos 5 pesquisas de atributos para gerar a análise."
+        }
     
     # Separate converted vs non-converted
     converted_surveys = [s for s in surveys if s.get("converted")]
@@ -238,46 +247,4 @@ def generate_attribute_recommendations(analysis: List[dict]) -> List[dict]:
     return recommendations[:5]
 
 
-async def generate_sample_surveys(brand_id: str) -> list:
-    """Generate sample survey data for demonstration"""
-    import random
-    
-    surveys = []
-    
-    # Generate 30 sample surveys
-    for i in range(30):
-        converted = random.random() > 0.4  # 60% conversion rate
-        
-        ratings = []
-        for attr in DEFAULT_ATTRIBUTES:
-            # Converted customers rate higher importance for key attributes
-            base_importance = random.randint(2, 5)
-            base_performance = random.randint(2, 5)
-            
-            if converted and attr["id"] in ["quality", "trust", "customer_service"]:
-                base_importance = min(5, base_importance + 1)
-                base_performance = min(5, base_performance + 1)
-            
-            ratings.append({
-                "attribute_id": attr["id"],
-                "importance": base_importance,
-                "performance": base_performance
-            })
-        
-        survey = {
-            "survey_id": f"sample_{uuid.uuid4().hex[:8]}",
-            "brand_id": brand_id,
-            "ratings": ratings,
-            "converted": converted,
-            "respondent_type": "customer" if converted else "lead",
-            "submitted_at": datetime.now(timezone.utc).isoformat()
-        }
-        surveys.append(survey)
-        
-        await db.attribute_surveys.update_one(
-            {"brand_id": brand_id, "survey_id": survey["survey_id"]},
-            {"$set": survey},
-            upsert=True
-        )
-    
-    return surveys
+    # generate_sample_surveys removed - no mock data

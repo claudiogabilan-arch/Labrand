@@ -58,14 +58,21 @@ async def get_share_of_voice(brand_id: str, period: int = 30, user: dict = Depen
             "message": "Nenhuma menção encontrada. Configure o monitoramento em Social Listening e adicione concorrentes para comparar."
         }
     
-    # Get competitor data (only from configured competitors)
+    # Only use real competitor mention data from DB
     competitors_data = []
     total_mentions = brand_mentions
     
     if sov_config and sov_config.get("competitors"):
         for comp in sov_config["competitors"]:
-            # In real implementation, would fetch actual data
-            comp_mentions = int(brand_mentions * (0.5 + (hash(comp["name"]) % 100) / 100))
+            # Count real mentions for competitor keywords
+            comp_mentions = 0
+            for keyword in comp.get("keywords", []):
+                count = await db.social_mentions.count_documents({
+                    "brand_id": brand_id,
+                    "content": {"$regex": keyword, "$options": "i"},
+                    "created_at": {"$gte": since.isoformat()}
+                })
+                comp_mentions += count
             competitors_data.append({
                 "name": comp["name"],
                 "mentions": comp_mentions,
@@ -102,20 +109,14 @@ async def get_share_of_voice(brand_id: str, period: int = 30, user: dict = Depen
     all_sov.sort(reverse=True)
     brand_rank = all_sov.index(brand_sov) + 1
     
-    # Channel breakdown (simulated)
-    channel_breakdown = {
-        "social": {"brand": int(brand_mentions * 0.5), "market": int(total_mentions * 0.45)},
-        "search": {"brand": int(brand_mentions * 0.3), "market": int(total_mentions * 0.35)},
-        "paid": {"brand": int(brand_mentions * 0.2), "market": int(total_mentions * 0.2)}
-    }
-    
     return {
         "sov": sov_data,
         "total_market_mentions": total_mentions,
         "brand_rank": brand_rank,
         "total_players": len(sov_data["competitors"]) + 1,
-        "channel_breakdown": channel_breakdown,
+        "channel_breakdown": {},
         "period_days": period,
+        "has_data": True,
         "insights": generate_sov_insights(brand_sov, sov_data["competitors"], brand_rank)
     }
 
@@ -142,29 +143,22 @@ async def save_sov_config(brand_id: str, data: SOVConfig, user: dict = Depends(g
 
 @router.get("/brands/{brand_id}/share-of-voice/trend")
 async def get_sov_trend(brand_id: str, months: int = 6, user: dict = Depends(get_current_user)):
-    """Get Share of Voice trend over time"""
+    """Get Share of Voice trend over time - only real data"""
     brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0, "name": 1})
     brand_name = brand.get("name", "Sua Marca") if brand else "Sua Marca"
     
-    # Generate trend data (in production, would aggregate from real data)
-    now = datetime.now(timezone.utc)
-    trend = []
-    
-    base_sov = 25  # Starting SOV
-    for i in range(months):
-        month_date = now - timedelta(days=30 * (months - 1 - i))
-        # Simulate gradual improvement
-        month_sov = base_sov + (i * 2) + (hash(str(i)) % 5)
-        trend.append({
-            "month": month_date.strftime("%Y-%m"),
-            "brand_sov": min(45, month_sov),
-            "market_leader_sov": 35 + (hash(str(i * 2)) % 10)
-        })
+    # Get real historical SOV data
+    history = await db.sov_history.find(
+        {"brand_id": brand_id},
+        {"_id": 0}
+    ).sort("month", -1).to_list(months)
     
     return {
         "brand_name": brand_name,
-        "trend": trend,
-        "growth": trend[-1]["brand_sov"] - trend[0]["brand_sov"] if trend else 0
+        "trend": history,
+        "has_data": len(history) > 0,
+        "growth": history[-1].get("brand_sov", 0) - history[0].get("brand_sov", 0) if len(history) >= 2 else 0,
+        "message": "Nenhum histórico disponível. Os dados serão acumulados conforme o monitoramento." if not history else None
     }
 
 
