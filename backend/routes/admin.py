@@ -135,7 +135,43 @@ async def reset_database(secret_key: str):
     }
 
 
-@router.get("/admin/database-status")
+@router.get("/admin/clean-mock-data/{brand_id}")
+async def clean_all_mock_data(brand_id: str):
+    """
+    Limpa TODOS os dados mock/simulados de uma marca.
+    Acesse: /api/admin/clean-mock-data/{brand_id}
+    Remove: social_mentions, attribute_surveys sample, brand_tracking auto, sov_config
+    """
+    results = {}
+    
+    # 1. Remove all social mentions (mock data)
+    r = await db.social_mentions.delete_many({"brand_id": brand_id})
+    results["social_mentions"] = r.deleted_count
+    
+    # 2. Remove sample attribute surveys
+    r = await db.attribute_surveys.delete_many({"brand_id": brand_id, "survey_id": {"$regex": "^sample_"}})
+    results["sample_surveys"] = r.deleted_count
+    
+    # 3. Remove auto-generated brand tracking snapshots
+    r = await db.brand_tracking.delete_many({"brand_id": brand_id, "type": "auto"})
+    results["auto_tracking"] = r.deleted_count
+    
+    # 4. Remove SOV config without real data
+    r = await db.sov_config.delete_many({"brand_id": brand_id})
+    results["sov_config"] = r.deleted_count
+    
+    # 5. Remove social config without real connections
+    r = await db.social_config.delete_many({"brand_id": brand_id})
+    results["social_config"] = r.deleted_count
+    
+    total = sum(v for v in results.values())
+    
+    return {
+        "success": True,
+        "brand_id": brand_id,
+        "message": f"Limpeza concluída! {total} registros removidos.",
+        "details": results
+    }
 async def database_status():
     """Verifica o status atual do banco de dados (não precisa de autenticação)"""
     try:
