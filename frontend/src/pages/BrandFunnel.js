@@ -176,15 +176,32 @@ export default function BrandFunnel() {
         <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200">
           <CardContent className="py-3">
             <p className="text-sm text-amber-800 dark:text-amber-200">
-              ⚡ <strong>Dados Estimados:</strong> Os valores atuais são baseados em estimativas. 
+              <strong>Dados Estimados:</strong> Os valores atuais são baseados em estimativas. 
               Atualize com dados reais para análises mais precisas.
             </p>
           </CardContent>
         </Card>
       )}
 
-      {/* Health Score */}
-      <div className="grid md:grid-cols-4 gap-4">
+      {/* Empty State - No funnel data */}
+      {(!funnel?.stages || Object.keys(funnel.stages).length === 0) && !editMode && (
+        <Card className="border-dashed border-2">
+          <CardContent className="py-12 text-center">
+            <Filter className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Nenhum dado de funil configurado</h3>
+            <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+              {funnel?.message || "Insira os dados reais do seu funil de marca para visualizar a jornada de preferência do público. Clique em 'Atualizar Dados' para começar."}
+            </p>
+            <Button onClick={() => setEditMode(true)}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Inserir Dados do Funil
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Health Score - only show when there's data */}
+      {funnel?.stages && Object.keys(funnel.stages).length > 0 && (
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
           <CardContent className="pt-6 text-center">
             <Target className="h-8 w-8 mx-auto mb-2 text-primary" />
