@@ -76,7 +76,14 @@ Files modified:
 - `/app/frontend/src/pages/ConversionAttributes.js` - Added empty state UI
 - `/app/frontend/src/pages/BrandTracking.js` - Added empty state UI
 
-Testing: 15/15 backend tests passed. All frontend empty states verified.
+### 2026-02-27 - 5 Bug Fixes (User-reported)
+1. **Audiência - Buscar Influenciadores**: Button was failing silently. Now shows toast notification explaining social media integration is required.
+2. **Benchmark Setorial**: Removed fake percentile formula. Shows empty state when no pillar data. RBI shows "Sem dados" when no valuation exists. Sector shows "Não definido" instead of "default".
+3. **Funil de Marca**: Removed `generate_initial_funnel()` that was creating fake data (10000, 3000, etc.). Now shows empty state with "Inserir Dados do Funil" CTA.
+4. **Saúde da Marca**: Now shows 0 values for funnel section when no real data exists.
+5. **Pilar Valores**: Progress calculation changed from 33/33/34 (valores+necessidades+cruzamentos) to 50/50 (valores+necessidades only). Crossings no longer block 100%.
+
+Testing: 9/9 tests passed. All 5 issues verified fixed.
 
 ---
 
