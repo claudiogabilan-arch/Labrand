@@ -98,27 +98,6 @@ async def get_executive_summary(brand_id: str, user: dict = Depends(get_current_
         "decisions": {"total": len(decisions), "pending": len([d for d in decisions if d.get("status") == "pending"])}
     }
 
-@router.get("/brands/{brand_id}/benchmark")
-async def get_benchmark(brand_id: str, user: dict = Depends(get_current_user)):
-    brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
-    industry = brand.get("industry", "geral") if brand else "geral"
-    
-    industry_averages = {"pillar_completion": 65, "task_completion": 55, "decision_rate": 70, "brand_score": 58}
-    
-    pillars = await db.pillars.find({"brand_id": brand_id}, {"_id": 0}).to_list(10)
-    pillar_keys = ["start", "values", "purpose", "promise", "positioning", "personality", "universality"]
-    pillars_filled = sum(1 for k in pillar_keys if any(p.get("pillar_type") == k and p.get("answers") for p in pillars))
-    pillar_completion = int((pillars_filled / len(pillar_keys)) * 100)
-    
-    return {
-        "brand_metrics": {"pillar_completion": pillar_completion, "industry": industry},
-        "industry_averages": industry_averages,
-        "comparison": {
-            "pillar_completion": {"brand": pillar_completion, "industry": industry_averages["pillar_completion"],
-                                   "diff": pillar_completion - industry_averages["pillar_completion"]}
-        }
-    }
-
 # Dashboard Metrics
 @router.get("/brands/{brand_id}/dashboard-metrics")
 async def get_dashboard_metrics(brand_id: str, user: dict = Depends(get_current_user)):
