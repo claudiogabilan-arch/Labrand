@@ -90,23 +90,18 @@ async def get_bvs_history(brand_id: str, months: int = 6, user: dict = Depends(g
     ).sort("calculated_at", -1).to_list(months)
     
     if not history:
-        # Generate sample history
-        now = datetime.now(timezone.utc)
-        current_bvs = (await get_bvs(brand_id, user))["bvs_score"]
-        
-        history = []
-        for i in range(months):
-            month_date = now - timedelta(days=30 * (months - 1 - i))
-            # Simulate gradual improvement
-            month_bvs = max(30, current_bvs - ((months - 1 - i) * 3))
-            history.append({
-                "month": month_date.strftime("%Y-%m"),
-                "bvs_score": month_bvs
-            })
+        # Return empty - no simulated history
+        return {
+            "history": [],
+            "growth": 0,
+            "has_data": False,
+            "message": "Nenhum histórico BVS disponível. O histórico será gerado conforme o score é calculado ao longo do tempo."
+        }
     
     return {
         "history": history,
-        "growth": history[-1]["bvs_score"] - history[0]["bvs_score"] if len(history) >= 2 else 0
+        "growth": history[-1]["bvs_score"] - history[0]["bvs_score"] if len(history) >= 2 else 0,
+        "has_data": True
     }
 
 

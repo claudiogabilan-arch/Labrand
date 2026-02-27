@@ -25,13 +25,20 @@ async def get_tracking_history(brand_id: str, months: int = 6, user: dict = Depe
     ).sort("created_at", -1).to_list(months * 4)  # Up to weekly snapshots
     
     if not snapshots:
-        # Generate initial data from current scores
-        snapshots = await generate_initial_tracking(brand_id)
+        # Return empty - no simulated data
+        return {
+            "snapshots": [],
+            "total": 0,
+            "period_months": months,
+            "has_data": False,
+            "message": "Nenhum snapshot de tracking disponível. Crie um snapshot manual ou aguarde a coleta automática."
+        }
     
     return {
         "snapshots": snapshots,
         "total": len(snapshots),
-        "period_months": months
+        "period_months": months,
+        "has_data": True
     }
 
 
@@ -191,35 +198,4 @@ async def collect_current_scores(brand_id: str) -> dict:
     }
 
 
-async def generate_initial_tracking(brand_id: str) -> list:
-    """Generate initial tracking data based on current state"""
-    current = await collect_current_scores(brand_id)
-    now = datetime.now(timezone.utc)
-    
-    snapshots = []
-    
-    # Generate 6 months of simulated history
-    for i in range(6):
-        date = now - timedelta(days=30 * i)
-        # Simulate gradual improvement
-        factor = 1 - (i * 0.08)  # Each month back is 8% lower
-        
-        snapshot = {
-            "snapshot_id": f"snap_auto_{uuid.uuid4().hex[:8]}",
-            "brand_id": brand_id,
-            "created_at": date.isoformat(),
-            "type": "auto",
-            "brand_score": max(0, int(current["brand_score"] * factor)),
-            "brand_equity": max(0, int(current["brand_equity"] * factor)),
-            "maturity_score": max(0, int(current["maturity_score"] * factor)),
-            "pillar_completion": max(0, int(current["pillar_completion"] * factor)),
-            "touchpoints_count": max(0, int(current["touchpoints_count"] * factor)),
-            "crm_contacts": max(0, int(current["crm_contacts"] * factor))
-        }
-        snapshots.append(snapshot)
-    
-    # Save the generated snapshots
-    if snapshots:
-        await db.brand_tracking.insert_many(snapshots)
-    
-    return snapshots
+    # generate_initial_tracking removed - no simulated data

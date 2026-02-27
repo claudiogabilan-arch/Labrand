@@ -399,17 +399,15 @@ async def get_brand_equity_score(brand_id: str, user: dict = Depends(get_current
             }
             recommendations.append({"dimension": dim_data["name"], "action": recs.get(dim_key, "Fortaleça esta dimensão"), "priority": "alta" if dim_data["score"] < 40 else "média"})
     
-    # Histórico de equity (últimos 6 meses - simulado)
-    history = []
-    base_score = max(20, total_equity - 15)
-    for i in range(6):
-        month_score = min(100, base_score + (i * 2.5))
-        history.append({
-            "month": f"2025-{str(7+i).zfill(2)}",
-            "score": round(month_score)
-        })
+    # Histórico de equity real do banco
+    equity_history = await db.brand_equity_history.find(
+        {"brand_id": brand_id},
+        {"_id": 0, "equity_score": 1, "calculated_at": 1}
+    ).sort("calculated_at", -1).to_list(6)
     
-    # Benchmark do setor (simulado)
+    history = [{"month": h.get("calculated_at", "")[:7], "score": h.get("equity_score", 0)} for h in equity_history]
+    
+    # Benchmark do setor
     industry = brand.get("industry", "Geral")
     industry_benchmark = {"average": 55, "top_10": 78, "bottom_10": 32}
     
