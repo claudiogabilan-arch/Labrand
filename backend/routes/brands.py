@@ -353,12 +353,10 @@ async def get_brand_metrics(brand_id: str, user: dict = Depends(get_current_user
                     elif v:  # Any other truthy value
                         filled_fields += 1
             
-            # More generous thresholds
-            if filled_fields >= 2:
+            # More generous thresholds - any meaningful data = complete
+            if filled_fields >= 1:
                 pillar_progress[pillar_type] = 100
                 pillars_completed += 1
-            elif filled_fields >= 1:
-                pillar_progress[pillar_type] = 75
             else:
                 pillar_progress[pillar_type] = 0
     
@@ -373,13 +371,9 @@ async def get_brand_metrics(brand_id: str, user: dict = Depends(get_current_user
         if legacy_doc:
             filled = sum(1 for k, v in legacy_doc.items() 
                         if k not in ["brand_id", "pillar_id", "updated_at", "created_at", "_id"] and v)
-            if filled >= 3:
+            if filled >= 1:
                 pillar_progress[pillar_type] = 100
                 pillars_completed += 1
-            elif filled >= 2:
-                pillar_progress[pillar_type] = 75
-            elif filled >= 1:
-                pillar_progress[pillar_type] = 50
             else:
                 pillar_progress[pillar_type] = 0
         else:
