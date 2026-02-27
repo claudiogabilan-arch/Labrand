@@ -27,620 +27,89 @@ Web application for brand management covering diagnosis, strategy creation, exec
 
 ---
 
-## Changelog
+## What's Been Implemented
 
-### 2026-02-21 (Session 7 - Current)
+### Core Platform
+- Full authentication system (JWT + Google OAuth)
+- Multi-brand management with brand creation/editing
+- 7 brand pillars (Start, Valores, Propósito, Promessa, Posicionamento, Personalidade, Universalidade)
+- Executive Dashboard with real-time progress
+- BVS (Branding Value Score) with real data consolidation
+- Brand Equity Score (Aaker model)
+- Touchpoint mapping and scoring
+- Maturity diagnosis
+- Brand Risk analysis
+- Disaster Check module
+- Value Waves analysis
+- Brand Funnel
+- Naming module (with AI generation)
+- Content generator (AI-powered)
+- Competitor analysis (AI-powered)
+- CRM integration framework
+- Ads integration framework (Meta, Google)
+- Social Listening framework
+- Share of Voice analysis
+- Conversion Attributes analysis
+- Brand Tracking (snapshots over time)
+- PDF Report generation (executive reports)
+- Email alerts system (Resend API)
+- Stripe payment integration (LIVE keys)
+- AI credits system with metered usage
+- Team invitations and roles
+- Admin dashboard with stats
+- Mindmap visualization (React Flow)
+- Gantt chart in Planning module
+- Presentation mode for client meetings
 
-#### ✅ COMPLETED: Integração Real de Email com Resend
+### 2026-02-27 - Mock Data Removal (P0 Fix)
+**CRITICAL FIX: Removed ALL mock/simulated data from the platform**
 
-**Implementação completa de alertas por email:**
+Files modified:
+- `/app/backend/routes/social_listening.py` - Returns empty state when no mentions
+- `/app/backend/routes/share_of_voice.py` - Removed fake competitor mentions (hash-based), simulated channel breakdown, simulated trend history. Now uses real DB data only.
+- `/app/backend/routes/conversion_attributes.py` - Removed `generate_sample_surveys()` function that was creating and persisting 30 fake surveys in DB. Now returns empty state when < 5 real surveys.
+- `/app/backend/routes/brand_tracking.py` - Removed `generate_initial_tracking()` that was creating and persisting 6 months of simulated history in DB. Returns empty state.
+- `/app/backend/routes/bvs.py` - Removed simulated BVS history generation. Returns empty when no real history.
+- `/app/backend/routes/brand_tools.py` - Replaced simulated equity history with real DB data.
+- `/app/backend/routes/admin.py` - Added comprehensive cleanup endpoint: `GET /api/admin/clean-mock-data/{brand_id}`
+- `/app/frontend/src/pages/ShareOfVoice.js` - Added empty state UI
+- `/app/frontend/src/pages/ConversionAttributes.js` - Added empty state UI
+- `/app/frontend/src/pages/BrandTracking.js` - Added empty state UI
 
-1. **Serviço de Email (`/app/backend/services/email_service.py`):**
-   - Templates HTML profissionais para cada tipo de alerta
-   - Envio assíncrono não-bloqueante usando `asyncio.to_thread`
-   - Logging de todos os emails enviados no MongoDB
-   - Remetente: `alertas@labrand.com.br`
-
-2. **Tipos de Alertas:**
-   - ⚠️ **Consistência** - Pilares incompletos, touchpoints com baixa performance, score abaixo do ideal
-   - 🚨 **Risco** - Riscos identificados, maturidade organizacional baixa
-   - 💡 **Oportunidades** - Sugestões de melhorias (logo, naming, conteúdo, concorrentes)
-   - ✅ **Teste** - Email de verificação da configuração
-
-3. **Novos Endpoints:**
-   - `POST /api/brands/{id}/alerts/send-test` - Envia email de teste REAL
-   - `POST /api/brands/{id}/alerts/send` - Envia alerta específico por tipo
-   - `GET /api/brands/{id}/alerts/history` - Histórico de emails enviados
-
-4. **Frontend Atualizado:**
-   - Seção "Enviar Alerta Agora" com 3 botões
-   - Histórico de alertas enviados (últimos 5)
-   - Indicador de integração ativa com Resend
-
-**Testado e funcionando com emails reais enviados!**
-
----
-
-#### ✅ COMPLETED: Melhorias de UX e Clareza (Quick Wins)
-
-**Correções sem custo de créditos:**
-
-1. **Mensagens MOCK Atualizadas:**
-   - PDF Report: "✅ Relatório PDF real gerado com ReportLab"
-   - Social Listening: "⚡ Preview com dados de demonstração"
-   - Ads/CRM: Banners amarelos explicando modo Preview
-
-2. **Mensagens de Erro Específicas:**
-   - Erros genéricos substituídos por mensagens claras
-   - Ex: "Erro ao conectar. Verifique suas credenciais."
-   - Ex: "Erro na análise. Verifique seus créditos de IA."
-
-3. **Badges "Preview" nas Integrações:**
-   - Ads Integration: Badge + banner explicativo
-   - CRM Integration: Badge + banner explicativo
-   - Deixa claro que dados são de demonstração
-
-4. **Toasts Informativos:**
-   - Sucesso: Descrições claras do que aconteceu
-   - Erro: Sugestões de como resolver
+Testing: 15/15 backend tests passed. All frontend empty states verified.
 
 ---
 
-#### ✅ COMPLETED: Limpeza de Código e Correção de Arquitetura
-
-**Ações realizadas:**
-
-1. **Arquivo Bridge `server.py` Criado:**
-   - O supervisor aponta para `server:app`, então criamos um arquivo bridge que importa do `server_new.py`
-   - Isso permite manter a arquitetura modular sem modificar configurações do supervisor
-   - Arquivo original monolítico removido com sucesso
-
-2. **Router de Reports Integrado:**
-   - `reports.py` agora está corretamente incluído no `server_new.py`
-   - Endpoints `/api/brands/{id}/reports/executive-pdf` funcionando
-   - Geração REAL de PDF com ReportLab (não mais mock)
-
-3. **PDF Generation FUNCIONANDO:**
-   - Content-Type: application/pdf ✅
-   - Arquivo binário válido (%PDF-1.4) ✅
-   - Histórico de relatórios mantido no MongoDB ✅
-
-**Estrutura Final do Backend:**
-```
-/app/backend/
-├── server.py              # Bridge → imports from server_new.py
-├── server_new.py          # Modular entry point (16 routers)
-└── routes/
-    ├── reports.py         # PDF generation (NOVO - agora integrado)
-    └── ... (15 outros routers)
-```
-
----
-
-### 2026-02-21 (Session 6)
-
-#### ✅ COMPLETED: 6 Brand Tools Features (Alto Impacto + Diferenciação)
-
-**Alto Impacto:**
-
-1. **Brand Score Unificado**
-   - `GET /api/brands/{id}/brand-score` - Score consolidado 0-100
-   - 4 dimensões: Estratégia (35%), Experiência (20%), Maturidade (25%), Consistência (20%)
-   - Níveis: Excelente (≥80), Bom (≥60), Em Desenvolvimento (≥40), Crítico (<40)
-   - Recomendações automáticas baseadas no score
-
-2. **Relatório PDF Executivo**
-   - `POST /api/brands/{id}/reports/executive-pdf` - Gera relatório
-   - `GET /api/brands/{id}/reports/history` - Histórico de relatórios
-   - Executive summary com pontos fortes, áreas de melhoria, ações prioritárias
-   - **REAL PDF Generation com ReportLab** ✅
-
-3. **Alertas por Email**
-   - `GET/POST /api/brands/{id}/alerts/config` - Configuração de alertas
-   - `POST /api/brands/{id}/alerts/send-test` - Email de teste (MOCK)
-   - Frequência: diário, semanal, mensal
-   - Tipos: consistência, risco, oportunidades
-
-**Diferenciação Competitiva:**
-
-4. **Social Listening Light**
-   - `GET /api/brands/{id}/social-listening/mentions` - Menções em redes sociais
-   - Sentimento, alcance, trending topics
-   - Fontes: Twitter, Instagram, LinkedIn, Facebook
-   - **Note:** Dados MOCK - Integração real com APIs de social listening pendente
-
-5. **Análise de Concorrentes com IA**
-   - `POST /api/brands/{id}/competitors/analyze-ai` - Análise com IA
-   - Custo: 2 créditos (básico), 4 créditos (detalhado)
-   - Forças, fraquezas, nível de ameaça, recomendações estratégicas
-   - Histórico: `GET /api/brands/{id}/competitors/analyses`
-
-6. **Gerador de Conteúdo de Marca**
-   - `GET /api/content-generator/types` - Tipos disponíveis
-   - `POST /api/brands/{id}/content-generator/generate` - Gera conteúdo
-   - Tipos: Tagline (1cr), Post Social (1cr), Bio (1cr), Manifesto (2cr), Elevator Pitch (1cr)
-   - Tons: profissional, casual, inspiracional
-   - Histórico: `GET /api/brands/{id}/content-generator/history`
-
-**Frontend:**
-- Nova página `/brand-tools` com 6 abas
-- Menu "Ferramentas" no sidebar (ícone de chave)
-- Todas as funcionalidades conectadas e testadas
-
-**Testes:**
-- Backend: 23 testes passaram, 3 skipped (comportamento esperado - créditos insuficientes)
-- Frontend: Todas as 6 abas verificadas funcionando
-- Bug corrigido: ordenação de rotas em `/reports/history`
-
-#### ⚙️ COMPLETED: Refatoração do server.py
-
-**Migração Concluída com Sucesso!**
-
-O backend foi refatorado de um arquivo monolítico (5300+ linhas) para arquitetura modular:
-
-```
-/app/backend/
-├── server.py               # MODULAR - 143 rotas (em uso)
-├── server_monolith_backup.py  # Backup do antigo monolítico
-└── routes/
-    ├── auth.py            # 11 rotas - Login, register, reset
-    ├── brands.py          # 8 rotas - CRUD marcas
-    ├── pillars.py         # 30 rotas - 7 pilares + tasks/decisions
-    ├── ai.py              # 7 rotas - Insights, mentor, risk
-    ├── credits.py         # 3 rotas - Saldo, histórico, compra
-    ├── plans.py           # 4 rotas - Planos, upgrade
-    ├── stripe.py          # 5 rotas - Checkout, webhook
-    ├── maturity.py        # 5 rotas - Diagnóstico maturidade
-    ├── brand_tools.py     # 12 rotas - 6 features novas
-    ├── ads.py             # 6 rotas - Meta & Google Ads (MOCK)
-    ├── crm.py             # 6 rotas - RD Station, HubSpot, Kommo (MOCK)
-    ├── touchpoints.py     # 8 rotas - Jornada do cliente
-    ├── naming.py          # 16 rotas - Estúdio Onomástico
-    ├── extras.py          # 12 rotas - Templates, competitor groups, narratives
-    └── admin.py           # 3 rotas - Dashboard administrativo
-```
-
-**Testes:** 100% backend (21 testes) + 100% frontend (Dashboard, brand-tools, naming)
-
-#### ✅ COMPLETED: Brand Equity Score (Inteligência Avançada)
-
-**Implementação baseada no modelo de Aaker (5 dimensões):**
-- `GET /api/brands/{id}/brand-equity` - Calcula Brand Equity Score
-- `GET /api/brands/{id}/brand-equity/history` - Histórico do score
-- `GET /api/brands/{id}/brand-equity/comparison` - Comparação com benchmark
-
-**5 Dimensões calculadas:**
-1. **Conhecimento de Marca (20%)** - Baseado em impressões de Ads
-2. **Associações de Marca (25%)** - Baseado em pilares preenchidos
-3. **Qualidade Percebida (20%)** - Baseado em touchpoints e maturidade
-4. **Lealdade à Marca (20%)** - Baseado em CRM e conversões
-5. **Ativos Proprietários (15%)** - Baseado em naming, logo, universo
-
-**Features:**
-- Score 0-100 com níveis (Inicial, Emergente, Em Desenvolvimento, Forte, Premium)
-- Multiplicador de valuation (0.5x a 3.5x)
-- Recomendações priorizadas para aumentar o equity
-- Benchmark com média do setor
-- Histórico de evolução (6 meses)
-
-**Frontend:** Nova aba "Equity" em /brand-tools (primeira aba)
-
-#### ✅ COMPLETED: Testes Automatizados (Pytest)
-
-**Criados 17 testes cobrindo todos os módulos:**
-```
-/app/backend/tests/
-├── conftest.py          # Configuração pytest
-├── pytest.ini           # Configuração asyncio
-├── test_api.py          # Suite principal (17 testes)
-├── test_auth.py         # Testes de auth (async)
-├── test_brands.py       # Testes de brands (async)
-├── test_brand_tools.py  # Testes de brand tools (async)
-└── test_maturity_diagnosis.py  # Testes de maturidade
-```
-
-**Rodar testes:** `cd /app/backend && pytest tests/test_api.py -v`
-
-**Cobertura:** Auth, Brands, Brand Score, Brand Equity, Social Listening, Naming, CRM, Ads, Touchpoints, Intelligence
-
-#### ✅ COMPLETED: Google OAuth (Emergent Auth)
-
-**Implementação:**
-- `GET /api/auth/google/login` - Redireciona para Emergent Auth
-- `POST /api/auth/session` - Processa retorno do OAuth
-- Frontend: Botão "Continuar com Google" na tela de login
-- AuthCallback: Processa `session_id` retornado pela URL
-
-**Fluxo:**
-1. Usuário clica "Continuar com Google"
-2. Redireciona para `https://auth.emergentagent.com/?redirect={dashboard_url}`
-3. Após autenticação, retorna com `?session_id=xxx`
-4. Frontend processa sessão e autentica usuário
-
----
-
-### 2026-02-18 (Session 5)
-
-#### ✅ COMPLETED: Security & Login Validation
-- Confirmed `/api/setup/create-admin` endpoint already removed (security fixed)
-- Validated login flow working correctly via API and UI
-- Confirmed all auth endpoints functional
-
-#### ✅ COMPLETED: Touchpoints Module (Phase 1) - Testing & Validation
-- All backend endpoints verified and working
-- Frontend features working (heatmap, personas, ROI, AI analysis)
-
-#### ✅ COMPLETED: CRM Integration Module (NEW)
-- **Backend endpoints:** 6 endpoints for connect/disconnect/import/list
-- **Supported CRMs:** RD Station, HubSpot, Kommo
-- **Frontend features:** Cards, import, stats, contacts table
-- **Note:** Import is currently MOCK data. Real API integration pending.
-
-#### ✅ COMPLETED: Naming Module "Estúdio Onomástico" - COMPLETO
-- **7 Etapas Implementadas:**
-  1. **Essência Decode®** - Formulário de contexto (negócio, missão, valores, público)
-  2. **Fator Propulsor®** - Seleção de arquétipo (12 opções) + tensão criativa (8 exemplos)
-  3. **Arquétipos Vivos®** - Mapa semântico com IA (keywords, conceitos, metáforas) - 1 crédito
-  4. **Geração de Nomes** - Criação de nomes com IA - 3 créditos
-  5. **Laboratório Sonoro®** - Análise fonética (sílabas, ritmo, pronúncia) - 1 crédito
-  6. **Fricção Global®** - Verificação em 7 idiomas (alertas de pronúncia/conotação) - 2 créditos
-  7. **Avaliação Final** - Scoring com 7 critérios + favoritos + disponibilidade domínio/redes
-
-- **Backend endpoints:** 14 endpoints completos
-- **Features extras:**
-  - Mock verificação de domínios (.com, .com.br, .io, .co)
-  - Mock verificação redes sociais (Instagram, Twitter, LinkedIn, Facebook, TikTok)
-  - Exportação de relatório (JSON)
-  - 12 Arquétipos de marca com keywords e exemplos
-  - 8 exemplos de tensões criativas
-
-#### ✅ COMPLETED: Onboarding & Benchmark Improvements
-- **Templates API:**
-  - `GET /api/templates/pillars?sector=X` - Templates por pilar e setor
-  - `GET /api/templates/sectors` - Lista de 12 setores
-  - Templates para: Purpose, Values, Promise, Positioning
-  - Setores: Tecnologia, Saúde, Educação, Varejo, Financeiro, Indústria, etc.
-
-- **Benchmark com Grupos de Concorrentes:**
-  - `GET /api/brands/{id}/competitor-groups` - Listar grupos
-  - `POST /api/brands/{id}/competitor-groups` - Criar grupo
-  - `PUT /api/brands/{id}/competitor-groups/{id}` - Atualizar concorrentes
-  - `DELETE /api/brands/{id}/competitor-groups/{id}` - Remover grupo
-  - Frontend: Criar grupos por segmento/região, adicionar concorrentes com scores
-
-#### ✅ COMPLETED: Ads Integration (Meta & Google)
-- **Backend endpoints:**
-  - `GET /api/brands/{id}/ads/providers` - Listar provedores e status
-  - `POST /api/brands/{id}/ads/connect` - Conectar provedor
-  - `DELETE /api/brands/{id}/ads/{provider}` - Desconectar
-  - `POST /api/brands/{id}/ads/{provider}/sync` - Sincronizar dados (MOCK)
-  - `GET /api/brands/{id}/ads/{provider}/metrics` - Buscar métricas
-
-- **Frontend features:**
-  - Cards de Meta Ads e Google Ads
-  - Métricas: Investimento, Impressões, Cliques, Conversões, CTR, ROAS
-  - Tabela de métricas diárias (30 dias)
-  - Tab comparativo entre plataformas
-  - Dialog de conexão com credenciais
-
-- **Note:** Sync é MOCK - gera dados simulados. Integração real requer credenciais das APIs.
-
-#### ✅ COMPLETED: Intelligence Dashboard Melhorado
-- **Backend endpoint:**
-  - `GET /api/brands/{id}/intelligence/summary` - Resumo unificado de todas as fontes
-
-- **Frontend features:**
-  - Status de fontes conectadas (GA, Meta Ads, Google Ads, CRM)
-  - Saúde da marca (completude dos pilares)
-  - Métricas consolidadas de marketing
-  - Insights automáticos baseados nos dados
-  - Ações rápidas para navegação
-
-#### ✅ SYSTEM HEALTH (Updated 2026-02-21)
-- Frontend: RUNNING ✅
-- Backend: RUNNING ✅ (server.py → server_new.py bridge)
-- MongoDB: RUNNING ✅
-- PDF Generation: WORKING ✅ (ReportLab)
-- All APIs responding correctly
-
----
-
-### 2026-02-23 (Session 9 - Current)
-
-#### ✅ VERIFIED: Módulo de Inteligência Competitiva (Completo)
-
-**Verificação das páginas do módulo criado na sessão anterior:**
-
-1. **BVS - Branding Value Score** (`/bvs`)
-   - Score unificado 0-100 baseado em 4 componentes
-   - Força da Marca, Performance de Mercado, Conexão com Cliente, Saúde da Marca
-   - Comparativo com mercado e top performers
-   - Recomendações baseadas no score
-   - ✅ UI e Backend funcionando COM DADOS REAIS
-
-2. **Social Listening** (`/social-listening`)
-   - Monitoramento de menções
-   - Sentiment Score, Total de Menções, Engajamento
-   - Distribuição por plataforma (Twitter, Instagram, Facebook, LinkedIn)
-   - Lista de menções recentes
-   - ✅ UI e Backend funcionando
-
-3. **Share of Voice** (`/share-of-voice`)
-   - Participação no mercado vs concorrentes
-   - Ranking de posição no mercado
-   - Crescimento temporal
-   - Breakdown por canal (social, search, news, reviews)
-   - ✅ UI e Backend funcionando
-
-4. **Saúde da Marca** (`/brand-health`)
-   - Dashboard consolidado de todos os módulos
-   - Índice de Saúde Geral calculado com dados reais
-   - Cards de resumo de Brand Tracking, Ondas de Valor, Funil
-   - ✅ UI e Backend funcionando COM DADOS REAIS
-
-5. **Integrações Self-Service** (`/integrations`)
-   - CRMs: RD Station, HubSpot, Pipedrive, Kommo
-   - Plataformas de Ads: Meta Ads, Google Ads, TikTok Ads
-   - Backend completo para salvar e testar integrações
-   - ✅ UI e Backend funcionando
-
-**Implementado nesta sessão (P1):**
-- **Brand Data Service** (`/app/backend/services/brand_data_service.py`) - Serviço de consolidação de dados
-- **BVS com dados reais** - Agora usa dados de Touchpoints, Maturity, CRM, Ads, Social
-- **Brand Health endpoint** (`/api/brands/{id}/brand-health`) - Retorna métricas consolidadas
-- **Fontes de dados visíveis** - UI do BVS mostra quais fontes estão conectadas
-
----
-
-### 2026-02-23 (Session 8)
-
-#### ✅ COMPLETED: Novos Frameworks Estratégicos (Sem custo de créditos IA)
-
-**Baseado em análise competitiva do Valometry**, implementamos 4 novos módulos que não utilizam créditos de IA:
-
-**1. Brand Tracking - Acompanhamento Contínuo**
-- `GET /api/brands/{id}/tracking/history` - Histórico de snapshots (6 meses)
-- `POST /api/brands/{id}/tracking/snapshot` - Criar snapshot manual
-- `GET /api/brands/{id}/tracking/comparison` - Comparação período atual vs anterior
-- `GET /api/brands/{id}/tracking/alerts` - Alertas baseados em mudanças
-- Métricas: Brand Score, Brand Equity, Maturidade, Pilares, Touchpoints, CRM
-
-**2. Disaster Check - Verificação de Risco Pré-Lançamento**
-- `GET /api/disaster-check/template` - Template com 7 categorias e 35 itens
-- `POST /api/brands/{id}/disaster-checks` - Criar novo check
-- `PUT /api/brands/{id}/disaster-checks/{id}/item` - Atualizar item do checklist
-- `GET /api/brands/{id}/disaster-checks/{id}/report` - Relatório com recomendação
-- Categorias: Identidade, Legal/Naming, Mercado, Comunicação, Digital, Crise, Operações
-- Sistema de peso para itens críticos
-
-**3. Ondas de Valor (Value Waves) - Framework de Gestão**
-- `GET /api/value-waves/framework` - Estrutura com 3 ondas e 27 perguntas
-- `POST /api/brands/{id}/value-waves/assess` - Salvar avaliação
-- `GET /api/brands/{id}/value-waves/recommendations` - Recomendações priorizadas
-- Ondas: Marca (awareness, percepção, diferenciação), Negócio (receita, market share, valor cliente), Comunicação (consistência, alcance, engajamento)
-- Score por onda e dimensão com insights automáticos
-
-**4. Funil de Conversão de Marca (Brand Funnel)**
-- `GET /api/brand-funnel/stages` - 6 estágios do funil
-- `GET /api/brands/{id}/brand-funnel` - Dados do funil com estimativas
-- `POST /api/brands/{id}/brand-funnel` - Atualizar dados do funil
-- `GET /api/brands/{id}/brand-funnel/analysis` - Análise de gargalos e oportunidades
-- `GET /api/brands/{id}/brand-funnel/benchmark` - Comparação com benchmark do setor
-- Estágios: Conhecimento → Consideração → Preferência → Compra → Lealdade → Advocacia
-
-**5. Saúde da Marca (Brand Health) - Dashboard Consolidado**
-- Página única que reúne todos os 4 módulos acima
-- Índice de Saúde Geral (média ponderada de Brand Score, Ondas de Valor e Funil)
-- Cards de ação para completar avaliações pendentes
-- Resumo de cada módulo com links para detalhes
-- Banner informando que todas as análises são GRATUITAS (sem créditos IA)
-
-**6. Sistema Self-Service de Integrações (NOVO)**
-- `GET /api/integrations/providers` - Lista todos os provedores disponíveis
-- `GET /api/brands/{id}/integrations` - Listar integrações configuradas
-- `POST /api/brands/{id}/integrations/{category}` - Salvar credenciais
-- `POST /api/brands/{id}/integrations/{category}/{provider}/test` - Testar conexão
-- `POST /api/brands/{id}/integrations/{category}/{provider}/sync` - Sincronizar dados
-- `DELETE /api/brands/{id}/integrations/{category}/{provider}` - Remover integração
-
-**CRMs Suportados:**
-- RD Station
-- HubSpot
-- Pipedrive
-- Kommo (amoCRM)
-
-**Plataformas de Ads Suportadas:**
-- Meta Ads (Facebook/Instagram)
-- Google Ads
-- TikTok Ads
-
-**Frontend:**
-- Nova seção "Frameworks Estratégicos" no sidebar
-- 6 páginas completas com visualizações ricas
-- **Integrações** - Self-service para CRM e Ads (NOVO)
-- **Saúde da Marca** - Dashboard consolidado
-- Brand Tracking com gráficos de evolução temporal
-- Disaster Check com checklist interativo e recomendações
-- Ondas de Valor com questionário e scores por dimensão
-- Funil de Marca com visualização de barras coloridas e taxas de conversão
-
----
-
-## Roadmap / Backlog
-
-### P1 - Próximas Tarefas
-- [x] Upload de Foto de Perfil ✅
-- [x] Sistema de Convite de Equipe ✅
-- [x] Brand Tracking Contínuo ✅
-- [x] Disaster Check (pré-lançamento) ✅
-- [x] Ondas de Valor ✅
-- [x] Funil de Conversão de Marca ✅
-- [x] Saúde da Marca (dashboard consolidado) ✅
-- [x] Sistema Self-Service de Integrações (CRM + Ads) ✅
-- [ ] Cases de Sucesso na Landing Page
-
-### P2 - Melhorias (do Valometry)
-- [x] BVS (Branding Value Score) - indicador unificado ✅
-- [x] Social Listening - monitoramento de menções ✅
-- [x] Share of Voice - participação no mercado ✅
-- [ ] Cases de Sucesso na Landing Page
-- [ ] Análise de Atributos de Conversão
-- [ ] Colaboração & Governança (roles granulares, workflows de aprovação)
-- [ ] Social Listening REAL (APIs do Twitter/Instagram - atual é dados simulados)
-- [ ] Dashboards configuráveis
-
-### Futuro
-- [ ] White-labeling para enterprise
-- [ ] "Visão de Mercados" e "Oportunidades de Mercado"
-- [ ] Multi-idioma (além de pt-BR)
-
----
-
-### 2026-02-17 (Session 4)
-
-#### ✅ COMPLETED: Backend Refactoring Structure
-Created modular architecture (files ready for future migration):
-```
-/app/backend/
-├── config.py           # DB, JWT, Plans, AI Costs config
-├── models/schemas.py   # Pydantic models
-├── utils/helpers.py    # Auth, email, LLM, credits helpers
-├── routes/
-│   ├── auth.py         # Authentication endpoints
-│   ├── brands.py       # Brand CRUD
-│   ├── pillars.py      # Pillar endpoints + tasks/decisions
-│   ├── ai.py           # AI insights, risk, consistency
-│   ├── credits.py      # AI credits management
-│   ├── plans.py        # Subscription plans
-│   ├── stripe.py       # Payment processing
-│   └── maturity.py     # Maturity diagnosis
-└── server_new.py       # Refactored entry point (75 routes)
-```
-Note: Original server.py kept functional (98 routes). Migration can be done gradually.
-
-#### ✅ COMPLETED: Maturity Diagnosis Module (Full Implementation)
-- **6 Dimensions** with 5 questions each (30 total):
-  - Estratégia de Marca
-  - Identidade Visual
-  - Comunicação
-  - Experiência do Cliente
-  - Cultura Interna
-  - Métricas e Governança
-- **New Endpoints:**
-  - `GET /api/maturity/dimensions` - Get all dimensions/questions
-  - `POST /api/brands/{id}/maturity-diagnosis/recommendations` - AI recommendations (1 credit)
-- **Frontend Updated:** Added AI recommendations section with:
-  - Summary
-  - Priority Actions (with impact/effort matrix)
-  - Quick Wins
-  - 30/90/180 day Roadmap
-  - Strengths to Leverage
-
-### 2026-02-17 (Session 3)
-- **IMPLEMENTED**: AI Credits Deduction System
-- **FIXED**: TRIAL_DAYS changed from 15 to 7 days
-- **UPDATED**: Frontend components handle 402 errors
-
-### AI Credit Costs:
-| Action | Credits | Endpoint |
-|--------|---------|----------|
-| Sugestão de IA | 1 | POST /api/ai/insights |
-| Jeito de Ser (IA) | 2 | POST /api/ai/brand-way |
-| Mentor IA | 3 | POST /api/ai/mentor |
-| Análise de Risco | 5 | POST /api/brands/{id}/risk-analysis |
-| Alertas de Consistência | 5 | POST /api/brands/{id}/consistency-alerts |
-| Recomendações Maturidade | 1 | POST /api/brands/{id}/maturity-diagnosis/recommendations |
-
----
-
-## Roadmap
-
-### P0 - Critical (Completed ✅)
-- [x] Fix login/registration loop bug
-- [x] Implement Brand Way module
-- [x] Implement Brand Purpose Tracks
-- [x] Implement Brand Risk module
-- [x] Implement Competitor Analysis
-- [x] Implement Consistency Alerts
-- [x] Google Integration (Real OAuth)
-- [x] Stripe Payments Integration
-- [x] AI Credits Deduction System
-- [x] 7-day trial period
-
-### P1 - High Priority (Completed ✅)
-- [x] Backend refactoring structure (modular files created)
-- [x] Complete Maturity Diagnosis module with AI recommendations
-- [x] Touchpoints Module Phase 1 (ROI, Personas, AI Analysis, Dashboard)
-- [x] Admin Dashboard with usage metrics
-
-### P2 - Medium Priority (In Progress)
-- [ ] Complete backend migration to refactored server.py
-- [ ] Onboarding flow save responses to DB
-- [ ] Team invitation functionality
-- [ ] Strategic Priority Report for consultants
-- [ ] Naming module
-- [ ] Brand Book PDF Generator
-- [ ] Complete migration to refactored server
-
-### P3 - Low Priority / Backlog
-- [ ] White-labeling for Enterprise
-- [ ] API access for Enterprise
-- [ ] Timeline de Evolução
-
----
-
-## Key Files Reference
-
-### Backend (Refactored Structure)
-- `/app/backend/server.py` - Main server (still in use, ~3300 lines)
-- `/app/backend/server_new.py` - Refactored server (ready for migration)
-- `/app/backend/routes/*.py` - Modular route files
-- `/app/backend/config.py` - Configuration
-- `/app/backend/utils/helpers.py` - Helper functions
-- `/app/backend/.env` - Contains LIVE Stripe keys, Emergent LLM key
-
-### Frontend Pages (Updated)
-- `/app/frontend/src/pages/MaturityDiagnosis.js` - Full implementation with AI recommendations
-- `/app/frontend/src/pages/AICredits.js` - Credit management
-- `/app/frontend/src/pages/BrandRisk.js` - Risk analysis
-- `/app/frontend/src/pages/ConsistencyAlerts.js` - Consistency checks
-
----
-
-## Test Credentials
-- **Strategist**: demo@labrand.com / password123
-- **Admin**: admin@labrand.com / LaBrand@2024!
-- **Brand ID**: brand_92bcc15a44fb
-
-## Integrations Status
-- ✅ Google OAuth (login)
-- ✅ Google Analytics Data API (GA4)
-- ✅ Google Search Console API
-- ✅ Resend (transactional emails)
-- ✅ Emergent LLM (Gemini 2.0 Flash)
-- ✅ Stripe Payments (LIVE keys)
-- ✅ AI Credits System
-
-## Test Reports
-- `/app/test_reports/iteration_5.json` - Maturity Diagnosis (100% pass - 13/13 tests)
-- `/app/test_reports/iteration_4.json` - AI Credits system (100% pass)
-- `/app/test_reports/iteration_3.json` - New modules (100% pass)
-
-## Backend Tests Created
-- `/app/backend/tests/test_maturity_diagnosis.py`
-
----
-
-## Touchpoints Module Details
-| Field | Type | Description |
-|-------|------|-------------|
-| nome | string | Touchpoint name |
-| descricao | string | Description |
-| ambiente | enum | "Online" or "Offline" |
-| fase_funil | enum | "Topo de Funil", "Meio de Funil", "Fundo de Funil" |
-| sentimento | enum | "Feliz", "Neutro", "Triste", "Frustrado" |
-| nota | int (1-10) | Customer experience score |
-| persona | string | Target persona (default: "Geral") |
-| custo_mensal | float | Monthly cost |
-| receita_gerada | float | Generated revenue |
-| conversoes | int | Number of conversions |
+## Prioritized Backlog
+
+### P0 (Critical - Done)
+- ✅ Remove ALL mock/simulated data from backend
+- ✅ Add proper empty states to all frontend components
+- ✅ Create cleanup endpoint for production DB
+
+### P1 (High Priority - Next)
+- [ ] Refactor `brand_tools.py` → move report logic to `reports.py`
+- [ ] Advanced Collaboration & Governance (granular roles, approval workflows)
+- [ ] "Cultura & Pessoas" module
+- [ ] "Blog/Conteúdo" (Content Hub) module
+
+### P2 (Medium Priority - Future)
+- [ ] Timeline de evolução da marca (metrics over time)
+- [ ] Comparativo antes/depois (before/after snapshot)
+- [ ] Export PDF do mindmap
+- [ ] White-labeling for enterprise clients
+- [ ] Enhance PDF reports with more data (BVS, social, ads, etc.)
+
+### Key Endpoints
+- `GET /health` - Kubernetes health check
+- `GET /api/admin/clean-mock-data/{brand_id}` - Clean mock data for a brand
+- `GET /api/admin/reset-database?secret_key=LABRAND2024RESET` - Full DB reset
+- `GET /api/brands/{brand_id}/social-listening/dashboard` - Social listening data
+- `GET /api/brands/{brand_id}/share-of-voice` - Share of Voice data
+- `POST /api/brands/{brand_id}/reports/executive-pdf` - Generate PDF report
+- `GET /api/brands/{brand_id}/bvs` - BVS Score
+- `GET /api/brands/{brand_id}/metrics` - Dashboard metrics
+
+### Test Credentials
+- Admin: `admin@labrand.com` / `LaBrand@2024!`
+- Brand ID: `brand_29aafd2d6125` (Sandro Serzedello)
