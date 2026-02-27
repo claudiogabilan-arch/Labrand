@@ -165,11 +165,37 @@ export default function Benchmark() {
     );
   }
 
-  const sector = data?.sector || 'default';
+  const sector = data?.sector || 'Não definido';
   const benchmark = SECTOR_BENCHMARKS[sector.toLowerCase()] || SECTOR_BENCHMARKS.default;
   const brandStrength = data?.brand_strength || 0;
-  const rbi = data?.rbi || 0;
-  const percentile = data?.percentile || 50;
+  const rbi = data?.rbi;
+  const percentile = data?.percentile || 0;
+  const hasData = data?.has_data !== false;
+
+  if (!hasData) {
+    return (
+      <TooltipProvider>
+        <div className="space-y-6" data-testid="benchmark-page">
+          <div>
+            <h1 className="text-2xl font-bold">Benchmark Setorial</h1>
+            <p className="text-muted-foreground">Comparação com o setor</p>
+          </div>
+          <Card className="border-dashed border-2">
+            <CardContent className="py-12 text-center">
+              <TrendingUp className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <h3 className="text-lg font-semibold mb-2">Sem dados para benchmark</h3>
+              <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                {data?.message || "Preencha os pilares da marca para gerar o benchmark setorial."}
+              </p>
+              <Button onClick={() => window.location.href = '/pillars/start'}>
+                Preencher Pilares
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </TooltipProvider>
+    );
+  }
 
   return (
     <TooltipProvider>
