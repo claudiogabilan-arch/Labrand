@@ -83,7 +83,15 @@ Files modified:
 4. **Saúde da Marca**: Now shows 0 values for funnel section when no real data exists.
 5. **Pilar Valores**: Progress calculation changed from 33/33/34 (valores+necessidades+cruzamentos) to 50/50 (valores+necessidades only). Crossings no longer block 100%.
 
-Testing: 9/9 tests passed. All 5 issues verified fixed.
+### 2026-02-27 - Refatoração brand_tools.py
+**Refactored `brand_tools.py` (490 → 148 lines) into modular files:**
+- `/app/backend/routes/brand_equity.py` (208 lines) - Brand Equity Score (Aaker model), history, comparison
+- `/app/backend/routes/email_alerts.py` (129 lines) - Alert config, sending, history
+- `/app/backend/routes/brand_tools.py` (148 lines) - Brand Score, Competitor Analysis, Content Generator
+- Removed duplicate `PDFReportRequest` model (already in `reports.py`)
+- Removed duplicate `/benchmark` endpoint from `extras.py` (already in `brands.py`)
+- Updated `server_new.py` with new routers
+- All 10 endpoints verified working post-refactor
 
 ---
 
@@ -95,7 +103,7 @@ Testing: 9/9 tests passed. All 5 issues verified fixed.
 - ✅ Create cleanup endpoint for production DB
 
 ### P1 (High Priority - Next)
-- [ ] Refactor `brand_tools.py` → move report logic to `reports.py`
+- ✅ Refactor `brand_tools.py` → split into `brand_equity.py`, `email_alerts.py`
 - [ ] Advanced Collaboration & Governance (granular roles, approval workflows)
 - [ ] "Cultura & Pessoas" module
 - [ ] "Blog/Conteúdo" (Content Hub) module
