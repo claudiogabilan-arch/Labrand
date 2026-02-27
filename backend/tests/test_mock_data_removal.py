@@ -44,8 +44,9 @@ class TestMockDataRemoval:
             # Get or create a brand for testing
             brands_res = self.client.get(f"{BASE_URL}/api/brands")
             if brands_res.status_code == 200:
-                brands = brands_res.json().get("brands", [])
-                if brands:
+                brands = brands_res.json()
+                # API returns list directly, not dict with brands key
+                if isinstance(brands, list) and brands:
                     self.brand_id = brands[0].get("brand_id")
                 else:
                     self.brand_id = BRAND_ID
