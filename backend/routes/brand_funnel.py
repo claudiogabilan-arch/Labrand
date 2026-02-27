@@ -343,53 +343,14 @@ def calculate_funnel_health(stages: List[FunnelStageData], rates: dict) -> int:
 
 
 async def generate_initial_funnel(brand_id: str) -> dict:
-    """Generate initial funnel data based on available metrics"""
-    # Get ads data
-    meta_ads = await db.ads_metrics.find_one({"brand_id": brand_id, "provider": "meta"})
-    google_ads = await db.ads_metrics.find_one({"brand_id": brand_id, "provider": "google"})
-    
-    # Estimate funnel values
-    total_impressions = 0
-    total_conversions = 0
-    
-    for ads in [meta_ads, google_ads]:
-        if ads and ads.get("metrics"):
-            for m in ads["metrics"]:
-                total_impressions += m.get("impressions", 0)
-                total_conversions += m.get("conversions", 0)
-    
-    # Generate estimated values
-    awareness = max(total_impressions // 100, 10000)  # Normalize
-    consideration = int(awareness * 0.3)
-    preference = int(consideration * 0.4)
-    purchase = max(total_conversions, int(preference * 0.25))
-    loyalty = int(purchase * 0.35)
-    advocacy = int(loyalty * 0.2)
-    
-    stages = {
-        "awareness": {"value": awareness, "previous_value": None, "notes": "Estimativa baseada em impressões"},
-        "consideration": {"value": consideration, "previous_value": None, "notes": "Estimativa"},
-        "preference": {"value": preference, "previous_value": None, "notes": "Estimativa"},
-        "purchase": {"value": purchase, "previous_value": None, "notes": "Baseado em conversões de Ads"},
-        "loyalty": {"value": loyalty, "previous_value": None, "notes": "Estimativa"},
-        "advocacy": {"value": advocacy, "previous_value": None, "notes": "Estimativa"}
-    }
-    
-    # Calculate rates
-    rates = {
-        "awareness_to_consideration": 30,
-        "consideration_to_preference": 40,
-        "preference_to_purchase": 25,
-        "purchase_to_loyalty": 35,
-        "loyalty_to_advocacy": 20
-    }
-    
+    """Return empty funnel state - no estimated data"""
     return {
         "brand_id": brand_id,
-        "stages": stages,
-        "conversion_rates": rates,
-        "health_score": 50,
+        "stages": {},
+        "conversion_rates": {},
+        "health_score": 0,
         "period": "initial",
-        "is_estimated": True,
-        "message": "Dados estimados. Atualize com valores reais para análises precisas."
+        "is_estimated": False,
+        "has_data": False,
+        "message": "Nenhum dado de funil configurado. Clique em 'Atualizar Dados' para inserir seus números reais."
     }

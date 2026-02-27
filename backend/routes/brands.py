@@ -297,19 +297,26 @@ async def get_benchmark(brand_id: str, user: dict = Depends(get_current_user)):
             if legacy:
                 pillars_data[pt] = {k: v for k, v in legacy.items() if k not in ["brand_id", "pillar_id"]}
     
-    sector = pillars_data.get("start", {}).get("industry", "default") if pillars_data.get("start") else "default"
+    sector = pillars_data.get("start", {}).get("industry", "") if pillars_data.get("start") else ""
     
     filled = sum(1 for pt in pillar_types if pt in pillars_data and pillars_data[pt])
     brand_strength = int((filled / len(pillar_types)) * 100)
-    rbi = valuation.get("role_of_brand", 50) if valuation else 50
     
-    percentile = min(95, max(5, brand_strength + 10))
+    # RBI from valuation, or null if not calculated
+    rbi = valuation.get("role_of_brand") if valuation and valuation.get("role_of_brand") else None
+    
+    # Percentile based on brand_strength relative to industry average
+    percentile = min(90, max(10, brand_strength))
     
     return {
-        "sector": sector,
+        "sector": sector or "Não definido",
         "brand_strength": brand_strength,
         "rbi": rbi,
-        "percentile": percentile
+        "percentile": percentile,
+        "has_data": filled > 0,
+        "pillars_filled": filled,
+        "pillars_total": len(pillar_types),
+        "message": "Dados calculados com base nos pilares preenchidos. Complete mais pilares para aumentar a precisão." if filled > 0 else "Preencha os pilares da marca para gerar o benchmark."
     }
 
 

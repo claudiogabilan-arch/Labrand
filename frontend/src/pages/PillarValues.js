@@ -171,9 +171,8 @@ export const PillarValues = () => {
 
   const calculateProgress = () => {
     let score = 0;
-    if (data.valores.length > 0) score += 33;
-    if (data.necessidades.length > 0) score += 33;
-    if (data.cruzamento.length > 0) score += 34;
+    if (data.valores.length > 0) score += 50;
+    if (data.necessidades.length > 0) score += 50;
     return score;
   };
 
