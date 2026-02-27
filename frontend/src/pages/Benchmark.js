@@ -269,29 +269,46 @@ export default function Benchmark() {
                   Role of Brand Index (RBI)
                   <InfoTooltip content="Percentual da decisão de compra atribuída à marca. Quanto maior, mais a marca influencia a escolha do cliente, reduzindo dependência de preço." />
                 </span>
-                <PositionBadge value={rbi} benchmark={benchmark.rbi} />
+                {rbi !== null && rbi !== undefined ? (
+                  <PositionBadge value={rbi} benchmark={benchmark.rbi} />
+                ) : (
+                  <Badge variant="outline">Sem dados</Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Sua marca</span>
-                  <span className="font-bold">{rbi}%</span>
+              {rbi !== null && rbi !== undefined ? (
+                <>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Sua marca</span>
+                      <span className="font-bold">{rbi}%</span>
+                    </div>
+                    <Progress value={rbi} className="h-3" />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Média do setor</span>
+                      <span>{benchmark.rbi}%</span>
+                    </div>
+                    <Progress value={benchmark.rbi} className="h-3 opacity-50" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {rbi >= benchmark.rbi 
+                      ? `+${rbi - benchmark.rbi}% acima da média`
+                      : `${benchmark.rbi - rbi}% abaixo da média`}
+                  </p>
+                </>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground">
+                    Complete a Avaliação de Marca para calcular o RBI
+                  </p>
+                  <Button variant="outline" size="sm" className="mt-2" onClick={() => window.location.href = '/valuation'}>
+                    Ir para Avaliação
+                  </Button>
                 </div>
-                <Progress value={rbi} className="h-3" />
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Média do setor</span>
-                  <span>{benchmark.rbi}%</span>
-                </div>
-                <Progress value={benchmark.rbi} className="h-3 opacity-50" />
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {rbi >= benchmark.rbi 
-                  ? `+${rbi - benchmark.rbi}% acima da média`
-                  : `${benchmark.rbi - rbi}% abaixo da média`}
-              </p>
+              )}
             </CardContent>
           </Card>
         </div>
