@@ -141,6 +141,22 @@ export default function BrandTracking() {
         </Button>
       </div>
 
+      {/* Empty State */}
+      {history.length === 0 && (
+        <Card className="border-dashed border-2">
+          <CardContent className="py-12 text-center">
+            <TrendingUp className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Nenhum snapshot disponível</h3>
+            <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+              Crie seu primeiro snapshot para começar a acompanhar a evolução da sua marca ao longo do tempo.
+            </p>
+            <Button onClick={handleCreateSnapshot} disabled={saving}>
+              Criar Primeiro Snapshot
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Alerts */}
       {alerts.length > 0 && (
         <div className="space-y-2">

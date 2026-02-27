@@ -63,6 +63,36 @@ export default function ShareOfVoice() {
   const brand = sovData?.sov?.brand || {};
   const competitors = sovData?.sov?.competitors || [];
   const insights = sovData?.insights || [];
+  const hasData = sovData?.has_data !== false;
+
+  // Show empty state if no data
+  if (!hasData) {
+    return (
+      <div className="space-y-6" data-testid="share-of-voice-page">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center">
+            <Volume2 className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Share of Voice</h1>
+            <p className="text-muted-foreground">Participação nas conversas do mercado</p>
+          </div>
+        </div>
+        <Card className="border-dashed border-2">
+          <CardContent className="py-12 text-center">
+            <Volume2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Sem dados de Share of Voice</h3>
+            <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+              {sovData?.message || "Configure o monitoramento em Social Listening e adicione concorrentes para comparar sua participação no mercado."}
+            </p>
+            <Button onClick={() => window.location.href = '/social-listening'}>
+              Configurar Social Listening
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // All players for chart
   const allPlayers = [

@@ -79,6 +79,33 @@ export default function ConversionAttributes() {
   const weaknesses = analysis?.weaknesses || [];
   const recommendations = analysis?.recommendations || [];
   const attributes = analysis?.attributes || [];
+  const hasData = analysis?.has_data !== false;
+
+  // Show empty state if no data
+  if (!hasData) {
+    return (
+      <div className="space-y-6" data-testid="conversion-attributes-page">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+            <BarChart3 className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Atributos de Conversão</h1>
+            <p className="text-muted-foreground">Quais atributos mais influenciam a decisão de compra</p>
+          </div>
+        </div>
+        <Card className="border-dashed border-2">
+          <CardContent className="py-12 text-center">
+            <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Dados insuficientes</h3>
+            <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+              {analysis?.message || "São necessárias pelo menos 5 pesquisas de atributos para gerar a análise de conversão."}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" data-testid="conversion-attributes-page">
