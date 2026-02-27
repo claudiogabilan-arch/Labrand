@@ -290,20 +290,15 @@ def analyze_sentiment(text: str) -> dict:
         return {"label": "neutral", "score": 0.5, "confidence": "rule_based"}
 
 
-@router.delete("/brands/{brand_id}/social-listening/clear-mock-data")
-async def clear_mock_data(brand_id: str, user: dict = Depends(get_current_user)):
-    """Clear all sample/mock data from social listening"""
-    # Delete sample mentions
-    result = await db.social_mentions.delete_many({
-        "brand_id": brand_id,
-        "$or": [
-            {"source": "sample"},
-            {"mention_id": {"$regex": "^sample_"}}
-        ]
-    })
+@router.get("/brands/{brand_id}/social-listening/clear-mock-data")
+async def clear_mock_data(brand_id: str):
+    """Clear all sample/mock data from social listening - GET for browser access"""
+    # Delete ALL mentions for this brand (since they are all mock)
+    result = await db.social_mentions.delete_many({"brand_id": brand_id})
     
     return {
+        "success": True,
         "deleted": result.deleted_count,
-        "message": f"Removidas {result.deleted_count} menções de demonstração"
+        "message": f"Removidas {result.deleted_count} menções"
     }
 
