@@ -173,6 +173,14 @@ async def get_importance_performance_matrix(brand_id: str, user: dict = Depends(
     """Get Importance-Performance matrix for strategic decisions"""
     analysis = await get_attributes_analysis(brand_id, user)
     
+    # Handle empty state
+    if analysis.get("has_data") == False:
+        return {
+            "quadrants": {"concentrate": [], "keep_up": [], "low_priority": [], "possible_overkill": []},
+            "priority_actions": [],
+            "has_data": False
+        }
+    
     quadrants = {
         "concentrate": [],  # High importance, Low performance - FOCUS HERE
         "keep_up": [],      # High importance, High performance - MAINTAIN
