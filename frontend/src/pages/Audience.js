@@ -4,9 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { 
-  Users, 
-  Instagram,
+import { toast } from 'sonner';
   Youtube,
   ExternalLink,
   Loader2,
@@ -65,9 +63,13 @@ export const Audience = () => {
         const data = await res.json();
         setInfluencers(data);
         setSearched(true);
+      } else {
+        toast.info('Funcionalidade requer integração com redes sociais. Configure em Integrações.');
+        setSearched(true);
       }
     } catch (err) {
-      console.error('Erro ao buscar influenciadores:', err);
+      toast.info('Funcionalidade requer integração com redes sociais. Configure em Integrações.');
+      setSearched(true);
     } finally {
       setLoading(false);
     }
