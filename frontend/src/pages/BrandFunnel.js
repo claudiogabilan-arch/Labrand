@@ -202,6 +202,7 @@ export default function BrandFunnel() {
 
       {/* Health Score - only show when there's data */}
       {funnel?.stages && Object.keys(funnel.stages).length > 0 && (
+      <div className="grid md:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
           <CardContent className="pt-6 text-center">
             <Target className="h-8 w-8 mx-auto mb-2 text-primary" />
@@ -242,6 +243,7 @@ export default function BrandFunnel() {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Funnel Visualization */}
       <Card>
