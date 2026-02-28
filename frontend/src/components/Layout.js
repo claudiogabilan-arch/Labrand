@@ -19,6 +19,7 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   LayoutDashboard,
   Target,
   Heart,
@@ -60,60 +61,106 @@ import {
   Share2
 } from 'lucide-react';
 
-const navigationItems = [
+// Top-level items (always visible, no section)
+const topItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, featureId: 'dashboard' },
   { name: 'Mapa Mental', href: '/mindmap', icon: Share2, featureId: 'mindmap' },
   { name: 'BVS Score', href: '/bvs', icon: Gem, featureId: 'bvs', pro: true },
   { name: 'Executivo', href: '/executive', icon: Briefcase, featureId: 'executive', pro: true },
   { name: 'Diagnóstico', href: '/maturity', icon: ClipboardCheck, featureId: 'maturity', pro: true },
   { name: 'Ferramentas', href: '/brand-tools', icon: Wrench, featureId: 'brand_tools', pro: true },
-  { type: 'divider', label: 'Pilares de Marca' },
-  { name: 'Jeito de Ser', href: '/brand-way', icon: Heart, featureId: 'brand_way' },
-  { name: 'Naming', href: '/naming', icon: Sparkles, featureId: 'naming', pro: true },
-  { name: 'Start', href: '/pillars/start', icon: Target, pillar: 'start', featureId: 'start' },
-  { name: 'Valores', href: '/pillars/values', icon: Heart, pillar: 'values', featureId: 'values' },
-  { name: 'Propósito', href: '/pillars/purpose', icon: Compass, pillar: 'purpose', featureId: 'purpose' },
-  { name: 'Promessa', href: '/pillars/promise', icon: Star, pillar: 'promise', featureId: 'promise', pro: true },
-  { name: 'Posicionamento', href: '/pillars/positioning', icon: Crosshair, pillar: 'positioning', featureId: 'positioning', pro: true },
-  { name: 'Personalidade', href: '/pillars/personality', icon: Users, pillar: 'personality', featureId: 'personality', pro: true },
-  { name: 'Universal', href: '/pillars/universality', icon: Globe, pillar: 'universality', featureId: 'universality', pro: true },
-  { type: 'divider', label: 'Frameworks Estratégicos' },
-  { name: 'Saúde da Marca', href: '/brand-health', icon: Activity, featureId: 'brand_health', pro: true },
-  { name: 'Ondas de Valor', href: '/value-waves', icon: Waves, featureId: 'value_waves', pro: true },
-  { name: 'Funil de Marca', href: '/brand-funnel', icon: Filter, featureId: 'brand_funnel', pro: true },
-  { name: 'Disaster Check', href: '/disaster-check', icon: Shield, featureId: 'disaster_check', pro: true },
-  { type: 'divider', label: 'Análise Competitiva' },
-  { name: 'Social Listening', href: '/social-listening', icon: Radio, featureId: 'social_listening', pro: true },
-  { name: 'Share of Voice', href: '/share-of-voice', icon: Volume2, featureId: 'share_of_voice', pro: true },
-  { name: 'Atributos Conversão', href: '/conversion-attributes', icon: BarChart3, featureId: 'conversion_attributes', pro: true },
-  { type: 'divider', label: 'Jornada do Cliente' },
-  { name: 'Touchpoints', href: '/touchpoints', icon: MapPin, featureId: 'touchpoints' },
-  { type: 'divider', label: 'Análise & Risco' },
-  { name: 'Brand Tracking', href: '/brand-tracking', icon: TrendingUp, featureId: 'brand_tracking', pro: true },
-  { name: 'Risco de Marca', href: '/brand-risk', icon: AlertTriangle, featureId: 'risk', pro: true },
-  { name: 'Alertas Consistência', href: '/consistency', icon: Eye, featureId: 'consistency', pro: true },
-  { name: 'Concorrentes', href: '/competitors', icon: Users, featureId: 'competitors', pro: true },
-  { name: 'Benchmark Setorial', href: '/benchmark', icon: BarChart3, featureId: 'benchmark', pro: true },
-  { name: 'Simulador', href: '/simulator', icon: TrendingUp, featureId: 'simulator', pro: true },
-  { name: 'Avaliação de Marca', href: '/valuation', icon: DollarSign, featureId: 'valuation', pro: true },
-  { type: 'divider', label: 'Inteligência' },
-  { name: 'Dashboard Intel', href: '/intelligence', icon: BarChart3, featureId: 'intelligence' },
-  { name: 'Integrações', href: '/integrations', icon: Plug, featureId: 'integrations', pro: true },
-  { name: 'Google Analytics', href: '/google-integration', icon: Globe, featureId: 'google_integration', pro: true },
-  { name: 'Meta & Google Ads', href: '/ads', icon: TrendingUp, featureId: 'ads', pro: true },
-  { name: 'CRM', href: '/crm', icon: Building2, featureId: 'crm', pro: true },
-  { name: 'Audiência', href: '/audience', icon: UserCheck, featureId: 'audience' },
-  { type: 'divider', label: 'Gestão' },
-  { name: 'Planejamento', href: '/planning', icon: ListTodo, featureId: 'planning' },
-  { name: 'Campanhas', href: '/campaigns', icon: Calendar, featureId: 'campaigns' },
-  { name: 'Decisões', href: '/scorecard', icon: ClipboardCheck, featureId: 'scorecard' },
-  { name: 'Narrativas', href: '/narratives', icon: BookOpen, featureId: 'narratives' },
-  { name: 'Relatórios', href: '/reports', icon: FileText, featureId: 'reports', pro: true },
-  { type: 'divider', label: 'Sistema' },
-  { name: 'Créditos IA', href: '/ai-credits', icon: Star, featureId: 'ai_credits' },
-  { name: 'Planos', href: '/plans', icon: DollarSign, featureId: 'plans' },
-  { name: 'Configurações', href: '/settings', icon: Settings, featureId: 'settings' },
-  { name: 'Admin', href: '/admin', icon: Shield, featureId: 'admin', adminOnly: true },
+];
+
+// Collapsible sections
+const sections = [
+  {
+    id: 'pilares',
+    label: 'Pilares de Marca',
+    icon: Heart,
+    items: [
+      { name: 'Jeito de Ser', href: '/brand-way', icon: Heart, featureId: 'brand_way' },
+      { name: 'Naming', href: '/naming', icon: Sparkles, featureId: 'naming', pro: true },
+      { name: 'Start', href: '/pillars/start', icon: Target, pillar: 'start', featureId: 'start' },
+      { name: 'Valores', href: '/pillars/values', icon: Heart, pillar: 'values', featureId: 'values' },
+      { name: 'Propósito', href: '/pillars/purpose', icon: Compass, pillar: 'purpose', featureId: 'purpose' },
+      { name: 'Promessa', href: '/pillars/promise', icon: Star, pillar: 'promise', featureId: 'promise', pro: true },
+      { name: 'Posicionamento', href: '/pillars/positioning', icon: Crosshair, pillar: 'positioning', featureId: 'positioning', pro: true },
+      { name: 'Personalidade', href: '/pillars/personality', icon: Users, pillar: 'personality', featureId: 'personality', pro: true },
+      { name: 'Universal', href: '/pillars/universality', icon: Globe, pillar: 'universality', featureId: 'universality', pro: true },
+    ]
+  },
+  {
+    id: 'frameworks',
+    label: 'Frameworks',
+    icon: Activity,
+    items: [
+      { name: 'Saúde da Marca', href: '/brand-health', icon: Activity, featureId: 'brand_health', pro: true },
+      { name: 'Ondas de Valor', href: '/value-waves', icon: Waves, featureId: 'value_waves', pro: true },
+      { name: 'Funil de Marca', href: '/brand-funnel', icon: Filter, featureId: 'brand_funnel', pro: true },
+      { name: 'Disaster Check', href: '/disaster-check', icon: Shield, featureId: 'disaster_check', pro: true },
+    ]
+  },
+  {
+    id: 'competitiva',
+    label: 'Análise Competitiva',
+    icon: Radio,
+    items: [
+      { name: 'Social Listening', href: '/social-listening', icon: Radio, featureId: 'social_listening', pro: true },
+      { name: 'Share of Voice', href: '/share-of-voice', icon: Volume2, featureId: 'share_of_voice', pro: true },
+      { name: 'Atributos Conversão', href: '/conversion-attributes', icon: BarChart3, featureId: 'conversion_attributes', pro: true },
+    ]
+  },
+  {
+    id: 'analise',
+    label: 'Análise & Risco',
+    icon: AlertTriangle,
+    items: [
+      { name: 'Touchpoints', href: '/touchpoints', icon: MapPin, featureId: 'touchpoints' },
+      { name: 'Brand Tracking', href: '/brand-tracking', icon: TrendingUp, featureId: 'brand_tracking', pro: true },
+      { name: 'Risco de Marca', href: '/brand-risk', icon: AlertTriangle, featureId: 'risk', pro: true },
+      { name: 'Alertas', href: '/consistency', icon: Eye, featureId: 'consistency', pro: true },
+      { name: 'Concorrentes', href: '/competitors', icon: Users, featureId: 'competitors', pro: true },
+      { name: 'Benchmark', href: '/benchmark', icon: BarChart3, featureId: 'benchmark', pro: true },
+      { name: 'Simulador', href: '/simulator', icon: TrendingUp, featureId: 'simulator', pro: true },
+      { name: 'Avaliação', href: '/valuation', icon: DollarSign, featureId: 'valuation', pro: true },
+    ]
+  },
+  {
+    id: 'inteligencia',
+    label: 'Inteligência',
+    icon: BarChart3,
+    items: [
+      { name: 'Dashboard Intel', href: '/intelligence', icon: BarChart3, featureId: 'intelligence' },
+      { name: 'Integrações', href: '/integrations', icon: Plug, featureId: 'integrations', pro: true },
+      { name: 'Google Analytics', href: '/google-integration', icon: Globe, featureId: 'google_integration', pro: true },
+      { name: 'Meta & Google Ads', href: '/ads', icon: TrendingUp, featureId: 'ads', pro: true },
+      { name: 'CRM', href: '/crm', icon: Building2, featureId: 'crm', pro: true },
+      { name: 'Audiência', href: '/audience', icon: UserCheck, featureId: 'audience' },
+    ]
+  },
+  {
+    id: 'gestao',
+    label: 'Gestão',
+    icon: ListTodo,
+    items: [
+      { name: 'Planejamento', href: '/planning', icon: ListTodo, featureId: 'planning' },
+      { name: 'Campanhas', href: '/campaigns', icon: Calendar, featureId: 'campaigns' },
+      { name: 'Decisões', href: '/scorecard', icon: ClipboardCheck, featureId: 'scorecard' },
+      { name: 'Narrativas', href: '/narratives', icon: BookOpen, featureId: 'narratives' },
+      { name: 'Relatórios', href: '/reports', icon: FileText, featureId: 'reports', pro: true },
+    ]
+  },
+  {
+    id: 'sistema',
+    label: 'Sistema',
+    icon: Settings,
+    items: [
+      { name: 'Créditos IA', href: '/ai-credits', icon: Star, featureId: 'ai_credits' },
+      { name: 'Planos', href: '/plans', icon: DollarSign, featureId: 'plans' },
+      { name: 'Configurações', href: '/settings', icon: Settings, featureId: 'settings' },
+      { name: 'Admin', href: '/admin', icon: Shield, featureId: 'admin', adminOnly: true },
+    ]
+  },
 ];
 
 export const Sidebar = ({ collapsed, setCollapsed }) => {
@@ -122,18 +169,92 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
   const { isCliente, canAccess, user } = useAuth();
   const { theme } = useTheme();
 
+  // Find which section contains the active page
+  const getActiveSectionId = () => {
+    for (const section of sections) {
+      if (section.items.some(item => location.pathname === item.href)) {
+        return section.id;
+      }
+    }
+    return null;
+  };
+
+  // Initialize open sections from localStorage, auto-expand active section
+  const [openSections, setOpenSections] = useState(() => {
+    try {
+      const saved = localStorage.getItem('labrand_sidebar_sections');
+      const parsed = saved ? JSON.parse(saved) : {};
+      const activeSectionId = sections.find(s => 
+        s.items.some(item => location.pathname === item.href)
+      )?.id;
+      if (activeSectionId) parsed[activeSectionId] = true;
+      return parsed;
+    } catch {
+      return {};
+    }
+  });
+
+  // Auto-expand section when navigating
+  useEffect(() => {
+    const activeSectionId = getActiveSectionId();
+    if (activeSectionId && !openSections[activeSectionId]) {
+      setOpenSections(prev => {
+        const next = { ...prev, [activeSectionId]: true };
+        localStorage.setItem('labrand_sidebar_sections', JSON.stringify(next));
+        return next;
+      });
+    }
+  }, [location.pathname]);
+
+  const toggleSection = (sectionId) => {
+    setOpenSections(prev => {
+      const next = { ...prev, [sectionId]: !prev[sectionId] };
+      localStorage.setItem('labrand_sidebar_sections', JSON.stringify(next));
+      return next;
+    });
+  };
+
   const getPillarProgress = (pillar) => {
     if (!metrics?.pillars) return 0;
     return metrics.pillars[pillar] || 0;
   };
 
-  // Filter navigation items based on user role
-  const filteredNavItems = navigationItems.filter(item => {
-    if (item.type === 'divider') return true;
-    // Hide admin-only items for non-admin users
+  const canShowItem = (item) => {
     if (item.adminOnly && user?.role !== 'admin' && !user?.is_admin) return false;
     return !isCliente || canAccess(item.href);
-  });
+  };
+
+  const renderNavItem = (item) => {
+    const isActive = location.pathname === item.href;
+    const Icon = item.icon;
+    const progress = item.pillar ? getPillarProgress(item.pillar) : null;
+
+    return (
+      <Link
+        key={item.href}
+        to={item.href}
+        data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+        className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all ${
+          isActive
+            ? 'bg-primary/10 text-primary font-medium'
+            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+        } ${collapsed ? 'justify-center' : ''}`}
+        title={collapsed ? item.name : undefined}
+      >
+        <Icon className="h-4 w-4 flex-shrink-0" />
+        {!collapsed && (
+          <div className="flex-1 flex items-center justify-between">
+            <span className="truncate">{item.name}</span>
+            {progress !== null && (
+              <div className="w-8">
+                <Progress value={progress} className="h-1" />
+              </div>
+            )}
+          </div>
+        )}
+      </Link>
+    );
+  };
 
   return (
     <aside
@@ -193,47 +314,57 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
         )}
 
         {/* Navigation */}
-        <ScrollArea className="flex-1 py-4">
-          <nav className="px-2 space-y-1">
-            {filteredNavItems.map((item, index) => {
-              if (item.type === 'divider') {
-                return (
-                  <div key={index} className={`pt-4 pb-2 ${collapsed ? 'hidden' : ''}`}>
-                    <span className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      {item.label}
-                    </span>
-                  </div>
-                );
+        <ScrollArea className="flex-1 py-2">
+          <nav className="px-2 space-y-0.5">
+            {/* Top-level items */}
+            {topItems.filter(canShowItem).map(renderNavItem)}
+
+            {/* Collapsible sections */}
+            {sections.map(section => {
+              const visibleItems = section.items.filter(canShowItem);
+              if (visibleItems.length === 0) return null;
+
+              const isOpen = openSections[section.id];
+              const hasActiveChild = visibleItems.some(item => location.pathname === item.href);
+              const SectionIcon = section.icon;
+
+              if (collapsed) {
+                // When collapsed, show section items as icons only
+                return visibleItems.map(renderNavItem);
               }
 
-              const isActive = location.pathname === item.href;
-              const Icon = item.icon;
-              const progress = item.pillar ? getPillarProgress(item.pillar) : null;
-
               return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                    isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  } ${collapsed ? 'justify-center' : ''}`}
-                  title={collapsed ? item.name : undefined}
-                >
-                  <Icon className="h-5 w-5 flex-shrink-0" />
-                  {!collapsed && (
-                    <div className="flex-1 flex items-center justify-between">
-                      <span>{item.name}</span>
-                      {progress !== null && (
-                        <div className="w-8">
-                          <Progress value={progress} className="h-1" />
-                        </div>
-                      )}
+                <div key={section.id} className="pt-2">
+                  {/* Section header - clickable */}
+                  <button
+                    onClick={() => toggleSection(section.id)}
+                    data-testid={`section-${section.id}`}
+                    className={`flex items-center w-full px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all ${
+                      hasActiveChild
+                        ? 'text-primary'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <SectionIcon className="h-3.5 w-3.5 mr-2 flex-shrink-0" />
+                    <span className="flex-1 text-left truncate">{section.label}</span>
+                    <ChevronDown 
+                      className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                        isOpen ? '' : '-rotate-90'
+                      }`} 
+                    />
+                  </button>
+
+                  {/* Section items with collapse animation */}
+                  <div
+                    className={`overflow-hidden transition-all duration-200 ease-in-out ${
+                      isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <div className="pl-2 space-y-0.5 pt-0.5">
+                      {visibleItems.map(renderNavItem)}
                     </div>
-                  )}
-                </Link>
+                  </div>
+                </div>
               );
             })}
           </nav>
