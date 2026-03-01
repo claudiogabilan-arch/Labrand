@@ -32,9 +32,12 @@ export default function AcceptInvite() {
       });
       setInviteData(response.data);
       setStatus('success');
+      // Clear pending invite from localStorage
+      localStorage.removeItem('pending_invite');
     } catch (error) {
       setError(error.response?.data?.detail || 'Erro ao aceitar convite');
       setStatus('error');
+      localStorage.removeItem('pending_invite');
     }
   };
 
