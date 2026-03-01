@@ -93,6 +93,19 @@ Files modified:
 - Updated `server_new.py` with new routers
 - All 10 endpoints verified working post-refactor
 
+### 2026-02-28 - Sidebar Colapsável
+- Menu lateral reorganizado com seções accordion colapsáveis
+- 6 itens top-level + 7 seções colapsáveis, estado salvo no localStorage
+- Seção ativa auto-expande ao navegar
+
+### 2026-02-28 - Fix Team Invite Flow
+**Fixed critical bug: invited team members couldn't see shared brands.**
+1. `GET /api/brands` now queries `team_members` collection (not just brands doc)
+2. `GET /api/brands/{brand_id}` checks team membership for access
+3. `POST /api/team/accept/{token}` auto-sets `onboarding_completed=True`
+4. Frontend `VerifyEmail.js` checks `pending_invite` → redirects to invite acceptance
+5. Testing: 12/12 tests passed
+
 ---
 
 ## Prioritized Backlog
