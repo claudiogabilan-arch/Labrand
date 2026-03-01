@@ -36,8 +36,15 @@ export default function VerifyEmail() {
       setUser(userData);
       
       toast.success('Email verificado com sucesso!');
-      // Novo usuário sempre vai para onboarding primeiro
-      window.location.href = '/onboarding';
+      
+      // Check if user has a pending invite - skip onboarding and accept invite
+      const pendingInvite = localStorage.getItem('pending_invite');
+      if (pendingInvite) {
+        window.location.href = `/invite/${pendingInvite}`;
+      } else {
+        // New user goes to onboarding
+        window.location.href = '/onboarding';
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Código inválido');
     } finally {
