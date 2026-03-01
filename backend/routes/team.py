@@ -274,6 +274,12 @@ async def accept_invite(token: str, user: dict = Depends(get_current_user)):
         {"$set": {"status": "accepted", "accepted_at": datetime.now(timezone.utc).isoformat()}}
     )
     
+    # Auto-complete onboarding for invited users (they don't need to fill it)
+    await db.users.update_one(
+        {"user_id": user["user_id"], "onboarding_completed": {"$ne": True}},
+        {"$set": {"onboarding_completed": True}}
+    )
+    
     return {
         "success": True,
         "brand_id": invite["brand_id"],

@@ -48,23 +48,50 @@ async def create_brand(brand_data: BrandCreate, user: dict = Depends(get_current
 
 @router.get("/brands")
 async def get_brands(user: dict = Depends(get_current_user)):
-    """Get all brands for current user"""
-    brands = await db.brands.find(
-        {"$or": [{"owner_id": user["user_id"]}, {"team_members": user["user_id"]}]},
+    """Get all brands for current user (owned + team member)"""
+    # Brands where user is owner
+    owned_brands = await db.brands.find(
+        {"owner_id": user["user_id"]},
         {"_id": 0}
     ).to_list(100)
-    return brands
+    
+    # Brands where user is a team member (from team_members collection)
+    memberships = await db.team_members.find(
+        {"user_id": user["user_id"]},
+        {"_id": 0, "brand_id": 1, "role": 1}
+    ).to_list(100)
+    
+    team_brand_ids = [m["brand_id"] for m in memberships]
+    owned_brand_ids = {b["brand_id"] for b in owned_brands}
+    # Only fetch team brands not already owned
+    new_team_ids = [bid for bid in team_brand_ids if bid not in owned_brand_ids]
+    
+    team_brands = []
+    if new_team_ids:
+        team_brands = await db.brands.find(
+            {"brand_id": {"$in": new_team_ids}},
+            {"_id": 0}
+        ).to_list(100)
+    
+    return owned_brands + team_brands
 
 
 @router.get("/brands/{brand_id}")
 async def get_brand(brand_id: str, user: dict = Depends(get_current_user)):
-    """Get a specific brand"""
-    brand = await db.brands.find_one(
-        {"brand_id": brand_id, "$or": [{"owner_id": user["user_id"]}, {"team_members": user["user_id"]}]},
-        {"_id": 0}
-    )
+    """Get a specific brand (owner or team member)"""
+    brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
     if not brand:
         raise HTTPException(status_code=404, detail="Marca não encontrada")
+    
+    # Check access: owner or team member
+    is_owner = brand.get("owner_id") == user["user_id"]
+    is_team_member = await db.team_members.find_one(
+        {"brand_id": brand_id, "user_id": user["user_id"]}, {"_id": 0}
+    )
+    
+    if not is_owner and not is_team_member:
+        raise HTTPException(status_code=404, detail="Marca não encontrada")
+    
     return brand
 
 
