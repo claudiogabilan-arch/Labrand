@@ -3,33 +3,73 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#000000" />
-        <meta name="description" content="LABrand - Brand OS | Sistema de Gestão de Marca" />
+        <meta name="theme-color" content="#0a0a0a" />
+
+        <!-- SEO Meta Tags -->
+        <title>LaBrand — Brand Operation System | Plataforma de Gestão de Marca</title>
+        <meta name="description" content="LaBrand Brand OS: Plataforma estratégica para diagnóstico, construção e gestão de marcas. Dashboards executivos, BVS Score, análise de concorrentes, relatórios PDF e mais de 30 módulos para B2B e consultorias." />
+        <meta name="keywords" content="gestão de marca, branding, brand management, BVS, brand equity, brand OS, plataforma de marca, consultoria de marca, diagnóstico de marca, B2B branding" />
+        <meta name="author" content="LaBrand" />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://labrand.com.br" />
+
+        <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://labrand.com.br" />
+        <meta property="og:title" content="LaBrand — Brand Operation System" />
+        <meta property="og:description" content="Plataforma estratégica para diagnóstico, construção e gestão de marcas. Mais de 30 módulos, dashboards executivos e BVS Score para empresas B2B e consultorias." />
+        <meta property="og:image" content="https://labrand.com.br/og-image.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:locale" content="pt_BR" />
+        <meta property="og:site_name" content="LaBrand" />
+
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="LaBrand — Brand Operation System" />
+        <meta name="twitter:description" content="Plataforma estratégica para diagnóstico, construção e gestão de marcas. Dashboards executivos, BVS Score e análise competitiva." />
+        <meta name="twitter:image" content="https://labrand.com.br/og-image.png" />
+
+        <!-- Favicon -->
         <link rel="icon" type="image/png" href="/icon-skull-black.png" />
         <link rel="apple-touch-icon" href="/icon-skull-black.png" />
+        
+        <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap" rel="stylesheet" />
-        <title>LABrand - Brand OS</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+        <!-- Structured Data (JSON-LD) -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "LaBrand — Brand Operation System",
+            "description": "Plataforma estratégica para diagnóstico, construção e gestão de marcas B2B",
+            "url": "https://labrand.com.br",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "BRL",
+                "description": "7 dias grátis"
+            },
+            "creator": {
+                "@type": "Organization",
+                "name": "LaBrand"
+            }
+        }
+        </script>
+
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
-        <!--
-        These two scripts have been added for the Visual Edits, please do not edit or remove them
-        -->
         <script>
-            // Only load visual edit scripts when inside an iframe
             if (window.self !== window.top) {
-                // Load debug monitor script
                 var debugMonitorScript = document.createElement('script');
                 debugMonitorScript.src = 'https://assets.emergent.sh/scripts/debug-monitor.js';
                 document.head.appendChild(debugMonitorScript);
-
-                // Configure Tailwind
                 window.tailwind = window.tailwind || {};
-                tailwind.config = {
-                    corePlugins: { preflight: false },
-                };
-
-                // Load Tailwind CDN
+                tailwind.config = { corePlugins: { preflight: false } };
                 var tailwindScript = document.createElement('script');
                 tailwindScript.src = 'https://cdn.tailwindcss.com';
                 document.head.appendChild(tailwindScript);
@@ -37,17 +77,10 @@
         </script>
     </head>
     <body>
-        <noscript>You need to enable JavaScript to run this app.</noscript>
+        <noscript>
+            <h1>LaBrand — Brand Operation System</h1>
+            <p>Plataforma estratégica para diagnóstico, construção e gestão de marcas. Ative o JavaScript para continuar.</p>
+        </noscript>
         <div id="root"></div>
-        <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
     </body>
 </html>

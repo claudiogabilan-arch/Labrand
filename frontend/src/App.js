@@ -9,6 +9,7 @@ import { MainLayout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ProtectedFeature } from "./components/FeatureGate";
 import { AuthCallback } from "./components/AuthCallback";
+import NotFound from "./pages/NotFound";
 import LoginPage from "./components/LoginPage";
 import Dashboard from "./pages/Dashboard";
 import NewBrand from "./pages/NewBrand";
@@ -670,7 +671,7 @@ function AppRouter() {
         }
       />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

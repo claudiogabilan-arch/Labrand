@@ -106,6 +106,20 @@ Files modified:
 4. Frontend `VerifyEmail.js` checks `pending_invite` → redirects to invite acceptance
 5. Testing: 12/12 tests passed
 
+
+### 2026-03-08 - Social Listening Inline Connection + SEO + 404
+**Social Listening:**
+- Painel de conexão inline: Instagram, Facebook, LinkedIn, YouTube
+- Passo-a-passo guiado para cada plataforma (campos de API, documentação oficial)
+- Endpoints: GET /platforms, POST /connect, DELETE /disconnect/{platform}
+- Credenciais salvas na coleção `social_connections`
+
+**SEO & 404:**
+- Meta tags Open Graph + Twitter Cards no index.html
+- JSON-LD structured data (SoftwareApplication schema)
+- robots.txt e sitemap.xml
+- OG Image profissional gerada
+- Página 404 customizada com botões "Dashboard" e "Voltar"
 ---
 
 ## Prioritized Backlog

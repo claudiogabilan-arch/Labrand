@@ -39,11 +39,150 @@ class SocialMention(BaseModel):
     posted_at: Optional[str] = None
 
 
+class SocialPlatformConnection(BaseModel):
+    platform: str  # instagram, facebook, linkedin, youtube
+    credentials: Dict  # Platform-specific credentials
+
 class SocialMonitoringConfig(BaseModel):
     keywords: List[str]
     competitors: Optional[List[str]] = []
-    platforms: List[str] = ["twitter", "instagram", "facebook"]
+    platforms: List[str] = ["instagram", "facebook", "linkedin", "youtube"]
     is_active: bool = True
+    
+PLATFORM_SETUP_GUIDES = {
+    "instagram": {
+        "name": "Instagram",
+        "fields": [
+            {"key": "app_id", "label": "App ID (Meta for Developers)", "type": "text"},
+            {"key": "app_secret", "label": "App Secret", "type": "password"},
+            {"key": "access_token", "label": "Access Token (Long-lived)", "type": "password"}
+        ],
+        "steps": [
+            "Acesse developers.facebook.com e crie um App do tipo 'Business'",
+            "Ative o produto 'Instagram Graph API' no seu App",
+            "Em Configurações > Básico, copie o App ID e o App Secret",
+            "Gere um token de acesso de longa duração em Ferramentas > Graph API Explorer",
+            "Cole os dados nos campos abaixo"
+        ],
+        "doc_url": "https://developers.facebook.com/docs/instagram-api/getting-started"
+    },
+    "facebook": {
+        "name": "Facebook",
+        "fields": [
+            {"key": "app_id", "label": "App ID (Meta for Developers)", "type": "text"},
+            {"key": "app_secret", "label": "App Secret", "type": "password"},
+            {"key": "page_access_token", "label": "Page Access Token", "type": "password"}
+        ],
+        "steps": [
+            "Acesse developers.facebook.com e crie um App do tipo 'Business'",
+            "Ative o produto 'Pages API' no seu App",
+            "Em Configurações > Básico, copie o App ID e o App Secret",
+            "Gere um Page Access Token em Ferramentas > Graph API Explorer (selecione a Page)",
+            "Cole os dados nos campos abaixo"
+        ],
+        "doc_url": "https://developers.facebook.com/docs/pages-api/getting-started"
+    },
+    "linkedin": {
+        "name": "LinkedIn",
+        "fields": [
+            {"key": "client_id", "label": "Client ID", "type": "text"},
+            {"key": "client_secret", "label": "Client Secret", "type": "password"},
+            {"key": "access_token", "label": "Access Token", "type": "password"}
+        ],
+        "steps": [
+            "Acesse linkedin.com/developers e crie um novo App",
+            "Em Auth, copie o Client ID e o Client Secret",
+            "Solicite as permissões: r_organization_social, rw_organization_admin",
+            "Gere um Access Token usando o fluxo OAuth 2.0",
+            "Cole os dados nos campos abaixo"
+        ],
+        "doc_url": "https://learn.microsoft.com/en-us/linkedin/marketing/getting-started"
+    },
+    "youtube": {
+        "name": "YouTube",
+        "fields": [
+            {"key": "api_key", "label": "API Key (Google Cloud)", "type": "password"},
+            {"key": "channel_id", "label": "Channel ID", "type": "text"}
+        ],
+        "steps": [
+            "Acesse console.cloud.google.com e crie um projeto",
+            "Ative a 'YouTube Data API v3' na biblioteca de APIs",
+            "Em Credenciais, crie uma API Key",
+            "Encontre seu Channel ID em youtube.com/account_advanced",
+            "Cole os dados nos campos abaixo"
+        ],
+        "doc_url": "https://developers.google.com/youtube/v3/getting-started"
+    }
+}
+
+
+@router.get("/brands/{brand_id}/social-listening/platforms")
+async def get_platform_guides(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get platform setup guides and connection status"""
+    connections = await db.social_connections.find(
+        {"brand_id": brand_id}, {"_id": 0, "credentials": 0}
+    ).to_list(10)
+    
+    connected_map = {c["platform"]: c for c in connections}
+    
+    platforms = []
+    for platform_id, guide in PLATFORM_SETUP_GUIDES.items():
+        conn = connected_map.get(platform_id)
+        platforms.append({
+            "id": platform_id,
+            "name": guide["name"],
+            "fields": guide["fields"],
+            "steps": guide["steps"],
+            "doc_url": guide["doc_url"],
+            "connected": conn is not None,
+            "connected_at": conn.get("connected_at") if conn else None,
+            "status": conn.get("status", "disconnected") if conn else "disconnected"
+        })
+    
+    return {"platforms": platforms, "total_connected": len(connections)}
+
+
+@router.post("/brands/{brand_id}/social-listening/connect")
+async def connect_social_platform(brand_id: str, data: SocialPlatformConnection, user: dict = Depends(get_current_user)):
+    """Save social platform credentials"""
+    if data.platform not in PLATFORM_SETUP_GUIDES:
+        raise HTTPException(status_code=400, detail=f"Plataforma inválida: {data.platform}")
+    
+    guide = PLATFORM_SETUP_GUIDES[data.platform]
+    required_keys = [f["key"] for f in guide["fields"]]
+    missing = [k for k in required_keys if not data.credentials.get(k)]
+    if missing:
+        raise HTTPException(status_code=400, detail=f"Campos obrigatórios: {', '.join(missing)}")
+    
+    connection_doc = {
+        "brand_id": brand_id,
+        "platform": data.platform,
+        "credentials": data.credentials,
+        "status": "connected",
+        "connected_at": datetime.now(timezone.utc).isoformat(),
+        "connected_by": user["user_id"]
+    }
+    
+    await db.social_connections.update_one(
+        {"brand_id": brand_id, "platform": data.platform},
+        {"$set": connection_doc},
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "platform": data.platform,
+        "message": f"{guide['name']} conectado com sucesso!"
+    }
+
+
+@router.delete("/brands/{brand_id}/social-listening/disconnect/{platform}")
+async def disconnect_social_platform(brand_id: str, platform: str, user: dict = Depends(get_current_user)):
+    """Disconnect a social platform"""
+    result = await db.social_connections.delete_one({"brand_id": brand_id, "platform": platform})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Conexão não encontrada")
+    return {"success": True, "message": f"Plataforma desconectada"}
 
 
 @router.get("/brands/{brand_id}/social-listening/config")
