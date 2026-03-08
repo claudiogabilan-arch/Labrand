@@ -98,6 +98,7 @@ const sections = [
       { name: 'Ondas de Valor', href: '/value-waves', icon: Waves, featureId: 'value_waves', pro: true },
       { name: 'Funil de Marca', href: '/brand-funnel', icon: Filter, featureId: 'brand_funnel', pro: true },
       { name: 'Disaster Check', href: '/disaster-check', icon: Shield, featureId: 'disaster_check', pro: true },
+      { name: 'Cultura & Pessoas', href: '/culture', icon: Users, featureId: 'culture' },
     ]
   },
   {
@@ -143,6 +144,7 @@ const sections = [
     label: 'Gestão',
     icon: ListTodo,
     items: [
+      { name: 'LaBrand Academy', href: '/academy', icon: BookOpen, featureId: 'academy' },
       { name: 'Planejamento', href: '/planning', icon: ListTodo, featureId: 'planning' },
       { name: 'Campanhas', href: '/campaigns', icon: Calendar, featureId: 'campaigns' },
       { name: 'Decisões', href: '/scorecard', icon: ClipboardCheck, featureId: 'scorecard' },

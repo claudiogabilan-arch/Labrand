@@ -120,6 +120,18 @@ Files modified:
 - robots.txt e sitemap.xml
 - OG Image profissional gerada
 - Página 404 customizada com botões "Dashboard" e "Voltar"
+
+### 2026-03-08 - Módulos Cultura & Pessoas + LaBrand Academy
+**Cultura & Pessoas** (`/culture`):
+- 5 seções: Manifesto Cultural, Rituais & Práticas, Comportamentos (DO/DON'T), Experiência do Colaborador, Alinhamento Marca x Cultura
+- Score de Saúde Cultural, recomendações, integração com valores da marca
+- Backend: GET/POST `/api/brands/{id}/culture`, GET `/culture/score`
+
+**LaBrand Academy** (`/academy`):
+- CRUD completo de artigos com 8 categorias
+- Busca, filtros por categoria, visualização, edição, publicação/rascunho
+- Backend: GET/POST/PUT/DELETE `/api/brands/{id}/academy`
+- Sidebar: Academy em Gestão, Cultura em Frameworks
 ---
 
 ## Prioritized Backlog

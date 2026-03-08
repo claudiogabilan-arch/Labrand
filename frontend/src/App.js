@@ -63,6 +63,8 @@ import ShareOfVoice from "./pages/ShareOfVoice";
 import ConversionAttributes from "./pages/ConversionAttributes";
 import BVS from "./pages/BVS";
 import BrandMindmap from "./pages/BrandMindmap";
+import Culture from "./pages/Culture";
+import Academy from "./pages/Academy";
 import "./App.css";
 
 // Router wrapper to handle auth callback
@@ -665,6 +667,30 @@ function AppRouter() {
             <BrandProvider>
               <MainLayout>
                 <BrandMindmap />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/culture"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <Culture />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/academy"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <Academy />
               </MainLayout>
             </BrandProvider>
           </ProtectedRoute>
