@@ -132,6 +132,18 @@ Files modified:
 - Busca, filtros por categoria, visualização, edição, publicação/rascunho
 - Backend: GET/POST/PUT/DELETE `/api/brands/{id}/academy`
 - Sidebar: Academy em Gestão, Cultura em Frameworks
+### 2026-03-08 - Touchpoints Offline (Business Rules v1.0)
+**Implementacao completa das regras de negocio para Touchpoints Offline:**
+- 4 tipos offline: Palestra/Keynote, Imersao Presencial, Aparicao em Midia/Podcast, Mentoria/Reuniao Estrategica
+- Cada tipo com: fase do funil padrao, exemplo de nomenclatura, orientacao contextual, dicas por metrica
+- Mensagens de orientacao: nota=0 (warning), receita=0 com conversoes>0 (info), 5+ offline no mes (lembrete snapshot)
+- Nova aba "Offline" no frontend com touchpoints agrupados por tipo e icones especificos
+- Card "Touchpoints que precisam de atualizacao" para alertar sobre dados incompletos
+- Box "Principio Orientador" na aba Offline
+- Backend: GET /api/touchpoints/offline-types, POST retorna {touchpoint, guidance}
+- Frontend: Formulario adaptativo com tipo offline, dicas contextuais, pre-preenchimento de fase do funil
+- Testes: 16/16 backend + 100% frontend
+
 ---
 
 ## Prioritized Backlog
@@ -140,26 +152,24 @@ Files modified:
 - ✅ Remove ALL mock/simulated data from backend
 - ✅ Add proper empty states to all frontend components
 - ✅ Create cleanup endpoint for production DB
+- ✅ Touchpoints Offline with business rules (4 types, guidance, naming conventions)
 
 ### P1 (High Priority - Next)
-- ✅ Refactor `brand_tools.py` → split into `brand_equity.py`, `email_alerts.py`
+- ✅ Refactor `brand_tools.py` -> split into `brand_equity.py`, `email_alerts.py`
 - [ ] Advanced Collaboration & Governance (granular roles, approval workflows)
-- [ ] "Cultura & Pessoas" module
-- [ ] "Blog/Conteúdo" (Content Hub) module
+- [ ] UX Suggestions: Timeline de evolucao, Comparativo antes/depois, Export PDF mindmap
 
 ### P2 (Medium Priority - Future)
-- [ ] Timeline de evolução da marca (metrics over time)
-- [ ] Comparativo antes/depois (before/after snapshot)
-- [ ] Export PDF do mindmap
 - [ ] White-labeling for enterprise clients
 - [ ] Enhance PDF reports with more data (BVS, social, ads, etc.)
 
 ### Key Endpoints
 - `GET /health` - Kubernetes health check
 - `GET /api/admin/clean-mock-data/{brand_id}` - Clean mock data for a brand
-- `GET /api/admin/reset-database?secret_key=LABRAND2024RESET` - Full DB reset
+- `GET /api/touchpoints/offline-types` - Offline touchpoint type definitions
+- `GET /api/brands/{brand_id}/touchpoints` - Touchpoints with offline stats, guidance
+- `POST /api/brands/{brand_id}/touchpoints` - Create touchpoint (returns guidance)
 - `GET /api/brands/{brand_id}/social-listening/dashboard` - Social listening data
-- `GET /api/brands/{brand_id}/share-of-voice` - Share of Voice data
 - `POST /api/brands/{brand_id}/reports/executive-pdf` - Generate PDF report
 - `GET /api/brands/{brand_id}/bvs` - BVS Score
 - `GET /api/brands/{brand_id}/metrics` - Dashboard metrics
