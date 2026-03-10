@@ -144,6 +144,20 @@ Files modified:
 - Frontend: Formulario adaptativo com tipo offline, dicas contextuais, pre-preenchimento de fase do funil
 - Testes: 16/16 backend + 100% frontend
 
+### 2026-03-10 - Correcao Tipo Offline + Painel Admin Expandido
+**1. Tipo Offline TV (substituiu Midia/Podcast):**
+- Substituido "Aparicao em Midia/Podcast" por "Participacao em Programa de TV"
+- Campos extras: Emissora (canal de TV) e Dia/Horario do programa
+- Frontend mostra campos extras somente quando tipo=tv
+
+**2. Painel Admin Expandido:**
+- Aba Usuarios como principal com tabela completa: nome, email, role, plano, status (Pagante/Trial/Free), marcas, touchpoints, creditos, cadastro, ultima atividade
+- Cards resumo: Total, Pagantes, Free, Novos este mes
+- Filtros: busca por nome/email, role (admin/estrategista/cliente), plano (todos/pagante/free/founder/etc)
+- Dialog de detalhes do usuario com atividade, marcas (owner/membro), stats
+- Backend: payment_status calculado via payment_transactions (pagante/trial/free)
+- Testes: 15/15 backend + 100% frontend
+
 ---
 
 ## Prioritized Backlog
