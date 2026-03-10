@@ -48,7 +48,12 @@ async def create_brand(brand_data: BrandCreate, user: dict = Depends(get_current
 
 @router.get("/brands")
 async def get_brands(user: dict = Depends(get_current_user)):
-    """Get all brands for current user (owned + team member)"""
+    """Get all brands for current user (owned + team member). Admins see ALL brands."""
+    # Admins see everything
+    if user.get("is_admin") or user.get("role") == "admin":
+        all_brands = await db.brands.find({}, {"_id": 0}).to_list(500)
+        return all_brands
+
     # Brands where user is owner
     owned_brands = await db.brands.find(
         {"owner_id": user["user_id"]},
@@ -83,13 +88,14 @@ async def get_brand(brand_id: str, user: dict = Depends(get_current_user)):
     if not brand:
         raise HTTPException(status_code=404, detail="Marca não encontrada")
     
-    # Check access: owner or team member
+    # Check access: owner, team member, or admin
+    is_admin = user.get("is_admin") or user.get("role") == "admin"
     is_owner = brand.get("owner_id") == user["user_id"]
     is_team_member = await db.team_members.find_one(
         {"brand_id": brand_id, "user_id": user["user_id"]}, {"_id": 0}
     )
     
-    if not is_owner and not is_team_member:
+    if not is_owner and not is_team_member and not is_admin:
         raise HTTPException(status_code=404, detail="Marca não encontrada")
     
     return brand
