@@ -65,6 +65,7 @@ import BVS from "./pages/BVS";
 import BrandMindmap from "./pages/BrandMindmap";
 import Culture from "./pages/Culture";
 import Academy from "./pages/Academy";
+import Collaboration from "./pages/Collaboration";
 import "./App.css";
 
 // Router wrapper to handle auth callback
@@ -691,6 +692,18 @@ function AppRouter() {
             <BrandProvider>
               <MainLayout>
                 <Academy />
+              </MainLayout>
+            </BrandProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/collaboration"
+        element={
+          <ProtectedRoute>
+            <BrandProvider>
+              <MainLayout>
+                <Collaboration />
               </MainLayout>
             </BrandProvider>
           </ProtectedRoute>

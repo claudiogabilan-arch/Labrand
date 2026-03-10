@@ -145,6 +145,7 @@ const sections = [
     icon: ListTodo,
     items: [
       { name: 'LaBrand Academy', href: '/academy', icon: BookOpen, featureId: 'academy' },
+      { name: 'Colaboracao', href: '/collaboration', icon: Users, featureId: 'collaboration' },
       { name: 'Planejamento', href: '/planning', icon: ListTodo, featureId: 'planning' },
       { name: 'Campanhas', href: '/campaigns', icon: Calendar, featureId: 'campaigns' },
       { name: 'Decisões', href: '/scorecard', icon: ClipboardCheck, featureId: 'scorecard' },

@@ -11,7 +11,9 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Loader2, ZoomIn, Maximize2, Minimize2, X } from 'lucide-react';
+import { Loader2, ZoomIn, Maximize2, Minimize2, X, Download } from 'lucide-react';
+import { toast } from 'sonner';
+import html2canvas from 'html2canvas';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -44,6 +46,23 @@ export default function BrandMindmap() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportPDF = async () => {
+    setExporting(true);
+    try {
+      const el = document.querySelector('[data-testid="mindmap-canvas"]');
+      if (!el) { toast.error('Mindmap nao encontrado'); return; }
+      const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#fafafa', useCORS: true, logging: false });
+      const link = document.createElement('a');
+      link.download = `mindmap-${currentBrand?.name || 'marca'}-${new Date().toISOString().split('T')[0]}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      toast.success('Mindmap exportado!');
+    } catch (e) {
+      toast.error('Erro ao exportar');
+    } finally { setExporting(false); }
+  };
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
@@ -295,20 +314,24 @@ export default function BrandMindmap() {
           <p className="text-muted-foreground">Visualização estratégica de {currentBrand.name}</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={exporting} data-testid="export-mindmap-btn">
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+            Exportar PNG
+          </Button>
           <Button variant="outline" size="sm" onClick={buildMindmap}>
             <ZoomIn className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
           <Button size="sm" onClick={toggleFullscreen}>
             <Maximize2 className="h-4 w-4 mr-2" />
-            Modo Apresentação
+            Modo Apresentacao
           </Button>
         </div>
       </div>
 
       <Card className="overflow-hidden">
         <CardContent className="p-0">
-          <div style={{ height: '70vh', background: '#fafafa' }}>
+          <div style={{ height: '70vh', background: '#fafafa' }} data-testid="mindmap-canvas">
             {mindmapContent}
           </div>
         </CardContent>
