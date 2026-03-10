@@ -170,6 +170,25 @@ Files modified:
 - Backend: /api/admin/emails/* (inactive-users, send-inactive-alerts, compose, history, auto-config, auto-run)
 - Nenhum dado mock, apenas leitura de dados reais
 
+### 2026-03-10 - UX Improvements + Colaboracao Avancada
+**1. Export PNG do Mindmap:**
+- Botao "Exportar PNG" na pagina Mapa Mental usando html2canvas
+- Gera imagem alta resolucao (scale:2) com nome do arquivo incluindo marca e data
+
+**2. Brand Tracking - Timeline + Comparativo:**
+- Aba Timeline: Linha do tempo visual com marcos, indicadores de subida/queda, scores por snapshot
+- Aba Comparativo: Selecao de 2 snapshots para comparacao lado a lado (Antes/Depois) com variacao percentual
+- Grafico de barras de evolucao dos indicadores ao longo do tempo
+- Aba Historico: Lista completa de snapshots com metricas
+
+**3. Colaboracao Avancada:**
+- Workflow de Aprovacoes: criar solicitacao, aprovar/rejeitar/pedir alteracoes com comentarios
+- Comentarios: criar, listar, deletar (somente proprio) em qualquer item da marca
+- Log de Atividades: registro automatico de todas acoes (aprovacoes, comentarios, etc)
+- Frontend completo com 3 abas (Aprovacoes com badge de pendentes, Comentarios, Atividades)
+- Link na sidebar em Gestao
+- Testes: 15/15 backend + 100% frontend
+
 ---
 
 ## Prioritized Backlog
