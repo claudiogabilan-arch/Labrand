@@ -20,7 +20,7 @@ import {
   ChevronDown, AlertTriangle, CheckCircle2,
   DollarSign, Users, Brain, BarChart3,
   Zap, ArrowRight, Lightbulb, PieChart,
-  Mic, BookOpen, Video, Briefcase, Info, Clock
+  Mic, BookOpen, Tv, Briefcase, Info, Clock
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -38,7 +38,7 @@ const SENTIMENTS = [
 const OFFLINE_TYPE_ICONS = {
   palestra: Mic,
   imersao: BookOpen,
-  midia: Video,
+  tv: Tv,
   mentoria: Briefcase
 };
 
@@ -113,7 +113,9 @@ export default function Touchpoints() {
     persona: 'Geral',
     custo_mensal: 0,
     receita_gerada: 0,
-    conversoes: 0
+    conversoes: 0,
+    emissora: '',
+    dia_horario: ''
   });
   const [newPersona, setNewPersona] = useState({ nome: '', descricao: '' });
 
@@ -274,7 +276,9 @@ export default function Touchpoints() {
       persona: tp.persona || 'Geral',
       custo_mensal: tp.custo_mensal || 0,
       receita_gerada: tp.receita_gerada || 0,
-      conversoes: tp.conversoes || 0
+      conversoes: tp.conversoes || 0,
+      emissora: tp.emissora || '',
+      dia_horario: tp.dia_horario || ''
     });
     setDialogOpen(true);
   };
@@ -292,7 +296,9 @@ export default function Touchpoints() {
       persona: selectedPersona,
       custo_mensal: 0,
       receita_gerada: 0,
-      conversoes: 0
+      conversoes: 0,
+      emissora: '',
+      dia_horario: ''
     });
   };
 
@@ -478,6 +484,30 @@ export default function Touchpoints() {
                   />
                 </div>
                 
+                {/* TV-specific fields: Emissora and Dia/Horario */}
+                {formData.tipo_offline === 'tv' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Emissora / Canal *</Label>
+                      <Input
+                        placeholder="Ex: TV Cultura, Globo, Band"
+                        value={formData.emissora || ''}
+                        onChange={(e) => setFormData({ ...formData, emissora: e.target.value })}
+                        data-testid="emissora-input"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Dia e Horario *</Label>
+                      <Input
+                        placeholder="Ex: Seg 22h, 15/03/2025 20h"
+                        value={formData.dia_horario || ''}
+                        onChange={(e) => setFormData({ ...formData, dia_horario: e.target.value })}
+                        data-testid="dia-horario-input"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {/* Descricao */}
                 <div className="space-y-2">
                   <Label>Descricao {selectedOfflineType?.dicas?.descricao && <span className="text-xs text-muted-foreground ml-1">({selectedOfflineType.dicas.descricao})</span>}</Label>
@@ -796,7 +826,7 @@ export default function Touchpoints() {
           {/* Offline Stats */}
           {offlineTouchpoints.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {['palestra', 'imersao', 'midia', 'mentoria'].map(typeId => {
+              {['palestra', 'imersao', 'tv', 'mentoria'].map(typeId => {
                 const typeDef = offlineTypes.find(t => t.id === typeId);
                 const count = offlineTouchpoints.filter(tp => tp.tipo_offline === typeId).length;
                 const TypeIcon = OFFLINE_TYPE_ICONS[typeId] || Building2;
@@ -844,7 +874,7 @@ export default function Touchpoints() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {['palestra', 'imersao', 'midia', 'mentoria'].map(typeId => {
+              {['palestra', 'imersao', 'tv', 'mentoria'].map(typeId => {
                 const typeDef = offlineTypes.find(t => t.id === typeId);
                 const typeTps = offlineTouchpoints.filter(tp => tp.tipo_offline === typeId);
                 const TypeIcon = OFFLINE_TYPE_ICONS[typeId] || Building2;
@@ -874,6 +904,8 @@ export default function Touchpoints() {
                                   {tp.receita_gerada > 0 && <span className="text-green-600">Receita: R$ {tp.receita_gerada.toLocaleString('pt-BR')}</span>}
                                   {tp.conversoes > 0 && <span>{tp.conversoes} conversoes</span>}
                                   {tp.roi !== 0 && <span className={getROIColor(tp.roi)}>ROI: {tp.roi}%</span>}
+                                  {tp.emissora && <span className="font-medium text-blue-600">{tp.emissora}</span>}
+                                  {tp.dia_horario && <span>{tp.dia_horario}</span>}
                                 </div>
                                 {tp.descricao && <p className="text-xs text-muted-foreground mt-1 truncate">{tp.descricao}</p>}
                               </div>

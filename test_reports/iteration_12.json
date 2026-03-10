@@ -1,0 +1,121 @@
+{
+  "summary": "Completed testing of TV Offline Type replacement and expanded Admin Dashboard. Backend: 15/15 tests passed (100%). Frontend: All features verified working - Admin users table, filters, detail dialog, summary cards; TV type form with emissora/dia_horario fields.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "Backend: GET /api/touchpoints/offline-types returns 'tv' type instead of 'midia'",
+    "Backend: TV type has campos_extras=['emissora','dia_horario']",
+    "Backend: TV type has correct label='Participacao em Programa de TV' and default_fase_funil='Topo de Funil'",
+    "Backend: TV type dicas include emissora and dia_horario guidance",
+    "Backend: POST touchpoint with tipo_offline='tv' saves emissora and dia_horario fields",
+    "Backend: Non-TV tipo_offline clears emissora/dia_horario fields (set to empty string)",
+    "Backend: GET /api/admin/users returns enriched user data (payment_status, brands_owned, brands_member, touchpoints_count, pillars_count, credits, last_activity)",
+    "Backend: Admin users summary includes total_all, new_this_month, paying_users, free_users",
+    "Backend: payment_status values are correctly computed (pagante/trial/free)",
+    "Backend: Admin users search filter works (filters by name or email)",
+    "Backend: Admin users role filter works (filters by role=admin/estrategista/cliente)",
+    "Backend: Admin users plan filter 'paying' returns non-free plan users",
+    "Backend: Admin users plan filter 'free' returns users with free/null plan",
+    "Backend: Admin endpoints require authentication and admin role (returns 401/403 for unauthorized)",
+    "Frontend: Admin Dashboard loads with data-testid='admin-dashboard'",
+    "Frontend: Users tab is default, showing user table with all 10 columns (Usuario, Role, Plano, Status, Marcas, TPs, Creditos, Cadastro, Ult. Atividade, Acao)",
+    "Frontend: Summary cards display (Total, Pagantes, Free, Novos este mes)",
+    "Frontend: Search input works (data-testid='admin-search-users')",
+    "Frontend: Role filter dropdown present (data-testid='admin-role-filter')",
+    "Frontend: Plan filter dropdown present (data-testid='admin-plan-filter')",
+    "Frontend: Eye button opens user detail dialog with Atividade, Marcas, Touchpoints, Pilares, Creditos IA stats",
+    "Frontend: Payment status badges (Free/Trial/Pagante) display correctly in table",
+    "Frontend: Touchpoints form shows offline type dropdown with TV option ('Participacao em Programa de TV')",
+    "Frontend: Selecting TV type shows Emissora/Canal and Dia e Horario fields (data-testid='emissora-input', 'dia-horario-input')",
+    "Frontend: TV type shows guidance message about registering emissora and dia/horario"
+  ],
+
+  "test_report_links": [
+    "/app/backend/tests/test_tv_type_and_admin_dashboard.py",
+    "/app/test_reports/pytest/pytest_tv_admin.xml"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "touchpoints.py: OFFLINE_TYPES correctly replaces 'midia' with 'tv' type including campos_extras=['emissora','dia_horario']",
+    "touchpoints.py: POST/PUT endpoints correctly save emissora/dia_horario for tv type and clear them for non-tv types",
+    "admin.py: GET /admin/users correctly computes payment_status based on payment_transactions (pagante if has_paid>0, trial if trial_ends_at>now, else free)",
+    "admin.py: Search, role, and plan query parameters correctly filter users",
+    "AdminDashboard.js: User table shows all required columns with proper badges for payment status",
+    "AdminDashboard.js: UserDetailDialog shows complete activity, brands, and stats information",
+    "Touchpoints.js: OFFLINE_TYPE_ICONS correctly maps 'tv' to Tv icon",
+    "Touchpoints.js: Form correctly shows emissora/dia_horario fields only when tipo_offline='tv'"
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_tv_type_and_admin_dashboard.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "100% (All features verified working)"
+  },
+
+  "test_credentials": {
+    "admin_email": "admin@labrand.com",
+    "admin_password": "LaBrand@2024!",
+    "brand_id": "brand_29aafd2d6125"
+  },
+
+  "seed_data_creation": "Created TEST_ prefixed touchpoints during testing, cleaned up after tests completed",
+
+  "features_verified": {
+    "tv_type_replacement": {
+      "status": "WORKING",
+      "details": "'midia' type replaced with 'tv' type (Participacao em Programa de TV) with campos_extras=['emissora','dia_horario']"
+    },
+    "tv_touchpoint_creation": {
+      "status": "WORKING",
+      "details": "POST /api/brands/{brand_id}/touchpoints with tipo_offline='tv' correctly saves emissora and dia_horario fields"
+    },
+    "admin_users_enriched": {
+      "status": "WORKING",
+      "details": "GET /api/admin/users returns payment_status, brands_owned, brands_member, touchpoints_count, pillars_count, credits object, last_activity"
+    },
+    "admin_users_search": {
+      "status": "WORKING",
+      "details": "search query parameter filters by name or email"
+    },
+    "admin_users_role_filter": {
+      "status": "WORKING",
+      "details": "role query parameter filters by admin/estrategista/cliente"
+    },
+    "admin_users_plan_filter": {
+      "status": "WORKING",
+      "details": "plan=paying filters non-free users, plan=free filters free/null plan users"
+    },
+    "admin_users_summary": {
+      "status": "WORKING",
+      "details": "Response includes summary with total_all, new_this_month, paying_users, free_users"
+    },
+    "admin_dashboard_ui": {
+      "status": "WORKING",
+      "details": "Users tab default, table with 10 columns, summary cards, filters, user detail dialog"
+    },
+    "tv_form_fields": {
+      "status": "WORKING",
+      "details": "Selecting TV tipo_offline shows Emissora/Canal and Dia e Horario input fields"
+    }
+  },
+
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "TV offline type replacement and admin dashboard expansion fully tested and working. TV type (id='tv') replaces 'midia' with campos_extras=['emissora','dia_horario']. Admin users endpoint at /api/admin/users returns enriched user data with payment_status computed server-side. Test file at /app/backend/tests/test_tv_type_and_admin_dashboard.py covers all backend endpoints."
+}

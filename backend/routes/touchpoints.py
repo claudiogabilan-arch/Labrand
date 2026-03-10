@@ -45,18 +45,21 @@ OFFLINE_TYPES = [
         }
     },
     {
-        "id": "midia",
-        "label": "Aparicao em Midia ou Podcast",
-        "description": "Entrevista, participacao ou mencao em veiculo externo: TV, radio, podcast, jornal ou revista.",
+        "id": "tv",
+        "label": "Participacao em Programa de TV",
+        "description": "Participacao como convidado ou entrevistado em programa de televisao ao vivo ou gravado.",
         "default_fase_funil": "Topo de Funil",
-        "nome_exemplo": "Podcast O Conselho - Branding e Legado - Fev 2025",
-        "orientacao": "Monitore mencoes nas redes sociais nas 48h apos a publicacao usando o Social Listening do LABrand. Esse dado complementa as metricas deste touchpoint.",
-        "metricas_obrigatorias": ["nome", "fase_funil", "custo_mensal", "receita_gerada", "conversoes", "nota"],
+        "nome_exemplo": "Programa Roda Viva - TV Cultura - Mar 2025",
+        "orientacao": "Registre a emissora e o dia/horario do programa. Monitore mencoes nas redes sociais nas 48h apos a exibicao usando o Social Listening do LABrand. Esse dado complementa as metricas deste touchpoint.",
+        "metricas_obrigatorias": ["nome", "fase_funil", "custo_mensal", "receita_gerada", "conversoes", "nota", "emissora", "dia_horario"],
+        "campos_extras": ["emissora", "dia_horario"],
         "dicas": {
-            "custo_mensal": "Zero se espontaneo; valor de assessoria se assessorado",
-            "receita_gerada": "Valor estimado de contratos atribuidos a esse canal",
-            "conversoes": "Novos seguidores ou leads que citaram o veiculo como ponto de contato",
-            "nota": "Avaliacao qualitativa da qualidade da aparicao (0 a 10)"
+            "custo_mensal": "Zero se convidado; valor de producao ou assessoria se pago",
+            "receita_gerada": "Valor estimado de contratos atribuidos a essa aparicao",
+            "conversoes": "Novos seguidores ou leads que citaram o programa como ponto de contato",
+            "nota": "Avaliacao qualitativa da qualidade da participacao (0 a 10)",
+            "emissora": "Nome da emissora ou canal (Ex: TV Cultura, Globo, Band, SBT)",
+            "dia_horario": "Data e horario da exibicao (Ex: Seg 22h, 15/03/2025 20h)"
         }
     },
     {
@@ -204,6 +207,8 @@ async def create_touchpoint(brand_id: str, data: dict, user: dict = Depends(get_
         "sentimento": data.get("sentimento", "Neutro"), "nota": min(10, max(0, int(data.get("nota", 5)))),
         "persona": data.get("persona", "Geral"), "custo_mensal": custo, "receita_gerada": receita,
         "conversoes": int(data.get("conversoes", 0)), "roi": round(roi, 1),
+        "emissora": data.get("emissora", "") if tipo_offline == "tv" else "",
+        "dia_horario": data.get("dia_horario", "") if tipo_offline == "tv" else "",
         "status": data.get("status", "ativo"),
         "created_at": datetime.now(timezone.utc).isoformat(), "updated_at": datetime.now(timezone.utc).isoformat()
     }
@@ -234,6 +239,7 @@ async def update_touchpoint(brand_id: str, touchpoint_id: str, data: dict, user:
         "nota": min(10, max(0, int(data.get("nota", 5)))), "persona": data.get("persona"),
         "custo_mensal": custo, "receita_gerada": receita, "conversoes": int(data.get("conversoes", 0)),
         "roi": round(roi, 1), "status": data.get("status"),
+        "emissora": data.get("emissora"), "dia_horario": data.get("dia_horario"),
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     update_data = {k: v for k, v in update_data.items() if v is not None}

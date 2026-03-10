@@ -60,14 +60,90 @@ async def get_admin_stats(user: dict = Depends(get_admin_user)):
     }
 
 @router.get("/admin/users")
-async def get_admin_users(skip: int = 0, limit: int = 50, user: dict = Depends(get_admin_user)):
-    users = await db.users.find({}, {"_id": 0, "password": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
-    total = await db.users.count_documents({})
+async def get_admin_users(skip: int = 0, limit: int = 50, role: str = None, plan: str = None, search: str = None, user: dict = Depends(get_admin_user)):
+    query = {}
+    if role:
+        query["role"] = role
+    if plan:
+        if plan == "paying":
+            query["plan"] = {"$nin": ["free", None]}
+        elif plan == "free":
+            query["$or"] = [{"plan": "free"}, {"plan": None}, {"plan": {"$exists": False}}]
+        else:
+            query["plan"] = plan
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"email": {"$regex": search, "$options": "i"}}
+        ]
+    
+    users = await db.users.find(query, {"_id": 0, "password": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    total = await db.users.count_documents(query)
+    
+    now = datetime.now(timezone.utc)
+    thirty_days_ago = (now - timedelta(days=30)).isoformat()
+    
     for u in users:
-        u["brands_count"] = await db.brands.count_documents({"owner_id": u["user_id"]})
-        credits = await db.ai_credits.find_one({"user_id": u["user_id"]}, {"_id": 0})
-        u["ai_credits"] = credits.get("balance", 0) if credits else 0
-    return {"users": users, "total": total, "skip": skip, "limit": limit}
+        uid = u["user_id"]
+        
+        # Brands owned
+        owned_brands = await db.brands.find({"owner_id": uid}, {"_id": 0, "brand_id": 1, "name": 1}).to_list(20)
+        
+        # Brands as team member
+        team_memberships = await db.team_members.find({"user_id": uid, "status": "active"}, {"_id": 0, "brand_id": 1}).to_list(20)
+        team_brand_ids = [m["brand_id"] for m in team_memberships]
+        team_brands = []
+        if team_brand_ids:
+            team_brands = await db.brands.find({"brand_id": {"$in": team_brand_ids}}, {"_id": 0, "brand_id": 1, "name": 1}).to_list(20)
+        
+        u["brands_owned"] = owned_brands
+        u["brands_member"] = team_brands
+        u["brands_count"] = len(owned_brands) + len(team_brands)
+        
+        # Activity stats
+        u["touchpoints_count"] = await db.touchpoints.count_documents({"brand_id": {"$in": [b["brand_id"] for b in owned_brands]}})
+        u["pillars_count"] = await db.pillars.count_documents({"brand_id": {"$in": [b["brand_id"] for b in owned_brands]}})
+        
+        # AI credits
+        credits = await db.ai_credits.find_one({"user_id": uid}, {"_id": 0})
+        u["credits"] = {
+            "available_credits": credits.get("available_credits", 0) if credits else 0,
+            "used_credits": credits.get("used_credits", 0) if credits else 0,
+            "total_credits": credits.get("total_credits", 0) if credits else 0
+        }
+        
+        # Payment status
+        has_paid = await db.payment_transactions.count_documents({"user_id": uid, "payment_status": "paid"})
+        trial_ends = u.get("trial_ends_at", "")
+        trial_active = False
+        if trial_ends:
+            try:
+                trial_dt = datetime.fromisoformat(trial_ends.replace("Z", "+00:00")) if isinstance(trial_ends, str) else trial_ends
+                trial_active = trial_dt > now
+            except:
+                pass
+        
+        u["payment_status"] = "pagante" if has_paid > 0 else ("trial" if trial_active else "free")
+        u["total_payments"] = has_paid
+        
+        # Last activity (AI usage)
+        last_ai = await db.ai_credits_history.find_one({"user_id": uid}, {"_id": 0, "created_at": 1}, sort=[("created_at", -1)])
+        u["last_activity"] = last_ai.get("created_at") if last_ai else u.get("created_at", "")
+    
+    # Summary stats
+    total_all = await db.users.count_documents({})
+    new_this_month = await db.users.count_documents({"created_at": {"$gte": now.strftime("%Y-%m")}})
+    paying_count = await db.payment_transactions.distinct("user_id", {"payment_status": "paid"})
+    
+    return {
+        "users": users, "total": total, "skip": skip, "limit": limit,
+        "summary": {
+            "total_all": total_all,
+            "new_this_month": new_this_month,
+            "paying_users": len(paying_count),
+            "free_users": total_all - len(paying_count)
+        }
+    }
 
 @router.get("/admin/ai-usage")
 async def get_ai_usage_details(days: int = 30, user: dict = Depends(get_admin_user)):
