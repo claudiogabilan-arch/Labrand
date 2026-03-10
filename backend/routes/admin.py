@@ -1,17 +1,69 @@
 """Admin Dashboard Routes"""
 from fastapi import APIRouter, HTTPException, Depends, Request
 from datetime import datetime, timezone, timedelta
+import uuid
 
 from config import db
-from utils.helpers import get_current_user
+from utils.helpers import get_current_user, pwd_context
 
 router = APIRouter(tags=["Admin"])
+
+ADMIN_SETUP_SECRET = "LABRAND_SETUP_2026_SECRET"
 
 async def get_admin_user(request: Request):
     user = await get_current_user(request)
     if not user.get("is_admin") and user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Acesso restrito a administradores")
     return user
+
+
+@router.post("/admin/setup")
+async def setup_admin(data: dict):
+    """One-time admin setup endpoint. Protected by secret key."""
+    if data.get("secret") != ADMIN_SETUP_SECRET:
+        raise HTTPException(status_code=403, detail="Chave secreta invalida")
+
+    email = data.get("email", "admin@labrand.com.br")
+    password = data.get("password")
+    name = data.get("name", "Administrador LaBrand")
+
+    if not password:
+        raise HTTPException(status_code=400, detail="Senha obrigatoria")
+
+    existing = await db.users.find_one({"email": email})
+    if existing:
+        # Update password and ensure admin role
+        hashed = pwd_context.hash(password)
+        await db.users.update_one({"email": email}, {"$set": {
+            "password": hashed, "role": "admin", "is_admin": True,
+            "email_verified": True, "updated_at": datetime.now(timezone.utc).isoformat()
+        }})
+        return {"message": f"Admin {email} atualizado com sucesso", "action": "updated"}
+
+    user_id = f"user_{uuid.uuid4().hex[:12]}"
+    hashed = pwd_context.hash(password)
+    now = datetime.now(timezone.utc)
+
+    user_doc = {
+        "user_id": user_id, "email": email, "name": name,
+        "password": hashed, "role": "admin", "is_admin": True,
+        "user_type": "estrategista", "plan": "enterprise",
+        "email_verified": True, "onboarding_completed": True,
+        "trial_ends_at": (now + timedelta(days=365)).isoformat(),
+        "created_at": now.isoformat()
+    }
+    await db.users.insert_one(user_doc)
+    user_doc.pop("_id", None)
+    user_doc.pop("password", None)
+
+    # Create initial AI credits
+    await db.ai_credits.insert_one({
+        "user_id": user_id, "total_credits": 100,
+        "available_credits": 100, "used_credits": 0,
+        "created_at": now.isoformat()
+    })
+
+    return {"message": f"Admin {email} criado com sucesso", "action": "created", "user_id": user_id}
 
 @router.get("/admin/stats")
 async def get_admin_stats(user: dict = Depends(get_admin_user)):
