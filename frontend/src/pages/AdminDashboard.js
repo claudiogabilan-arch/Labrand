@@ -5,6 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
+import { Label } from '../components/ui/label';
+import { Switch } from '../components/ui/switch';
 import { Progress } from '../components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -14,7 +17,8 @@ import {
   Users, CreditCard, Zap, TrendingUp, DollarSign, 
   BarChart3, Activity, Shield, Loader2, RefreshCw,
   Brain, Search, Eye, MapPin, Layers,
-  UserCheck, UserX, Clock, Calendar
+  UserCheck, UserX, Clock, Calendar,
+  Mail, Send, AlertCircle, Check, X, FileText
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -180,6 +184,17 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
+  // Email state
+  const [inactiveUsers, setInactiveUsers] = useState([]);
+  const [emailHistory, setEmailHistory] = useState([]);
+  const [emailStats, setEmailStats] = useState({});
+  const [autoConfig, setAutoConfig] = useState({ enabled: false, days_threshold: 7, max_emails_per_week: 1 });
+  const [composeData, setComposeData] = useState({ recipients: [], subject: '', body: '', cta_url: '', cta_text: '' });
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [sendingAlerts, setSendingAlerts] = useState(false);
+  const [customAlertMsg, setCustomAlertMsg] = useState('');
+
   useEffect(() => {
     if (user && user.role !== 'admin' && !user.is_admin) {
       toast.error('Acesso restrito a administradores');
@@ -236,6 +251,88 @@ export default function AdminDashboard() {
   const openUserDetail = (u) => {
     setSelectedUser(u);
     setDetailOpen(true);
+  };
+
+  // Email functions
+  const loadEmailData = async () => {
+    try {
+      const [inactiveRes, historyRes, configRes] = await Promise.all([
+        axios.get(`${API}/admin/emails/inactive-users?days=7`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/admin/emails/history?limit=30`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/admin/emails/auto-config`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      setInactiveUsers(inactiveRes.data.inactive_users || []);
+      setEmailHistory(historyRes.data.emails || []);
+      setEmailStats(historyRes.data.stats || {});
+      setAutoConfig(configRes.data || { enabled: false, days_threshold: 7, max_emails_per_week: 1 });
+    } catch (e) { /* silent on tab not yet visited */ }
+  };
+
+  const handleSendInactiveAlerts = async (userIds = null) => {
+    setSendingAlerts(true);
+    try {
+      const res = await axios.post(`${API}/admin/emails/send-inactive-alerts`,
+        { user_ids: userIds, custom_message: customAlertMsg || null },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(`${res.data.sent} alerta(s) enviado(s)!`);
+      if (res.data.errors?.length > 0) {
+        res.data.errors.forEach(e => toast.error(`Falha: ${e.email}`));
+      }
+      loadEmailData();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Erro ao enviar alertas');
+    } finally { setSendingAlerts(false); }
+  };
+
+  const handleSendCustomEmail = async () => {
+    if (!composeData.subject.trim() || !composeData.body.trim() || composeData.recipients.length === 0) {
+      toast.error('Preencha destinatario, assunto e corpo');
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      await axios.post(`${API}/admin/emails/compose`, composeData, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success('Email enviado!');
+      setComposeOpen(false);
+      setComposeData({ recipients: [], subject: '', body: '', cta_url: '', cta_text: '' });
+      loadEmailData();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Erro ao enviar');
+    } finally { setSendingEmail(false); }
+  };
+
+  const handleToggleAutoAlerts = async (enabled) => {
+    try {
+      await axios.post(`${API}/admin/emails/auto-config`,
+        { ...autoConfig, enabled },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAutoConfig(prev => ({ ...prev, enabled }));
+      toast.success(enabled ? 'Alertas automaticos ativados' : 'Alertas automaticos desativados');
+    } catch { toast.error('Erro ao salvar'); }
+  };
+
+  const handleAutoRun = async () => {
+    setSendingAlerts(true);
+    try {
+      const res = await axios.post(`${API}/admin/emails/auto-run`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success(res.data.message);
+      loadEmailData();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Erro');
+    } finally { setSendingAlerts(false); }
+  };
+
+  const openComposeForUser = (u) => {
+    setComposeData({ recipients: [u.email], subject: '', body: '', cta_url: '', cta_text: '' });
+    setComposeOpen(true);
+  };
+
+  const openComposeForAll = () => {
+    const emails = users.filter(u => u.email).map(u => u.email);
+    setComposeData({ recipients: emails, subject: '', body: '', cta_url: '', cta_text: '' });
+    setComposeOpen(true);
   };
 
   if (loading) {
@@ -327,6 +424,7 @@ export default function AdminDashboard() {
       <Tabs defaultValue="users" className="space-y-4">
         <TabsList>
           <TabsTrigger value="users" data-testid="admin-tab-users">Usuarios</TabsTrigger>
+          <TabsTrigger value="emails" data-testid="admin-tab-emails" onClick={loadEmailData}>Emails</TabsTrigger>
           <TabsTrigger value="overview" data-testid="admin-tab-overview">Visao Geral</TabsTrigger>
           <TabsTrigger value="ai" data-testid="admin-tab-ai">Consumo IA</TabsTrigger>
         </TabsList>
@@ -454,6 +552,230 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
+
+
+        {/* EMAILS TAB */}
+        <TabsContent value="emails" className="space-y-4" data-testid="admin-emails-tab">
+          {/* Email Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 text-center border">
+              <p className="text-xl font-bold text-blue-600">{emailStats.total_sent || 0}</p>
+              <p className="text-xs text-muted-foreground">Enviados</p>
+            </div>
+            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 text-center border">
+              <p className="text-xl font-bold text-red-600">{emailStats.total_failed || 0}</p>
+              <p className="text-xs text-muted-foreground">Falhas</p>
+            </div>
+            <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-950/30 text-center border">
+              <p className="text-xl font-bold text-orange-600">{emailStats.inactive_alerts || 0}</p>
+              <p className="text-xs text-muted-foreground">Alertas Inatividade</p>
+            </div>
+            <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-950/30 text-center border">
+              <p className="text-xl font-bold text-purple-600">{emailStats.custom_emails || 0}</p>
+              <p className="text-xs text-muted-foreground">Emails Customizados</p>
+            </div>
+            <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 text-center border">
+              <p className="text-xl font-bold text-green-600">{emailStats.auto_alerts || 0}</p>
+              <p className="text-xs text-muted-foreground">Alertas Automaticos</p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Inactive Users Panel */}
+            <Card className="border-orange-200">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-orange-500" /> Usuarios Inativos ({inactiveUsers.length})
+                  </CardTitle>
+                  <Button size="sm" onClick={() => handleSendInactiveAlerts()} disabled={sendingAlerts || inactiveUsers.filter(u => !u.already_alerted_this_week).length === 0} data-testid="send-all-inactive-alerts">
+                    {sendingAlerts ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
+                    Alertar Todos
+                  </Button>
+                </div>
+                <CardDescription>Usuarios sem atividade ha 7+ dias</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Custom message for alerts */}
+                <div className="mb-3">
+                  <Input placeholder="Mensagem personalizada (opcional)..." value={customAlertMsg} onChange={e => setCustomAlertMsg(e.target.value)} className="text-sm" data-testid="custom-alert-msg" />
+                </div>
+                {inactiveUsers.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4 text-sm">Nenhum usuario inativo! Todos estao ativos.</p>
+                ) : (
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {inactiveUsers.map(u => (
+                      <div key={u.user_id} className="flex items-center justify-between p-2 rounded border hover:border-orange-300 transition-colors" data-testid={`inactive-user-${u.user_id}`}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                            <span className="text-xs font-bold text-orange-600">{u.name?.charAt(0) || '?'}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{u.name}</p>
+                            <p className="text-xs text-muted-foreground">{u.days_inactive}d inativo</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {u.already_alerted_this_week ? (
+                            <Badge variant="secondary" className="text-xs"><Check className="h-3 w-3 mr-0.5" /> Alertado</Badge>
+                          ) : (
+                            <>
+                              <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => handleSendInactiveAlerts([u.user_id])} disabled={sendingAlerts}>
+                                <Send className="h-3 w-3" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => openComposeForUser(u)}>
+                                <Mail className="h-3 w-3" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Auto-Alert Config + Compose */}
+            <div className="space-y-4">
+              {/* Auto config */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Zap className="h-5 w-5 text-yellow-500" /> Alertas Automaticos
+                    </CardTitle>
+                    <Switch checked={autoConfig.enabled} onCheckedChange={handleToggleAutoAlerts} data-testid="auto-alerts-toggle" />
+                  </div>
+                  <CardDescription>Enviar automaticamente para usuarios inativos</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Dias sem atividade</span>
+                    <span className="font-medium">{autoConfig.days_threshold} dias</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Max emails/semana</span>
+                    <span className="font-medium">{autoConfig.max_emails_per_week}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Ultimo envio</span>
+                    <span className="font-medium">{autoConfig.last_run ? formatDate(autoConfig.last_run) : 'Nunca'}</span>
+                  </div>
+                  {autoConfig.enabled && (
+                    <Button variant="outline" size="sm" className="w-full" onClick={handleAutoRun} disabled={sendingAlerts} data-testid="run-auto-alerts">
+                      {sendingAlerts ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
+                      Executar Agora
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Compose button */}
+              <Card className="border-blue-200">
+                <CardContent className="pt-6 space-y-3">
+                  <Button className="w-full" onClick={openComposeForAll} data-testid="compose-email-all">
+                    <Mail className="h-4 w-4 mr-2" /> Enviar Email para Todos
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={() => { setComposeData({ recipients: [], subject: '', body: '', cta_url: '', cta_text: '' }); setComposeOpen(true); }} data-testid="compose-custom-email">
+                    <FileText className="h-4 w-4 mr-2" /> Compor Email Customizado
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Email History */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2"><Clock className="h-5 w-5" /> Historico de Emails</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {emailHistory.length === 0 ? (
+                <p className="text-center text-muted-foreground py-4 text-sm">Nenhum email enviado ainda</p>
+              ) : (
+                <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                  {emailHistory.map((email, i) => (
+                    <div key={email.email_id || i} className="flex items-center justify-between p-3 rounded border text-sm">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                          email.email_type === 'inactive_alert' ? 'bg-orange-100' :
+                          email.email_type === 'auto_inactive' ? 'bg-yellow-100' : 'bg-blue-100'
+                        }`}>
+                          {email.email_type === 'inactive_alert' ? <AlertCircle className="h-4 w-4 text-orange-600" /> :
+                           email.email_type === 'auto_inactive' ? <Zap className="h-4 w-4 text-yellow-600" /> :
+                           <Mail className="h-4 w-4 text-blue-600" />}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">{email.subject}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Para: {Array.isArray(email.recipient_email) ? email.recipient_email.join(', ') : email.recipient_email}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {email.success ? (
+                          <Badge className="bg-green-500 text-white text-xs"><Check className="h-3 w-3 mr-0.5" /> Enviado</Badge>
+                        ) : (
+                          <Badge variant="destructive" className="text-xs"><X className="h-3 w-3 mr-0.5" /> Falha</Badge>
+                        )}
+                        <span className="text-xs text-muted-foreground">{formatDate(email.sent_at)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Compose Email Dialog */}
+        <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2"><Mail className="h-5 w-5" /> Compor Email</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>Destinatarios ({composeData.recipients.length})</Label>
+                <div className="max-h-20 overflow-y-auto text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                  {composeData.recipients.length > 0 ? composeData.recipients.join(', ') : 'Nenhum selecionado'}
+                </div>
+                <Input placeholder="Adicionar email..." onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.target.value.includes('@')) {
+                    setComposeData(prev => ({ ...prev, recipients: [...prev.recipients, e.target.value] }));
+                    e.target.value = '';
+                  }
+                }} data-testid="compose-add-recipient" />
+              </div>
+              <div className="space-y-2">
+                <Label>Assunto *</Label>
+                <Input value={composeData.subject} onChange={e => setComposeData(prev => ({ ...prev, subject: e.target.value }))} placeholder="Assunto do email..." data-testid="compose-subject" />
+              </div>
+              <div className="space-y-2">
+                <Label>Mensagem *</Label>
+                <Textarea value={composeData.body} onChange={e => setComposeData(prev => ({ ...prev, body: e.target.value }))} placeholder="Escreva sua mensagem..." rows={5} data-testid="compose-body" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">URL do Botao (opcional)</Label>
+                  <Input value={composeData.cta_url} onChange={e => setComposeData(prev => ({ ...prev, cta_url: e.target.value }))} placeholder="https://..." className="text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Texto do Botao (opcional)</Label>
+                  <Input value={composeData.cta_text} onChange={e => setComposeData(prev => ({ ...prev, cta_text: e.target.value }))} placeholder="Ex: Acessar agora" className="text-sm" />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setComposeOpen(false)}>Cancelar</Button>
+                <Button onClick={handleSendCustomEmail} disabled={sendingEmail} data-testid="compose-send-btn">
+                  {sendingEmail ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                  Enviar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">

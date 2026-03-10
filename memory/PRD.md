@@ -158,6 +158,18 @@ Files modified:
 - Backend: payment_status calculado via payment_transactions (pagante/trial/free)
 - Testes: 15/15 backend + 100% frontend
 
+### 2026-03-10 - Sistema de Emails Administrativo
+**Sistema completo de emails no painel admin:**
+- Deteccao automatica de usuarios inativos (7+ dias sem atividade)
+- Alerta manual individual ou em lote para usuarios inativos
+- Alertas automaticos com toggle on/off, configuravel (dias, max/semana)
+- Composicao de email customizado para qualquer destinatario
+- Historico de todos emails enviados com status (enviado/falha)
+- Template HTML profissional LaBrand para todos emails
+- Anti-spam: max 1 email por semana por usuario
+- Backend: /api/admin/emails/* (inactive-users, send-inactive-alerts, compose, history, auto-config, auto-run)
+- Nenhum dado mock, apenas leitura de dados reais
+
 ---
 
 ## Prioritized Backlog
