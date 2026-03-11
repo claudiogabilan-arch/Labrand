@@ -88,16 +88,22 @@ async def get_current_user(request: Request) -> dict:
 async def send_email(to: str, subject: str, html: str) -> bool:
     """Send email via Resend"""
     try:
+        api_key = os.environ.get("RESEND_API_KEY")
+        if not api_key:
+            logging.error("RESEND_API_KEY nao configurado")
+            return False
+        resend.api_key = api_key
         params = {
             "from": "LABrand <noreply@labrand.com.br>",
             "to": [to],
             "subject": subject,
             "html": html
         }
-        resend.Emails.send(params)
+        result = resend.Emails.send(params)
+        logging.info(f"Email enviado para {to}: {result}")
         return True
     except Exception as e:
-        logging.error(f"Erro ao enviar email: {e}")
+        logging.error(f"Erro ao enviar email para {to}: {e}")
         return False
 
 
