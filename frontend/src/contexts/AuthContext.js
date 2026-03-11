@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const processOAuthSession = async (sessionId) => {
-    const response = await axios.post(`${API}/api/auth/session`, 
+    const response = await axios.post(`${API}/auth/session`, 
       { session_id: sessionId },
       { withCredentials: true }
     );

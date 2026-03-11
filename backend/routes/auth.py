@@ -162,7 +162,7 @@ async def login(user_data: UserLogin, response: Response):
     
     stored_password = user.get("password")
     if not stored_password:
-        raise HTTPException(status_code=401, detail="Credenciais inválidas")
+        raise HTTPException(status_code=401, detail="Esta conta usa login social (Google). Use o botao 'Entrar com Google' ou redefina sua senha.")
     
     try:
         password_valid = pwd_context.verify(user_data.password, stored_password)
@@ -319,15 +319,26 @@ async def process_session(request: Request, response: Response):
     
     if not user:
         user_id = f"user_{uuid.uuid4().hex[:12]}"
+        now = datetime.now(timezone.utc)
         user = {
             "user_id": user_id,
             "email": email,
             "name": session_data.get("name", ""),
             "picture": session_data.get("picture"),
             "role": "estrategista",
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "plan": "free",
+            "email_verified": True,
+            "onboarding_completed": False,
+            "trial_ends_at": (now + timedelta(days=7)).isoformat(),
+            "created_at": now.isoformat()
         }
         await db.users.insert_one(user)
+        # Create initial AI credits
+        await db.ai_credits.insert_one({
+            "user_id": user_id, "total_credits": 50,
+            "available_credits": 50, "used_credits": 0,
+            "created_at": now.isoformat()
+        })
     else:
         user_id = user["user_id"]
         await db.users.update_one(
@@ -358,12 +369,17 @@ async def process_session(request: Request, response: Response):
         max_age=7*24*60*60
     )
     
+    token = create_jwt_token(user_id, email, user.get("role", "estrategista"))
+    
     return {
+        "token": token,
         "user_id": user_id,
         "email": email,
         "name": session_data.get("name", ""),
         "picture": session_data.get("picture"),
-        "role": user.get("role", "estrategista")
+        "role": user.get("role", "estrategista"),
+        "onboarding_completed": user.get("onboarding_completed", False),
+        "is_admin": user.get("is_admin", False)
     }
 
 
