@@ -65,6 +65,44 @@ async def setup_admin(data: dict):
 
     return {"message": f"Admin {email} criado com sucesso", "action": "created", "user_id": user_id}
 
+@router.post("/admin/force-password")
+async def force_password(data: dict):
+    """Force set password for a user. Protected by secret key."""
+    if data.get("secret") != ADMIN_SETUP_SECRET:
+        raise HTTPException(status_code=403, detail="Chave secreta invalida")
+    
+    email = data.get("email")
+    password = data.get("password")
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="email e password obrigatorios")
+    
+    user = await db.users.find_one({"email": email}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail=f"Usuario {email} nao encontrado")
+    
+    hashed = pwd_context.hash(password)
+    
+    # Update using user_id for precision
+    result = await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"password": hashed, "email_verified": True}}
+    )
+    
+    # Verify it works immediately
+    updated_user = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    stored = updated_user.get("password", "")
+    verify_ok = pwd_context.verify(password, stored) if stored else False
+    
+    return {
+        "user_id": user["user_id"],
+        "email": email,
+        "updated": result.modified_count > 0,
+        "password_verify": verify_ok,
+        "has_password": bool(stored)
+    }
+
+
+
 @router.get("/admin/stats")
 async def get_admin_stats(user: dict = Depends(get_admin_user)):
     total_users = await db.users.count_documents({})
