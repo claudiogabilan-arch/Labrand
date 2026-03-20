@@ -268,6 +268,39 @@ async def reset_password(data: ResetPasswordRequest):
     return {"message": "Senha alterada com sucesso"}
 
 
+@router.post("/auth/change-password")
+async def change_password(data: dict, request: Request):
+    """Change password for authenticated user"""
+    user = await get_current_user(request)
+    
+    current_password = data.get("current_password", "")
+    new_password = data.get("new_password", "")
+    
+    if not new_password or len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Nova senha deve ter pelo menos 6 caracteres")
+    
+    # If user has a password, verify current password
+    full_user = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    stored_password = full_user.get("password")
+    
+    if stored_password and current_password:
+        try:
+            if not pwd_context.verify(current_password, stored_password):
+                raise HTTPException(status_code=401, detail="Senha atual incorreta")
+        except Exception:
+            raise HTTPException(status_code=401, detail="Senha atual incorreta")
+    
+    # Hash and save new password
+    hashed = pwd_context.hash(new_password)
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"password": hashed}}
+    )
+    
+    return {"message": "Senha alterada com sucesso"}
+
+
+
 @router.get("/auth/google/login")
 async def google_login(request: Request):
     """

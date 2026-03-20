@@ -348,10 +348,20 @@ export const Settings = () => {
       toast.error('As senhas não coincidem');
       return;
     }
+    if (security.newPassword.length < 6) {
+      toast.error('A nova senha deve ter pelo menos 6 caracteres');
+      return;
+    }
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Configurações de segurança atualizadas!');
+      await axios.post(`${API}/auth/change-password`, {
+        current_password: security.currentPassword,
+        new_password: security.newPassword
+      }, {
+        headers: getAuthHeaders(),
+        withCredentials: true
+      });
+      toast.success('Senha alterada com sucesso!');
       setSecurity(prev => ({
         ...prev,
         currentPassword: '',
@@ -359,7 +369,7 @@ export const Settings = () => {
         confirmPassword: ''
       }));
     } catch (error) {
-      toast.error('Erro ao atualizar segurança');
+      toast.error(error.response?.data?.detail || 'Erro ao alterar senha');
     } finally {
       setIsSaving(false);
     }
