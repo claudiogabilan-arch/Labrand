@@ -1,236 +1,66 @@
 # LaBrand - Brand OS
-## Product Requirements Document
+## Strategic Brand Infrastructure Platform
 
-### Original Problem Statement
-Web application for brand management covering diagnosis, strategy creation, execution, and result measurement. Positioned as a "Strategic Brand Infrastructure Platform (Brand OS)" for B2B companies and consultants.
-
-### User Personas
-- **Estrategista**: Full access to all features, can create/edit brands
-- **Cliente**: Read-only access to dashboards and reports
-- **Agência/Grupo Empresarial**: Multi-brand management
-
-### Core Requirements
-1. **Onboarding**: Multi-step guided process, user type selection
-2. **Brand Management**: Create brands, define pillars
-3. **Analytics**: Executive dashboard, benchmark, simulator, valuation
-4. **SaaS Model**: 7-day free trial, Pro, Consultor, Enterprise plans
-5. **AI Credits System**: Metered usage for AI features
+### Problem Statement
+Platform for B2B companies and consultants with strategic brand development, valuation, risk analysis, competitor comparison, consistency alerts, offline touchpoints tracking, advanced collaboration, and executive dashboard.
 
 ### Tech Stack
-- **Frontend**: React, Tailwind CSS, Shadcn/UI
-- **Backend**: FastAPI (Python)
-- **Database**: MongoDB
-- **Auth**: JWT + Google OAuth
-- **Email**: Resend API
-- **AI**: Emergent LLM Key (Gemini 2.0 Flash)
-- **Payments**: Stripe (LIVE keys)
+- Frontend: React + Shadcn UI + Tailwind CSS
+- Backend: FastAPI + Python
+- Database: MongoDB
+- Auth: JWT + Emergent Google OAuth
+- AI: OpenAI GPT-4o (Emergent LLM Key)
+- Email: Resend
+- Payments: Stripe
 
----
+### Users
+- Admin: admin@labrand.com.br / Labrand@2026!
+- Owner: claudiogabilan@gmail.com / Cla@2026
+- Production: labrand.com.br
 
-## What's Been Implemented
+### Completed Features
+- Full auth system (JWT + Google OAuth + password change)
+- Brand CRUD with pillar system (Start, Proposito, Promessa, etc.)
+- BVS Score calculation
+- Executive reports
+- Mind map with PDF export
+- Brand tracking with timeline
+- Offline Touchpoints (Palestra, Imersao, TV, Mentoria)
+- Advanced Collaboration (approvals, comments)
+- Admin Dashboard (users, payments, credits)
+- Admin System Emails (Resend)
+- Naming module with semantic map
+- Settings (profile, security, brands, team, integrations)
 
-### Core Platform
-- Full authentication system (JWT + Google OAuth)
-- Multi-brand management with brand creation/editing
-- 7 brand pillars (Start, Valores, Propósito, Promessa, Posicionamento, Personalidade, Universalidade)
-- Executive Dashboard with real-time progress
-- BVS (Branding Value Score) with real data consolidation
-- Brand Equity Score (Aaker model)
-- Touchpoint mapping and scoring
-- Maturity diagnosis
-- Brand Risk analysis
-- Disaster Check module
-- Value Waves analysis
-- Brand Funnel
-- Naming module (with AI generation)
-- Content generator (AI-powered)
-- Competitor analysis (AI-powered)
-- CRM integration framework
-- Ads integration framework (Meta, Google)
-- Social Listening framework
-- Share of Voice analysis
-- Conversion Attributes analysis
-- Brand Tracking (snapshots over time)
-- PDF Report generation (executive reports)
-- Email alerts system (Resend API)
-- Stripe payment integration (LIVE keys)
-- AI credits system with metered usage
-- Team invitations and roles
-- Admin dashboard with stats
-- Mindmap visualization (React Flow)
-- Gantt chart in Planning module
-- Presentation mode for client meetings
+### Recent Fixes (2026-03-20)
+1. **Login redirect** - Replaced window.location.href with navigate() to prevent React state loss
+2. **BrandContext auto-load** - Brands now auto-fetch when user is authenticated (was relying on Layout useEffect timing)
+3. **Password change** - Settings security form now calls real POST /api/auth/change-password (was fake setTimeout)
+4. **Admin badge** - Layout now shows "Admin" badge for admin users (was showing "Cliente")
+5. **is_admin in /auth/me** - Backend now returns is_admin field in /auth/me and /auth/login responses
+6. **Admin setup on production** - Set claudiogabilan@gmail.com as admin with is_admin=True
 
-### 2026-02-27 - Mock Data Removal (P0 Fix)
-**CRITICAL FIX: Removed ALL mock/simulated data from the platform**
+### Priority Backlog
+- P1: White-labeling for enterprise clients
+- P2: Better PDF Reports
+- P2: Push Notifications for Collaboration
+- P3: Refactoring (split large route files)
 
-Files modified:
-- `/app/backend/routes/social_listening.py` - Returns empty state when no mentions
-- `/app/backend/routes/share_of_voice.py` - Removed fake competitor mentions (hash-based), simulated channel breakdown, simulated trend history. Now uses real DB data only.
-- `/app/backend/routes/conversion_attributes.py` - Removed `generate_sample_surveys()` function that was creating and persisting 30 fake surveys in DB. Now returns empty state when < 5 real surveys.
-- `/app/backend/routes/brand_tracking.py` - Removed `generate_initial_tracking()` that was creating and persisting 6 months of simulated history in DB. Returns empty state.
-- `/app/backend/routes/bvs.py` - Removed simulated BVS history generation. Returns empty when no real history.
-- `/app/backend/routes/brand_tools.py` - Replaced simulated equity history with real DB data.
-- `/app/backend/routes/admin.py` - Added comprehensive cleanup endpoint: `GET /api/admin/clean-mock-data/{brand_id}`
-- `/app/frontend/src/pages/ShareOfVoice.js` - Added empty state UI
-- `/app/frontend/src/pages/ConversionAttributes.js` - Added empty state UI
-- `/app/frontend/src/pages/BrandTracking.js` - Added empty state UI
+### Architecture
+```
+/app/backend/
+  routes/: auth.py, brands.py, admin.py, admin_emails.py, collaboration.py, naming.py, touchpoints.py
+  utils/: helpers.py
+  server_new.py, config.py
+/app/frontend/src/
+  contexts/: AuthContext.js, BrandContext.js
+  components/: LoginPage.js, Layout.js, AuthCallback.js, ProtectedRoute.js
+  pages/: Dashboard.js, Settings.js, AdminDashboard.js, BrandTracking.js, Collaboration.js, Touchpoints.js
+  App.js
+```
 
-### 2026-02-27 - 5 Bug Fixes (User-reported)
-1. **Audiência - Buscar Influenciadores**: Button was failing silently. Now shows toast notification explaining social media integration is required.
-2. **Benchmark Setorial**: Removed fake percentile formula. Shows empty state when no pillar data. RBI shows "Sem dados" when no valuation exists. Sector shows "Não definido" instead of "default".
-3. **Funil de Marca**: Removed `generate_initial_funnel()` that was creating fake data (10000, 3000, etc.). Now shows empty state with "Inserir Dados do Funil" CTA.
-4. **Saúde da Marca**: Now shows 0 values for funnel section when no real data exists.
-5. **Pilar Valores**: Progress calculation changed from 33/33/34 (valores+necessidades+cruzamentos) to 50/50 (valores+necessidades only). Crossings no longer block 100%.
-
-### 2026-02-27 - Refatoração brand_tools.py
-**Refactored `brand_tools.py` (490 → 148 lines) into modular files:**
-- `/app/backend/routes/brand_equity.py` (208 lines) - Brand Equity Score (Aaker model), history, comparison
-- `/app/backend/routes/email_alerts.py` (129 lines) - Alert config, sending, history
-- `/app/backend/routes/brand_tools.py` (148 lines) - Brand Score, Competitor Analysis, Content Generator
-- Removed duplicate `PDFReportRequest` model (already in `reports.py`)
-- Removed duplicate `/benchmark` endpoint from `extras.py` (already in `brands.py`)
-- Updated `server_new.py` with new routers
-- All 10 endpoints verified working post-refactor
-
-### 2026-02-28 - Sidebar Colapsável
-- Menu lateral reorganizado com seções accordion colapsáveis
-- 6 itens top-level + 7 seções colapsáveis, estado salvo no localStorage
-- Seção ativa auto-expande ao navegar
-
-### 2026-02-28 - Fix Team Invite Flow
-**Fixed critical bug: invited team members couldn't see shared brands.**
-1. `GET /api/brands` now queries `team_members` collection (not just brands doc)
-2. `GET /api/brands/{brand_id}` checks team membership for access
-3. `POST /api/team/accept/{token}` auto-sets `onboarding_completed=True`
-4. Frontend `VerifyEmail.js` checks `pending_invite` → redirects to invite acceptance
-5. Testing: 12/12 tests passed
-
-
-### 2026-03-08 - Social Listening Inline Connection + SEO + 404
-**Social Listening:**
-- Painel de conexão inline: Instagram, Facebook, LinkedIn, YouTube
-- Passo-a-passo guiado para cada plataforma (campos de API, documentação oficial)
-- Endpoints: GET /platforms, POST /connect, DELETE /disconnect/{platform}
-- Credenciais salvas na coleção `social_connections`
-
-**SEO & 404:**
-- Meta tags Open Graph + Twitter Cards no index.html
-- JSON-LD structured data (SoftwareApplication schema)
-- robots.txt e sitemap.xml
-- OG Image profissional gerada
-- Página 404 customizada com botões "Dashboard" e "Voltar"
-
-### 2026-03-08 - Módulos Cultura & Pessoas + LaBrand Academy
-**Cultura & Pessoas** (`/culture`):
-- 5 seções: Manifesto Cultural, Rituais & Práticas, Comportamentos (DO/DON'T), Experiência do Colaborador, Alinhamento Marca x Cultura
-- Score de Saúde Cultural, recomendações, integração com valores da marca
-- Backend: GET/POST `/api/brands/{id}/culture`, GET `/culture/score`
-
-**LaBrand Academy** (`/academy`):
-- CRUD completo de artigos com 8 categorias
-- Busca, filtros por categoria, visualização, edição, publicação/rascunho
-- Backend: GET/POST/PUT/DELETE `/api/brands/{id}/academy`
-- Sidebar: Academy em Gestão, Cultura em Frameworks
-### 2026-03-08 - Touchpoints Offline (Business Rules v1.0)
-**Implementacao completa das regras de negocio para Touchpoints Offline:**
-- 4 tipos offline: Palestra/Keynote, Imersao Presencial, Aparicao em Midia/Podcast, Mentoria/Reuniao Estrategica
-- Cada tipo com: fase do funil padrao, exemplo de nomenclatura, orientacao contextual, dicas por metrica
-- Mensagens de orientacao: nota=0 (warning), receita=0 com conversoes>0 (info), 5+ offline no mes (lembrete snapshot)
-- Nova aba "Offline" no frontend com touchpoints agrupados por tipo e icones especificos
-- Card "Touchpoints que precisam de atualizacao" para alertar sobre dados incompletos
-- Box "Principio Orientador" na aba Offline
-- Backend: GET /api/touchpoints/offline-types, POST retorna {touchpoint, guidance}
-- Frontend: Formulario adaptativo com tipo offline, dicas contextuais, pre-preenchimento de fase do funil
-- Testes: 16/16 backend + 100% frontend
-
-### 2026-03-10 - Correcao Tipo Offline + Painel Admin Expandido
-**1. Tipo Offline TV (substituiu Midia/Podcast):**
-- Substituido "Aparicao em Midia/Podcast" por "Participacao em Programa de TV"
-- Campos extras: Emissora (canal de TV) e Dia/Horario do programa
-- Frontend mostra campos extras somente quando tipo=tv
-
-**2. Painel Admin Expandido:**
-- Aba Usuarios como principal com tabela completa: nome, email, role, plano, status (Pagante/Trial/Free), marcas, touchpoints, creditos, cadastro, ultima atividade
-- Cards resumo: Total, Pagantes, Free, Novos este mes
-- Filtros: busca por nome/email, role (admin/estrategista/cliente), plano (todos/pagante/free/founder/etc)
-- Dialog de detalhes do usuario com atividade, marcas (owner/membro), stats
-- Backend: payment_status calculado via payment_transactions (pagante/trial/free)
-- Testes: 15/15 backend + 100% frontend
-
-### 2026-03-10 - Sistema de Emails Administrativo
-**Sistema completo de emails no painel admin:**
-- Deteccao automatica de usuarios inativos (7+ dias sem atividade)
-- Alerta manual individual ou em lote para usuarios inativos
-- Alertas automaticos com toggle on/off, configuravel (dias, max/semana)
-- Composicao de email customizado para qualquer destinatario
-- Historico de todos emails enviados com status (enviado/falha)
-- Template HTML profissional LaBrand para todos emails
-- Anti-spam: max 1 email por semana por usuario
-- Backend: /api/admin/emails/* (inactive-users, send-inactive-alerts, compose, history, auto-config, auto-run)
-- Nenhum dado mock, apenas leitura de dados reais
-
-### 2026-03-10 - UX Improvements + Colaboracao Avancada
-**1. Export PNG do Mindmap:**
-- Botao "Exportar PNG" na pagina Mapa Mental usando html2canvas
-- Gera imagem alta resolucao (scale:2) com nome do arquivo incluindo marca e data
-
-**2. Brand Tracking - Timeline + Comparativo:**
-- Aba Timeline: Linha do tempo visual com marcos, indicadores de subida/queda, scores por snapshot
-- Aba Comparativo: Selecao de 2 snapshots para comparacao lado a lado (Antes/Depois) com variacao percentual
-- Grafico de barras de evolucao dos indicadores ao longo do tempo
-- Aba Historico: Lista completa de snapshots com metricas
-
-**3. Colaboracao Avancada:**
-- Workflow de Aprovacoes: criar solicitacao, aprovar/rejeitar/pedir alteracoes com comentarios
-- Comentarios: criar, listar, deletar (somente proprio) em qualquer item da marca
-- Log de Atividades: registro automatico de todas acoes (aprovacoes, comentarios, etc)
-- Frontend completo com 3 abas (Aprovacoes com badge de pendentes, Comentarios, Atividades)
-- Link na sidebar em Gestao
-- Testes: 15/15 backend + 100% frontend
-
-
-### 2026-03-20 - Fix Login Redirect Bug (P0)
-**Bug**: Login exibia mensagem de sucesso mas não redirecionava para o dashboard.
-**Causa raiz**: `window.location.href = '/dashboard'` causava reload completo da página, criando race condition com `checkAuth` que resetava o estado do usuário.
-**Correção**:
-- `LoginPage.js`: Substituído `window.location.href` por `navigate()` do React Router (navegação SPA sem reload)
-- `AuthContext.js`: Adicionado `skipNextCheckRef` para evitar que `checkAuth` sobrescreva o estado após login manual
-- Mesmo fix aplicado ao fluxo de registro e OAuth
-- **Testes**: 8/8 backend + 100% frontend (login, logout, rotas protegidas, erro de credenciais)
-
----
-
-## Prioritized Backlog
-
-### P0 (Critical - Done)
-- ✅ Remove ALL mock/simulated data from backend
-- ✅ Add proper empty states to all frontend components
-- ✅ Create cleanup endpoint for production DB
-- ✅ Touchpoints Offline with business rules (4 types, guidance, naming conventions)
-
-### P1 (High Priority - Next)
-- ✅ Refactor `brand_tools.py` -> split into `brand_equity.py`, `email_alerts.py`
-- ✅ Advanced Collaboration & Governance (approval workflows, comments, activity log)
-- ✅ UX: Timeline de evolução, Comparativo antes/depois, Export PNG mindmap
-- ✅ Login Redirect Bug Fix (2026-03-20)
-
-### P2 (Medium Priority - Future)
-- [ ] White-labeling for enterprise clients
-- [ ] Enhance PDF reports with more data (BVS, social, ads, etc.)
-- [ ] Push Notifications for Collaboration module
-
-### Key Endpoints
-- `GET /health` - Kubernetes health check
-- `GET /api/admin/clean-mock-data/{brand_id}` - Clean mock data for a brand
-- `GET /api/touchpoints/offline-types` - Offline touchpoint type definitions
-- `GET /api/brands/{brand_id}/touchpoints` - Touchpoints with offline stats, guidance
-- `POST /api/brands/{brand_id}/touchpoints` - Create touchpoint (returns guidance)
-- `GET /api/brands/{brand_id}/social-listening/dashboard` - Social listening data
-- `POST /api/brands/{brand_id}/reports/executive-pdf` - Generate PDF report
-- `GET /api/brands/{brand_id}/bvs` - BVS Score
-- `GET /api/brands/{brand_id}/metrics` - Dashboard metrics
-
-### Test Credentials
-- Admin: `admin@labrand.com` / `LaBrand@2024!`
-- Brand ID: `brand_29aafd2d6125` (Sandro Serzedello)
+### Critical Notes
+- Production (labrand.com.br) needs "Save to Github" + deploy to get code updates
+- Code changes NEVER affect MongoDB data
+- Always prefix backend routes with /api
+- Use .env for all credentials
