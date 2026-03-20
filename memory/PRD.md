@@ -189,6 +189,16 @@ Files modified:
 - Link na sidebar em Gestao
 - Testes: 15/15 backend + 100% frontend
 
+
+### 2026-03-20 - Fix Login Redirect Bug (P0)
+**Bug**: Login exibia mensagem de sucesso mas não redirecionava para o dashboard.
+**Causa raiz**: `window.location.href = '/dashboard'` causava reload completo da página, criando race condition com `checkAuth` que resetava o estado do usuário.
+**Correção**:
+- `LoginPage.js`: Substituído `window.location.href` por `navigate()` do React Router (navegação SPA sem reload)
+- `AuthContext.js`: Adicionado `skipNextCheckRef` para evitar que `checkAuth` sobrescreva o estado após login manual
+- Mesmo fix aplicado ao fluxo de registro e OAuth
+- **Testes**: 8/8 backend + 100% frontend (login, logout, rotas protegidas, erro de credenciais)
+
 ---
 
 ## Prioritized Backlog
@@ -201,12 +211,14 @@ Files modified:
 
 ### P1 (High Priority - Next)
 - ✅ Refactor `brand_tools.py` -> split into `brand_equity.py`, `email_alerts.py`
-- [ ] Advanced Collaboration & Governance (granular roles, approval workflows)
-- [ ] UX Suggestions: Timeline de evolucao, Comparativo antes/depois, Export PDF mindmap
+- ✅ Advanced Collaboration & Governance (approval workflows, comments, activity log)
+- ✅ UX: Timeline de evolução, Comparativo antes/depois, Export PNG mindmap
+- ✅ Login Redirect Bug Fix (2026-03-20)
 
 ### P2 (Medium Priority - Future)
 - [ ] White-labeling for enterprise clients
 - [ ] Enhance PDF reports with more data (BVS, social, ads, etc.)
+- [ ] Push Notifications for Collaboration module
 
 ### Key Endpoints
 - `GET /health` - Kubernetes health check
