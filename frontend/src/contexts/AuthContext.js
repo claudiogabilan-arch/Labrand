@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -17,8 +17,15 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('labrand_token'));
+  const skipNextCheckRef = React.useRef(false);
 
   const checkAuth = useCallback(async () => {
+    // Skip check if we just did a manual login (user already set)
+    if (skipNextCheckRef.current) {
+      skipNextCheckRef.current = false;
+      setLoading(false);
+      return;
+    }
     try {
       const response = await axios.get(`${API}/auth/me`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -42,8 +49,10 @@ export const AuthProvider = ({ children }) => {
     const response = await axios.post(`${API}/auth/login`, { email, password });
     const { token: newToken, ...userData } = response.data;
     localStorage.setItem('labrand_token', newToken);
+    skipNextCheckRef.current = true;
     setToken(newToken);
     setUser(userData);
+    setLoading(false);
     return userData;
   };
 
@@ -71,9 +80,11 @@ export const AuthProvider = ({ children }) => {
     const userData = response.data;
     if (userData.token) {
       localStorage.setItem('labrand_token', userData.token);
+      skipNextCheckRef.current = true;
       setToken(userData.token);
     }
     setUser(userData);
+    setLoading(false);
     return userData;
   };
 

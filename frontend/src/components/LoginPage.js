@@ -52,14 +52,11 @@ export const LoginPage = () => {
     try {
       const userData = await login(email, password);
       toast.success('Login realizado com sucesso!');
-      // Redirecionar baseado no status de onboarding
-      setTimeout(() => {
-        if (!userData.onboarding_completed) {
-          window.location.href = '/onboarding';
-        } else {
-          window.location.href = '/dashboard';
-        }
-      }, 100);
+      if (!userData.onboarding_completed) {
+        navigate('/onboarding', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erro ao fazer login');
       setIsLoading(false);
@@ -80,12 +77,12 @@ export const LoginPage = () => {
       
       if (response.data.requires_verification) {
         toast.success('Código de verificação enviado para seu email!');
-        window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
+        navigate(`/verify-email?email=${encodeURIComponent(email)}`, { replace: true });
       } else {
         // Fallback para usuários já verificados
-        const { token, ...userData } = response.data;
-        localStorage.setItem('labrand_token', token);
-        window.location.href = '/onboarding';
+        const { token: newToken, ...userData } = response.data;
+        localStorage.setItem('labrand_token', newToken);
+        navigate('/onboarding', { replace: true });
       }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erro ao criar conta');
