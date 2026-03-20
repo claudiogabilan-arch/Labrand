@@ -1,5 +1,5 @@
 """Naming Module Routes - Estúdio Onomástico"""
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 from datetime import datetime, timezone
@@ -102,7 +102,7 @@ async def update_propulsor(brand_id: str, project_id: str, archetype: str = "", 
     return {"success": True}
 
 @router.post("/brands/{brand_id}/naming/{project_id}/semantic-map")
-async def generate_semantic_map(brand_id: str, project_id: str, keywords: List[str] = [], user: dict = Depends(get_current_user)):
+async def generate_semantic_map(brand_id: str, project_id: str, keywords: List[str] = Query(default=[]), user: dict = Depends(get_current_user)):
     if not keywords:
         raise HTTPException(status_code=400, detail="Insira palavras-chave")
     
