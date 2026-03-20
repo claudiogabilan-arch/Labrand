@@ -194,6 +194,7 @@ async def login(user_data: UserLogin, response: Response):
         "trial_ends_at": trial_ends_at,
         "is_trial_active": is_trial_active,
         "onboarding_completed": user.get("onboarding_completed", False),
+        "is_admin": user.get("is_admin", False),
         "token": token
     }
 
@@ -395,8 +396,37 @@ async def get_me(request: Request, user: dict = Depends(get_current_user)):
         "onboarding_completed": user.get("onboarding_completed", False),
         "email_verified": user.get("email_verified", False),
         "plan": user.get("plan", "founder"),
-        "user_type": user.get("user_type", "estrategista")
+        "user_type": user.get("user_type", "estrategista"),
+        "is_admin": user.get("is_admin", False)
     }
+
+
+@router.get("/auth/debug-session")
+async def debug_session(request: Request):
+    """Debug endpoint to check how the server identifies the current user"""
+    result = {"cookie": None, "bearer": None, "user": None}
+    
+    session_token = request.cookies.get("session_token")
+    result["cookie"] = session_token[:20] + "..." if session_token else None
+    
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+        result["bearer"] = token[:20] + "..."
+    
+    try:
+        user = await get_current_user(request)
+        result["user"] = {
+            "user_id": user.get("user_id"),
+            "email": user.get("email"),
+            "role": user.get("role"),
+            "is_admin": user.get("is_admin", False)
+        }
+    except Exception as e:
+        result["user"] = {"error": str(e)}
+    
+    return result
+
 
 
 @router.post("/auth/logout")

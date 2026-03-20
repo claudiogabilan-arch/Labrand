@@ -24,14 +24,17 @@ export const BrandProvider = ({ children }) => {
   const fetchBrands = useCallback(async () => {
     setLoading(true);
     try {
+      const headers = getAuthHeaders();
+      console.log('[BrandContext] fetchBrands - token present:', !!headers.Authorization);
       const response = await axios.get(`${API}/brands`, {
-        headers: getAuthHeaders(),
+        headers,
         withCredentials: true
       });
+      console.log('[BrandContext] fetchBrands - brands count:', response.data?.length);
       setBrands(response.data);
       return response.data;
     } catch (error) {
-      console.error('Error fetching brands:', error);
+      console.error('[BrandContext] fetchBrands error:', error?.response?.status, error?.response?.data);
       return [];
     } finally {
       setLoading(false);

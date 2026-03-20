@@ -450,8 +450,8 @@ export const Header = ({ collapsed }) => {
               <div className="px-2 py-1.5">
                 <p className="text-sm font-medium">{user?.name}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
-                <Badge variant={isEstrategista ? "default" : "secondary"} className="mt-1 text-xs">
-                  {user?.role === 'estrategista' ? 'Estrategista' : 'Cliente'}
+                <Badge variant={user?.role === 'admin' || user?.is_admin ? "destructive" : isEstrategista ? "default" : "secondary"} className="mt-1 text-xs">
+                  {user?.role === 'admin' || user?.is_admin ? 'Admin' : user?.role === 'estrategista' ? 'Estrategista' : 'Cliente'}
                 </Badge>
               </div>
               <DropdownMenuSeparator />
@@ -481,11 +481,18 @@ export const MainLayout = ({ children }) => {
   useEffect(() => {
     if (user && !initialized.current) {
       initialized.current = true;
-      fetchBrands().then(brandsList => {
+      const loadBrands = async () => {
+        let brandsList = await fetchBrands();
+        // Retry once after 500ms if empty (token might not be ready)
+        if (brandsList.length === 0) {
+          await new Promise(r => setTimeout(r, 500));
+          brandsList = await fetchBrands();
+        }
         if (brandsList.length > 0 && !currentBrand) {
           setCurrentBrand(brandsList[0]);
         }
-      });
+      };
+      loadBrands();
     }
   }, [user, fetchBrands, currentBrand, setCurrentBrand]);
 
