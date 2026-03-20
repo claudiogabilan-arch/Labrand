@@ -474,27 +474,8 @@ export const Header = ({ collapsed }) => {
 
 export const MainLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const { currentBrand, fetchBrands, brands, setCurrentBrand, fetchMetrics } = useBrand();
+  const { currentBrand, brands, setCurrentBrand, fetchMetrics } = useBrand();
   const { user } = useAuth();
-  const initialized = useRef(false);
-
-  useEffect(() => {
-    if (user && !initialized.current) {
-      initialized.current = true;
-      const loadBrands = async () => {
-        let brandsList = await fetchBrands();
-        // Retry once after 500ms if empty (token might not be ready)
-        if (brandsList.length === 0) {
-          await new Promise(r => setTimeout(r, 500));
-          brandsList = await fetchBrands();
-        }
-        if (brandsList.length > 0 && !currentBrand) {
-          setCurrentBrand(brandsList[0]);
-        }
-      };
-      loadBrands();
-    }
-  }, [user, fetchBrands, currentBrand, setCurrentBrand]);
 
   useEffect(() => {
     if (currentBrand?.brand_id) {

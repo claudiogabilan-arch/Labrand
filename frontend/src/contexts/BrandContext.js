@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
 
@@ -15,36 +15,73 @@ export const useBrand = () => {
 };
 
 export const BrandProvider = ({ children }) => {
-  const { getAuthHeaders } = useAuth();
+  const { user, token } = useAuth();
   const [brands, setBrands] = useState([]);
   const [currentBrand, setCurrentBrand] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(false);
+  const hasFetchedRef = useRef(false);
 
   const fetchBrands = useCallback(async () => {
+    // Get token directly from localStorage as fallback
+    const authToken = token || localStorage.getItem('labrand_token');
+    if (!authToken) return [];
+    
     setLoading(true);
     try {
-      const headers = getAuthHeaders();
-      console.log('[BrandContext] fetchBrands - token present:', !!headers.Authorization);
       const response = await axios.get(`${API}/brands`, {
-        headers,
+        headers: { Authorization: `Bearer ${authToken}` },
         withCredentials: true
       });
-      console.log('[BrandContext] fetchBrands - brands count:', response.data?.length);
-      setBrands(response.data);
-      return response.data;
+      const brandsList = response.data || [];
+      setBrands(brandsList);
+      // Auto-select first brand if none selected
+      if (brandsList.length > 0 && !currentBrand) {
+        const savedBrandId = localStorage.getItem('labrand_current_brand');
+        const saved = savedBrandId ? brandsList.find(b => b.brand_id === savedBrandId) : null;
+        setCurrentBrand(saved || brandsList[0]);
+      }
+      return brandsList;
     } catch (error) {
-      console.error('[BrandContext] fetchBrands error:', error?.response?.status, error?.response?.data);
+      console.error('[BrandContext] fetchBrands error:', error?.response?.status);
       return [];
     } finally {
       setLoading(false);
     }
-  }, [getAuthHeaders]);
+  }, [token, currentBrand]);
+
+  // AUTO-FETCH: Load brands whenever user is authenticated
+  useEffect(() => {
+    const authToken = token || localStorage.getItem('labrand_token');
+    if (user && authToken && !hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+      fetchBrands();
+    }
+    // Reset when user logs out
+    if (!user && !authToken) {
+      hasFetchedRef.current = false;
+      setBrands([]);
+      setCurrentBrand(null);
+    }
+  }, [user, token, fetchBrands]);
+
+  // Persist selected brand
+  const handleSetCurrentBrand = useCallback((brand) => {
+    setCurrentBrand(brand);
+    if (brand?.brand_id) {
+      localStorage.setItem('labrand_current_brand', brand.brand_id);
+    }
+  }, []);
+
+  const getHeaders = useCallback(() => {
+    const authToken = token || localStorage.getItem('labrand_token');
+    return authToken ? { Authorization: `Bearer ${authToken}` } : {};
+  }, [token]);
 
   const fetchBrand = useCallback(async (brandId) => {
     try {
       const response = await axios.get(`${API}/brands/${brandId}`, {
-        headers: getAuthHeaders(),
+        headers: getHeaders(),
         withCredentials: true
       });
       setCurrentBrand(response.data);
@@ -53,11 +90,11 @@ export const BrandProvider = ({ children }) => {
       console.error('Error fetching brand:', error);
       return null;
     }
-  }, [getAuthHeaders]);
+  }, [getHeaders]);
 
   const createBrand = async (brandData) => {
     const response = await axios.post(`${API}/brands`, brandData, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
     setBrands(prev => [...prev, response.data]);
@@ -66,7 +103,7 @@ export const BrandProvider = ({ children }) => {
 
   const updateBrand = async (brandId, brandData) => {
     const response = await axios.put(`${API}/brands/${brandId}`, brandData, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
     setBrands(prev => prev.map(b => b.brand_id === brandId ? response.data : b));
@@ -79,7 +116,7 @@ export const BrandProvider = ({ children }) => {
   const fetchMetrics = useCallback(async (brandId) => {
     try {
       const response = await axios.get(`${API}/brands/${brandId}/metrics`, {
-        headers: getAuthHeaders(),
+        headers: getHeaders(),
         withCredentials: true
       });
       setMetrics(response.data);
@@ -88,12 +125,12 @@ export const BrandProvider = ({ children }) => {
       console.error('Error fetching metrics:', error);
       return null;
     }
-  }, [getAuthHeaders]);
+  }, [getHeaders]);
 
   // Pillar operations
   const fetchPillar = async (brandId, pillarName) => {
     const response = await axios.get(`${API}/brands/${brandId}/pillars/${pillarName}`, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
     return response.data;
@@ -101,7 +138,7 @@ export const BrandProvider = ({ children }) => {
 
   const updatePillar = async (brandId, pillarName, data) => {
     const response = await axios.put(`${API}/brands/${brandId}/pillars/${pillarName}`, data, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
     return response.data;
@@ -110,7 +147,7 @@ export const BrandProvider = ({ children }) => {
   // Task operations
   const fetchTasks = async (brandId) => {
     const response = await axios.get(`${API}/brands/${brandId}/tasks`, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
     return response.data;
@@ -118,7 +155,7 @@ export const BrandProvider = ({ children }) => {
 
   const createTask = async (brandId, taskData) => {
     const response = await axios.post(`${API}/brands/${brandId}/tasks`, taskData, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
     return response.data;
@@ -126,7 +163,7 @@ export const BrandProvider = ({ children }) => {
 
   const updateTask = async (brandId, taskId, taskData) => {
     const response = await axios.put(`${API}/brands/${brandId}/tasks/${taskId}`, taskData, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
     return response.data;
@@ -134,7 +171,7 @@ export const BrandProvider = ({ children }) => {
 
   const deleteTask = async (brandId, taskId) => {
     await axios.delete(`${API}/brands/${brandId}/tasks/${taskId}`, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
   };
@@ -142,7 +179,7 @@ export const BrandProvider = ({ children }) => {
   // Decision operations
   const fetchDecisions = async (brandId) => {
     const response = await axios.get(`${API}/brands/${brandId}/decisions`, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
     return response.data;
@@ -150,7 +187,7 @@ export const BrandProvider = ({ children }) => {
 
   const createDecision = async (brandId, decisionData) => {
     const response = await axios.post(`${API}/brands/${brandId}/decisions`, decisionData, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
     return response.data;
@@ -158,7 +195,7 @@ export const BrandProvider = ({ children }) => {
 
   const updateDecision = async (brandId, decisionId, decisionData) => {
     const response = await axios.put(`${API}/brands/${brandId}/decisions/${decisionId}`, decisionData, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
     return response.data;
@@ -167,7 +204,7 @@ export const BrandProvider = ({ children }) => {
   // Narrative operations
   const fetchNarratives = async (brandId) => {
     const response = await axios.get(`${API}/brands/${brandId}/narratives`, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
     return response.data;
@@ -175,7 +212,7 @@ export const BrandProvider = ({ children }) => {
 
   const createNarrative = async (brandId, narrativeData) => {
     const response = await axios.post(`${API}/brands/${brandId}/narratives`, narrativeData, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
     return response.data;
@@ -183,7 +220,7 @@ export const BrandProvider = ({ children }) => {
 
   const updateNarrative = async (brandId, narrativeId, narrativeData) => {
     const response = await axios.put(`${API}/brands/${brandId}/narratives/${narrativeId}`, narrativeData, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
     return response.data;
@@ -196,7 +233,7 @@ export const BrandProvider = ({ children }) => {
       pillar,
       brand_name: brandName
     }, {
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       withCredentials: true
     });
     return response.data;
@@ -212,7 +249,7 @@ export const BrandProvider = ({ children }) => {
       fetchBrand,
       createBrand,
       updateBrand,
-      setCurrentBrand,
+      setCurrentBrand: handleSetCurrentBrand,
       fetchMetrics,
       fetchPillar,
       updatePillar,
