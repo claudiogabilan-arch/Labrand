@@ -19,8 +19,6 @@ from routes.brands import router as brands_router
 from routes.pillars import router as pillars_router
 from routes.ai import router as ai_router
 from routes.credits import router as credits_router
-from routes.plans import router as plans_router
-from routes.stripe import router as stripe_router
 from routes.maturity import router as maturity_router
 from routes.brand_tools import router as brand_tools_router
 from routes.brand_equity import router as brand_equity_router
@@ -80,8 +78,6 @@ api_router.include_router(brands_router)
 api_router.include_router(pillars_router)
 api_router.include_router(ai_router)
 api_router.include_router(credits_router)
-api_router.include_router(plans_router)
-api_router.include_router(stripe_router)
 api_router.include_router(maturity_router)
 api_router.include_router(brand_tools_router)
 api_router.include_router(brand_equity_router)

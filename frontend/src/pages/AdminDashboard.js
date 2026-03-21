@@ -35,24 +35,14 @@ const ACTION_LABELS = {
   purchase_enterprise: 'Compra Enterprise'
 };
 
-const PLAN_COLORS = {
-  free: 'bg-gray-100 text-gray-700 border-gray-300',
-  founder: 'bg-blue-100 text-blue-700 border-blue-300',
-  essencial: 'bg-green-100 text-green-700 border-green-300',
-  executivo: 'bg-purple-100 text-purple-700 border-purple-300',
-  enterprise: 'bg-amber-100 text-amber-700 border-amber-300'
-};
-
 const PAYMENT_STATUS_COLORS = {
-  pagante: 'bg-green-500 text-white',
-  trial: 'bg-blue-500 text-white',
-  free: 'bg-gray-400 text-white'
+  ativo: 'bg-green-500 text-white',
+  inativo: 'bg-gray-400 text-white'
 };
 
 const PAYMENT_STATUS_LABELS = {
-  pagante: 'Pagante',
-  trial: 'Trial',
-  free: 'Free'
+  ativo: 'Ativo',
+  inativo: 'Inativo'
 };
 
 function formatDate(dateStr) {
@@ -102,14 +92,10 @@ function UserDetailDialog({ user, open, onClose }) {
         </DialogHeader>
         <div className="space-y-4 mt-2">
           {/* Status */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="p-3 rounded-lg bg-muted/50 text-center">
               <Badge className={PAYMENT_STATUS_COLORS[user.payment_status] || 'bg-gray-400'}>{PAYMENT_STATUS_LABELS[user.payment_status] || user.payment_status}</Badge>
               <p className="text-xs text-muted-foreground mt-1">Status</p>
-            </div>
-            <div className="p-3 rounded-lg bg-muted/50 text-center">
-              <p className="font-bold">{user.plan || 'free'}</p>
-              <p className="text-xs text-muted-foreground">Plano</p>
             </div>
             <div className="p-3 rounded-lg bg-muted/50 text-center">
               <p className="font-bold">{user.role}</p>
@@ -125,7 +111,6 @@ function UserDetailDialog({ user, open, onClose }) {
               <div className="flex justify-between"><span className="text-muted-foreground">Ultima atividade</span><span>{timeSince(user.last_activity)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Email verificado</span><span>{user.email_verified ? 'Sim' : 'Nao'}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Onboarding</span><span>{user.onboarding_completed ? 'Completo' : 'Pendente'}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Trial ate</span><span>{formatDate(user.trial_ends_at)}</span></div>
             </CardContent>
           </Card>
 
@@ -180,7 +165,6 @@ export default function AdminDashboard() {
   const [aiUsage, setAiUsage] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
-  const [planFilter, setPlanFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -233,7 +217,6 @@ export default function AdminDashboard() {
       const params = new URLSearchParams({ limit: '100' });
       if (searchQuery) params.set('search', searchQuery);
       if (roleFilter !== 'all') params.set('role', roleFilter);
-      if (planFilter !== 'all') params.set('plan', planFilter);
       
       const res = await axios.get(`${API}/admin/users?${params}`, { headers: { Authorization: `Bearer ${token}` } });
       setUsers(res.data.users);
@@ -246,7 +229,7 @@ export default function AdminDashboard() {
       const t = setTimeout(loadFilteredUsers, 300);
       return () => clearTimeout(t);
     }
-  }, [searchQuery, roleFilter, planFilter]);
+  }, [searchQuery, roleFilter]);
 
   const openUserDetail = (u) => {
     setSelectedUser(u);
@@ -468,20 +451,6 @@ export default function AdminDashboard() {
                 <SelectItem value="cliente">Cliente</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={planFilter} onValueChange={setPlanFilter}>
-              <SelectTrigger className="w-[150px]" data-testid="admin-plan-filter">
-                <SelectValue placeholder="Plano" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos Planos</SelectItem>
-                <SelectItem value="paying">Pagantes</SelectItem>
-                <SelectItem value="free">Free</SelectItem>
-                <SelectItem value="founder">Founder</SelectItem>
-                <SelectItem value="essencial">Essencial</SelectItem>
-                <SelectItem value="executivo">Executivo</SelectItem>
-                <SelectItem value="enterprise">Enterprise</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Users Table */}
@@ -493,7 +462,6 @@ export default function AdminDashboard() {
                     <tr className="border-b bg-muted/50">
                       <th className="text-left p-3 font-medium">Usuario</th>
                       <th className="text-left p-3 font-medium">Role</th>
-                      <th className="text-left p-3 font-medium">Plano</th>
                       <th className="text-center p-3 font-medium">Status</th>
                       <th className="text-center p-3 font-medium">Marcas</th>
                       <th className="text-center p-3 font-medium">TPs</th>
@@ -519,9 +487,6 @@ export default function AdminDashboard() {
                         </td>
                         <td className="p-3">
                           <Badge variant="outline" className="text-xs">{u.role || u.user_type || '-'}</Badge>
-                        </td>
-                        <td className="p-3">
-                          <Badge className={`text-xs ${PLAN_COLORS[u.plan] || PLAN_COLORS.free}`}>{u.plan || 'free'}</Badge>
                         </td>
                         <td className="p-3 text-center">
                           <Badge className={`text-xs ${PAYMENT_STATUS_COLORS[u.payment_status] || 'bg-gray-400 text-white'}`}>
@@ -780,18 +745,6 @@ export default function AdminDashboard() {
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader><CardTitle className="text-lg">Usuarios por Plano</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
-                {Object.entries(stats?.users?.by_plan || {}).map(([plan, count]) => (
-                  <div key={plan} className="flex items-center justify-between">
-                    <Badge className={PLAN_COLORS[plan] || PLAN_COLORS.free}>{plan.charAt(0).toUpperCase() + plan.slice(1)}</Badge>
-                    <span className="font-bold">{count}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
             <Card>
               <CardHeader><CardTitle className="text-lg">Uso de IA por Tipo</CardTitle></CardHeader>
               <CardContent className="space-y-3">

@@ -4,10 +4,8 @@ import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { BrandProvider } from "./contexts/BrandContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { PlanProvider } from "./contexts/PlanContext";
 import { MainLayout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { ProtectedFeature } from "./components/FeatureGate";
 import { AuthCallback } from "./components/AuthCallback";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./components/LoginPage";
@@ -34,7 +32,6 @@ import Benchmark from "./pages/Benchmark";
 import Simulator from "./pages/Simulator";
 import Audience from "./pages/Audience";
 import Campaigns from "./pages/Campaigns";
-import Plans from "./pages/Plans";
 import BrandIdentity from "./pages/BrandIdentity";
 import InvestmentMatch from "./pages/InvestmentMatch";
 import ResetPassword from "./pages/ResetPassword";
@@ -344,18 +341,6 @@ function AppRouter() {
             <BrandProvider>
               <MainLayout>
                 <Simulator />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/plans"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Plans />
               </MainLayout>
             </BrandProvider>
           </ProtectedRoute>
@@ -721,9 +706,7 @@ function App() {
       <ThemeProvider>
         <BrowserRouter>
           <AuthProvider>
-            <PlanProvider>
               <AppRouter />
-            </PlanProvider>
           </AuthProvider>
         </BrowserRouter>
         <Toaster 

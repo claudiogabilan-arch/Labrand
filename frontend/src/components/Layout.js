@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useBrand } from '../contexts/BrandContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { usePlan } from '../contexts/PlanContext';
 import { Button } from './ui/button';
 import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -159,7 +158,6 @@ const sections = [
     icon: Settings,
     items: [
       { name: 'Créditos IA', href: '/ai-credits', icon: Star, featureId: 'ai_credits' },
-      { name: 'Planos', href: '/plans', icon: DollarSign, featureId: 'plans' },
       { name: 'Configurações', href: '/settings', icon: Settings, featureId: 'settings' },
       { name: 'Admin', href: '/admin', icon: Shield, featureId: 'admin', adminOnly: true },
     ]

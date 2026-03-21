@@ -7,7 +7,7 @@ import uuid
 import httpx
 import os
 
-from config import db, PLANS, TRIAL_DAYS
+from config import db, PLANS
 from models.schemas import UserCreate, UserLogin, VerifyEmailRequest, ResendCodeRequest, ForgotPasswordRequest, ResetPasswordRequest, OnboardingData
 from utils.helpers import pwd_context, create_jwt_token, get_current_user, send_email
 
@@ -33,8 +33,7 @@ async def register(user_data: UserCreate):
         "role": user_data.role,
         "user_type": user_data.user_type,
         "picture": None,
-        "plan": "founder",
-        "trial_ends_at": (datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS)).isoformat(),
+        "plan": "internal",
         "ai_requests_used": 0,
         "ai_requests_reset_at": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
         "onboarding_completed": False,
@@ -94,8 +93,8 @@ async def verify_email(data: VerifyEmailRequest):
             <p style="color: #444; font-size: 16px; line-height: 1.6;">Olá <strong>{user['name']}</strong>,</p>
             <p style="color: #444; font-size: 16px; line-height: 1.6;">Sua conta foi ativada com sucesso!</p>
             <div style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%); border-radius: 8px; padding: 24px; margin: 24px 0;">
-                <p style="color: white; margin: 0; font-size: 14px;">Seu plano atual</p>
-                <p style="color: white; margin: 8px 0 0; font-size: 24px; font-weight: bold;">Founder + {TRIAL_DAYS} dias grátis</p>
+                <p style="color: white; margin: 0; font-size: 14px;">Status da conta</p>
+                <p style="color: white; margin: 8px 0 0; font-size: 24px; font-weight: bold;">Acesso ativo</p>
             </div>
             <a href="{os.environ.get('FRONTEND_URL', 'https://labrand.com.br')}/dashboard" style="display: inline-block; background: #1a1a1a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 16px;">Acessar Plataforma</a>
         </div>
@@ -111,8 +110,6 @@ async def verify_email(data: VerifyEmailRequest):
         "name": user["name"],
         "role": user.get("role", "cliente"),
         "user_type": user.get("user_type", "estrategista"),
-        "plan": user.get("plan", "founder"),
-        "trial_ends_at": user.get("trial_ends_at"),
         "onboarding_completed": False,
         "token": token
     }
@@ -174,15 +171,6 @@ async def login(user_data: UserLogin, response: Response):
     
     token = create_jwt_token(user["user_id"], user["email"], user.get("role", "cliente"))
     
-    plan = user.get("plan", "free")
-    trial_ends_at = user.get("trial_ends_at")
-    is_trial_active = False
-    if trial_ends_at:
-        trial_dt = datetime.fromisoformat(trial_ends_at) if isinstance(trial_ends_at, str) else trial_ends_at
-        if trial_dt.tzinfo is None:
-            trial_dt = trial_dt.replace(tzinfo=timezone.utc)
-        is_trial_active = trial_dt > datetime.now(timezone.utc)
-    
     return {
         "user_id": user["user_id"],
         "email": user["email"],
@@ -190,9 +178,6 @@ async def login(user_data: UserLogin, response: Response):
         "role": user.get("role", "cliente"),
         "user_type": user.get("user_type", "estrategista"),
         "picture": user.get("picture"),
-        "plan": plan,
-        "trial_ends_at": trial_ends_at,
-        "is_trial_active": is_trial_active,
         "onboarding_completed": user.get("onboarding_completed", False),
         "is_admin": user.get("is_admin", False),
         "token": token
@@ -360,10 +345,9 @@ async def process_session(request: Request, response: Response):
             "name": session_data.get("name", ""),
             "picture": session_data.get("picture"),
             "role": "estrategista",
-            "plan": "free",
+            "plan": "internal",
             "email_verified": True,
             "onboarding_completed": False,
-            "trial_ends_at": (now + timedelta(days=7)).isoformat(),
             "created_at": now.isoformat()
         }
         await db.users.insert_one(user)
@@ -428,7 +412,7 @@ async def get_me(request: Request, user: dict = Depends(get_current_user)):
         "picture": user.get("picture"),
         "onboarding_completed": user.get("onboarding_completed", False),
         "email_verified": user.get("email_verified", False),
-        "plan": user.get("plan", "founder"),
+        "plan": user.get("plan", "internal"),
         "user_type": user.get("user_type", "estrategista"),
         "is_admin": user.get("is_admin", False)
     }

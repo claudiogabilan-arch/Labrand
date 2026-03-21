@@ -47,9 +47,8 @@ async def setup_admin(data: dict):
     user_doc = {
         "user_id": user_id, "email": email, "name": name,
         "password": hashed, "role": "admin", "is_admin": True,
-        "user_type": "estrategista", "plan": "enterprise",
+        "user_type": "estrategista", "plan": "internal",
         "email_verified": True, "onboarding_completed": True,
-        "trial_ends_at": (now + timedelta(days=365)).isoformat(),
         "created_at": now.isoformat()
     }
     await db.users.insert_one(user_doc)
@@ -107,9 +106,6 @@ async def force_password(data: dict):
 async def get_admin_stats(user: dict = Depends(get_admin_user)):
     total_users = await db.users.count_documents({})
     active_users = await db.users.count_documents({"email_verified": True})
-    users_by_plan = {}
-    for plan in ["free", "founder", "essencial", "executivo", "enterprise"]:
-        users_by_plan[plan] = await db.users.count_documents({"plan": plan})
     
     total_brands = await db.brands.count_documents({})
     
@@ -139,7 +135,7 @@ async def get_admin_stats(user: dict = Depends(get_admin_user)):
     revenue_stats = revenue_result[0] if revenue_result else {"total_revenue": 0, "total_transactions": 0}
     
     return {
-        "users": {"total": total_users, "active": active_users, "by_plan": users_by_plan},
+        "users": {"total": total_users, "active": active_users},
         "brands": {"total": total_brands},
         "credits": credits_stats,
         "usage_by_type": usage_by_type,
@@ -150,17 +146,10 @@ async def get_admin_stats(user: dict = Depends(get_admin_user)):
     }
 
 @router.get("/admin/users")
-async def get_admin_users(skip: int = 0, limit: int = 50, role: str = None, plan: str = None, search: str = None, user: dict = Depends(get_admin_user)):
+async def get_admin_users(skip: int = 0, limit: int = 50, role: str = None, search: str = None, user: dict = Depends(get_admin_user)):
     query = {}
     if role:
         query["role"] = role
-    if plan:
-        if plan == "paying":
-            query["plan"] = {"$nin": ["free", None]}
-        elif plan == "free":
-            query["$or"] = [{"plan": "free"}, {"plan": None}, {"plan": {"$exists": False}}]
-        else:
-            query["plan"] = plan
     if search:
         query["$or"] = [
             {"name": {"$regex": search, "$options": "i"}},
@@ -171,7 +160,6 @@ async def get_admin_users(skip: int = 0, limit: int = 50, role: str = None, plan
     total = await db.users.count_documents(query)
     
     now = datetime.now(timezone.utc)
-    thirty_days_ago = (now - timedelta(days=30)).isoformat()
     
     for u in users:
         uid = u["user_id"]
@@ -204,16 +192,8 @@ async def get_admin_users(skip: int = 0, limit: int = 50, role: str = None, plan
         
         # Payment status
         has_paid = await db.payment_transactions.count_documents({"user_id": uid, "payment_status": "paid"})
-        trial_ends = u.get("trial_ends_at", "")
-        trial_active = False
-        if trial_ends:
-            try:
-                trial_dt = datetime.fromisoformat(trial_ends.replace("Z", "+00:00")) if isinstance(trial_ends, str) else trial_ends
-                trial_active = trial_dt > now
-            except:
-                pass
         
-        u["payment_status"] = "pagante" if has_paid > 0 else ("trial" if trial_active else "free")
+        u["payment_status"] = "ativo"
         u["total_payments"] = has_paid
         
         # Last activity (AI usage)
@@ -289,7 +269,7 @@ async def reset_database(secret_key: str):
         try:
             r = await db[coll].delete_many({})
             results[coll] = r.deleted_count
-        except:
+        except Exception:
             results[coll] = 0
     
     total = sum(v for v in results.values() if isinstance(v, int))
