@@ -124,14 +124,47 @@ async def serve_logo(filename: str):
 # Include the main API router
 app.include_router(api_router)
 
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS middleware - explicit origins required when allow_credentials=True
+cors_origins_env = os.environ.get("CORS_ORIGINS", "")
+frontend_url = os.environ.get("FRONTEND_URL", "")
+
+allowed_origins = []
+if cors_origins_env and cors_origins_env != "*":
+    allowed_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
+if frontend_url and frontend_url not in allowed_origins:
+    allowed_origins.append(frontend_url)
+
+# Fallback: if no explicit origins configured, allow all via dynamic origin matching
+if not allowed_origins:
+    from starlette.middleware.base import BaseHTTPMiddleware
+    from starlette.requests import Request
+    from starlette.responses import Response
+
+    class DynamicCORSMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request: Request, call_next):
+            origin = request.headers.get("origin", "")
+            if request.method == "OPTIONS":
+                response = Response(status_code=200)
+            else:
+                response = await call_next(request)
+            if origin:
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+                response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+                response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+            return response
+
+    app.add_middleware(DynamicCORSMiddleware)
+    logger.info("CORS: Dynamic origin matching enabled (no explicit origins configured)")
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origins=allowed_origins,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    logger.info(f"CORS: Allowed origins = {allowed_origins}")
 
 # Configure logging
 logging.basicConfig(
