@@ -235,14 +235,14 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
         key={item.href}
         to={item.href}
         data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
-        className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all ${
+        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors duration-200 ${
           isActive
-            ? 'bg-primary/10 text-primary font-medium'
-            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            ? 'bg-accent text-accent-foreground font-medium'
+            : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
         } ${collapsed ? 'justify-center' : ''}`}
         title={collapsed ? item.name : undefined}
       >
-        <Icon className="h-4 w-4 flex-shrink-0" />
+        <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? 'text-secondary' : ''}`} />
         {!collapsed && (
           <div className="flex-1 flex items-center justify-between">
             <span className="truncate">{item.name}</span>
@@ -259,20 +259,20 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
 
   return (
     <aside
-      className={`fixed left-0 top-0 z-40 h-screen bg-card border-r sidebar-transition ${
+      className={`fixed left-0 top-0 z-40 h-screen bg-background border-r border-border/50 sidebar-transition ${
         collapsed ? 'w-16' : 'w-64'
       }`}
       data-testid="sidebar"
     >
       <div className="flex flex-col h-full">
         {/* Logo */}
-        <div className={`flex items-center h-16 px-4 border-b ${collapsed ? 'justify-center' : 'justify-between'}`}>
+        <div className={`flex items-center h-14 px-4 border-b border-border/50 ${collapsed ? 'justify-center' : 'justify-between'}`}>
           {!collapsed && (
             <Link to="/dashboard" className="flex items-center gap-2" data-testid="logo-link">
               <img 
                 src={theme === 'dark' ? '/logo-white.png' : '/logo-black.png'} 
                 alt="LABrand" 
-                className="h-8 w-auto"
+                className="h-7 w-auto"
               />
             </Link>
           )}
@@ -281,7 +281,7 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
               <img 
                 src={theme === 'dark' ? '/icon-skull-white.png' : '/icon-skull-black.png'} 
                 alt="LABrand" 
-                className="h-8 w-8"
+                className="h-7 w-7"
               />
             </Link>
           )}
@@ -290,11 +290,11 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
               variant="ghost"
               size="icon"
               onClick={() => setCollapsed(!collapsed)}
-              className="h-8 w-8"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
               data-testid="toggle-sidebar-btn"
               aria-label="Recolher menu"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
           )}
         </div>
@@ -340,10 +340,10 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
                   <button
                     onClick={() => toggleSection(section.id)}
                     data-testid={`section-${section.id}`}
-                    className={`flex items-center w-full px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all ${
+                    className={`flex items-center w-full px-3 py-2 rounded-lg text-xs font-medium uppercase tracking-[0.05em] transition-colors duration-200 ${
                       hasActiveChild
-                        ? 'text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
+                        ? 'text-secondary'
+                        : 'text-muted-foreground/70 hover:text-foreground'
                     }`}
                   >
                     <SectionIcon className="h-3.5 w-3.5 mr-2 flex-shrink-0" />
@@ -392,7 +392,7 @@ export const Header = ({ collapsed }) => {
 
   return (
     <header
-      className={`fixed top-0 right-0 z-30 h-16 bg-card/80 backdrop-blur-sm border-b transition-all ${
+      className={`fixed top-0 right-0 z-30 h-14 bg-background/80 backdrop-blur-xl border-b border-border/50 transition-all sidebar-transition ${
         collapsed ? 'left-16' : 'left-64'
       }`}
       data-testid="header"
@@ -402,8 +402,8 @@ export const Header = ({ collapsed }) => {
         <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2" data-testid="brand-selector">
-                <Building2 className="h-4 w-4" />
+              <Button variant="ghost" className="gap-2 h-9 px-3 border border-border/50 hover:border-border text-sm font-medium" data-testid="brand-selector">
+                <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="max-w-[200px] truncate">
                   {currentBrand?.name || 'Selecionar Marca'}
                 </span>
@@ -490,9 +490,9 @@ export const MainLayout = ({ children }) => {
       <Header collapsed={collapsed} />
       <main
         id="main-content"
-        className={`pt-16 min-h-screen transition-all ${collapsed ? 'ml-16' : 'ml-64'}`}
+        className={`pt-14 min-h-screen sidebar-transition ${collapsed ? 'ml-16' : 'ml-64'}`}
       >
-        <div className="p-6 md:p-8 animate-fade-in">
+        <div className="relative px-6 md:px-8 py-8 max-w-7xl animate-fade-in">
           {children}
         </div>
       </main>

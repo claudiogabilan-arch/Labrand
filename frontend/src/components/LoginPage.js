@@ -92,79 +92,78 @@ export const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-black items-center justify-center">
-        <div className="text-center">
-          <div className="flex flex-col items-center gap-4">
-            <img 
-              src="/logo-white.png" 
-              alt="LABrand" 
-              className="h-24 w-auto"
-            />
-            <p className="text-white/60 text-sm mt-8">Brand Builder for Equity</p>
-          </div>
+      {/* Left Panel - Pure Black Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-zinc-950 items-center justify-center relative overflow-hidden">
+        <div className="relative z-10 flex flex-col items-center gap-6">
+          <img 
+            src="/logo-white.png" 
+            alt="LABrand" 
+            className="h-20 w-auto"
+          />
+          <div className="w-16 h-px bg-white/20 mt-2" />
+          <p className="text-white/40 text-sm font-light tracking-widest uppercase mt-2">Brand Builder for Equity</p>
         </div>
       </div>
 
-      {/* Right Panel - Auth Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-background">
-        <div className="w-full max-w-md space-y-8">
+      {/* Right Panel - Pure White Auth Form */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-white">
+        <div className="w-full max-w-[400px] space-y-8">
           {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
+          <div className="lg:hidden flex items-center justify-center mb-8">
             <img 
               src="/logo-black.png" 
               alt="LABrand" 
-              className="h-12 w-auto"
+              className="h-10 w-auto"
             />
           </div>
 
-          <Card className="border-0 shadow-lg" data-testid="auth-card">
-            <CardHeader className="space-y-1 pb-4">
-              <CardTitle className="font-heading text-2xl">
+          <Card className="border-0 shadow-none bg-transparent" data-testid="auth-card">
+            <CardHeader className="space-y-2 pb-6 px-0">
+              <CardTitle className="font-heading text-2xl font-bold text-zinc-900">
                 {activeTab === 'login' ? 'Bem-vindo de volta' : 'Criar conta'}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-zinc-500">
                 {activeTab === 'login' 
                   ? 'Entre na sua conta para continuar' 
                   : 'Preencha os dados para criar sua conta'}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-0">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="login" data-testid="login-tab">Entrar</TabsTrigger>
-                  <TabsTrigger value="register" data-testid="register-tab">Cadastrar</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 mb-6 bg-zinc-100 p-1 rounded-lg">
+                  <TabsTrigger value="login" className="data-[state=active]:bg-white data-[state=active]:text-zinc-900 data-[state=active]:shadow-sm rounded-md text-zinc-500 text-sm font-medium" data-testid="login-tab">Entrar</TabsTrigger>
+                  <TabsTrigger value="register" className="data-[state=active]:bg-white data-[state=active]:text-zinc-900 data-[state=active]:shadow-sm rounded-md text-zinc-500 text-sm font-medium" data-testid="register-tab">Cadastrar</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="login" className="space-y-4">
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="login-email">Email</Label>
+                      <Label htmlFor="login-email" className="text-zinc-700 text-sm font-medium">Email</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                         <Input
                           id="login-email"
                           type="email"
                           placeholder="seu@email.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10"
+                          className="pl-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900/10 h-11 bg-white"
                           required
                           data-testid="login-email-input"
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="login-password">Senha</Label>
+                      <Label htmlFor="login-password" className="text-zinc-700 text-sm font-medium">Senha</Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                         <Input
                           id="login-password"
                           type="password"
                           placeholder="••••••••"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10"
+                          className="pl-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900/10 h-11 bg-white"
                           required
                           data-testid="login-password-input"
                         />
@@ -173,7 +172,7 @@ export const LoginPage = () => {
                         <button
                           type="button"
                           onClick={() => setShowForgotPassword(true)}
-                          className="text-sm text-primary hover:underline"
+                          className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
                           data-testid="forgot-password-link"
                         >
                           Esqueci minha senha
@@ -182,7 +181,7 @@ export const LoginPage = () => {
                     </div>
                     <Button 
                       type="submit" 
-                      className="w-full bg-primary hover:bg-primary/90" 
+                      className="w-full bg-zinc-900 hover:bg-zinc-800 text-white h-11 font-medium" 
                       disabled={isLoading}
                       data-testid="login-submit-btn"
                     >
@@ -264,7 +263,7 @@ export const LoginPage = () => {
                     </div>
                     <Button 
                       type="submit" 
-                      className="w-full bg-primary hover:bg-primary/90" 
+                      className="w-full bg-zinc-900 hover:bg-zinc-800 text-white h-11 font-medium" 
                       disabled={isLoading || !userType}
                       data-testid="register-submit-btn"
                     >
@@ -284,16 +283,16 @@ export const LoginPage = () => {
               {/* Google OAuth - Emergent Auth */}
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t" />
+                  <div className="w-full border-t border-zinc-200" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">ou continue com</span>
+                  <span className="bg-white px-3 text-zinc-400 tracking-wider">ou continue com</span>
                 </div>
               </div>
 
               <Button
                 variant="outline"
-                className="w-full"
+                className="w-full h-11 border-zinc-200 hover:bg-zinc-50 text-zinc-700 font-medium"
                 onClick={loginWithGoogle}
                 disabled={isLoading}
                 data-testid="google-login-btn"

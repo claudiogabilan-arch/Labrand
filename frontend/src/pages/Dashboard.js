@@ -107,45 +107,48 @@ export const Dashboard = () => {
   const overallProgress = metrics?.overall_completion || 0;
 
   return (
-    <div className="space-y-8" data-testid="dashboard">
+    <div className="space-y-8 relative" data-testid="dashboard">
+      {/* Ambient orb for visual life */}
+      <div className="ambient-orb -top-24 -right-24 opacity-60" />
+
       {/* Welcome Section */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 relative z-10">
         <div>
-          <h1 className="font-heading text-3xl font-bold">
+          <h1 className="font-heading text-2xl font-bold tracking-tight">
             Olá, {user?.name?.split(' ')[0]}!
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 text-sm">
             Gerencie a marca <span className="font-medium text-foreground">{currentBrand.name}</span>
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant="outline" className="px-3 py-1.5">
-            <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
+          <Badge variant="outline" className="px-3 py-1.5 border-border/60 text-sm font-medium">
+            <TrendingUp className="h-3.5 w-3.5 mr-1.5 text-secondary" />
             {overallProgress}% concluído
           </Badge>
         </div>
       </div>
 
       {/* Overall Progress Card */}
-      <Card className="border-l-4 border-l-primary" data-testid="overall-progress-card">
-        <CardContent className="pt-6">
+      <Card className="border border-border/50 overflow-hidden relative z-10" data-testid="overall-progress-card">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-secondary/80 to-secondary/20" style={{width: `${overallProgress}%`}} />
+        <CardContent className="pt-6 pb-6">
           <div className="flex flex-col md:flex-row md:items-center gap-6">
             <div className="flex-1">
-              <h3 className="font-heading font-semibold text-lg mb-2">Progresso Geral da Marca</h3>
-              <Progress value={overallProgress} className="h-3" />
+              <h3 className="font-heading font-semibold text-base mb-3">Progresso Geral da Marca</h3>
+              <Progress value={overallProgress} className="h-1.5 [&>div]:bg-secondary" />
               <p className="text-sm text-muted-foreground mt-2">
                 {overallProgress < 30 && 'Você está começando! Complete os pilares para fortalecer sua marca.'}
                 {overallProgress >= 30 && overallProgress < 70 && 'Bom progresso! Continue preenchendo os pilares.'}
                 {overallProgress >= 70 && overallProgress < 100 && 'Quase lá! Finalize os últimos detalhes.'}
                 {overallProgress === 100 && 'Parabéns! Todos os pilares estão completos.'}
               </p>
-              {/* BVS Impact Indicator */}
-              <div className="mt-3 p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border border-primary/20">
+              <div className="mt-3 p-3 bg-accent rounded-lg border border-secondary/10">
                 <div className="flex items-center gap-2 text-sm">
-                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <TrendingUp className="h-4 w-4 text-secondary" />
                   <span className="text-muted-foreground">Impacto no</span>
-                  <span className="font-semibold text-primary">BVS Score:</span>
-                  <span className="font-bold">
+                  <span className="font-semibold text-accent-foreground">BVS Score:</span>
+                  <span className="font-bold text-accent-foreground">
                     {overallProgress < 30 && '+5-15 pontos ao completar pilares'}
                     {overallProgress >= 30 && overallProgress < 70 && '+10-20 pontos potenciais'}
                     {overallProgress >= 70 && '+25 pontos de Força da Marca'}
@@ -153,18 +156,18 @@ export const Dashboard = () => {
                 </div>
               </div>
             </div>
-            <div className="flex gap-4">
+            <div className="flex gap-6">
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">{metrics?.tasks?.completed || 0}</div>
-                <div className="text-xs text-muted-foreground">Tarefas concluídas</div>
+                <div className="text-2xl font-bold text-foreground">{metrics?.tasks?.completed || 0}</div>
+                <div className="text-xs text-muted-foreground">Concluídas</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-amber-500">{metrics?.tasks?.in_progress || 0}</div>
-                <div className="text-xs text-muted-foreground">Em andamento</div>
+                <div className="text-xs text-muted-foreground">Andamento</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-emerald-500">{metrics?.decisions?.validated || 0}</div>
-                <div className="text-xs text-muted-foreground">Decisões validadas</div>
+                <div className="text-xs text-muted-foreground">Validadas</div>
               </div>
             </div>
           </div>
@@ -172,9 +175,9 @@ export const Dashboard = () => {
       </Card>
 
       {/* Pillars Grid */}
-      <div>
-        <h2 className="font-heading text-xl font-semibold mb-4">Pilares de Marca</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="relative z-10">
+        <h2 className="font-heading text-lg font-semibold mb-4">Pilares de Marca</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {pillarInfo.map((pillar) => {
             const Icon = pillar.icon;
             const progress = metrics?.pillars?.[pillar.key] || 0;
@@ -185,33 +188,33 @@ export const Dashboard = () => {
                 to={pillar.href}
                 data-testid={`pillar-card-${pillar.key}`}
               >
-                <Card className={`h-full card-hover group ${progress === 100 ? 'border-green-300 bg-green-50/30' : progress > 0 ? 'border-amber-200 bg-amber-50/20' : ''}`}>
-                  <CardContent className="pt-6">
+                <Card className={`h-full pillar-card group ${progress === 100 ? 'border-emerald-200/60' : progress > 0 ? 'border-amber-200/40' : 'border-border/50'}`}>
+                  <CardContent className="pt-6 pb-5">
                     <div className="flex items-start justify-between mb-4">
-                      <div className={`w-10 h-10 rounded-lg ${pillar.color} flex items-center justify-center`}>
+                      <div className={`w-10 h-10 rounded-xl ${pillar.color} flex items-center justify-center`}>
                         <Icon className="h-5 w-5 text-white" />
                       </div>
                       {progress === 100 ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                        <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                       ) : (
-                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-secondary transition-colors duration-200" />
                       )}
                     </div>
-                    <h3 className="font-heading font-semibold mb-1">{pillar.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-3">{pillar.description}</p>
+                    <h3 className="font-heading font-semibold text-sm mb-1">{pillar.name}</h3>
+                    <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{pillar.description}</p>
                     <div className="space-y-2">
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Progresso</span>
-                        <span className={`font-medium ${progress === 100 ? 'text-green-600' : progress > 0 ? 'text-amber-600' : ''}`}>
+                        <span className={`font-medium ${progress === 100 ? 'text-emerald-600' : progress > 0 ? 'text-amber-600' : 'text-muted-foreground'}`}>
                           {progress}%
                         </span>
                       </div>
                       <Progress 
                         value={progress} 
-                        className={`h-1.5 ${progress === 100 ? '[&>div]:bg-green-500' : progress > 0 ? '[&>div]:bg-amber-500' : ''}`} 
+                        className={`h-1 [&>div]:transition-all [&>div]:duration-500 ${progress === 100 ? '[&>div]:bg-emerald-500' : progress > 0 ? '[&>div]:bg-amber-500' : '[&>div]:bg-muted-foreground/20'}`} 
                       />
                       {progress === 0 && (
-                        <p className="text-xs text-primary/70 flex items-center gap-1">
+                        <p className="text-xs text-secondary/70 flex items-center gap-1">
                           <Sparkles className="h-3 w-3" />
                           +3 pts no BVS ao completar
                         </p>
@@ -226,16 +229,16 @@ export const Dashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="card-hover cursor-pointer" onClick={() => navigate('/planning')} data-testid="quick-action-planning">
-          <CardContent className="pt-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 relative z-10">
+        <Card className="pillar-card cursor-pointer group" onClick={() => navigate('/planning')} data-testid="quick-action-planning">
+          <CardContent className="pt-6 pb-5">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                <ListTodo className="h-6 w-6 text-blue-600" />
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100">
+                <ListTodo className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <h3 className="font-heading font-semibold">Planejamento</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-heading font-semibold text-sm">Planejamento</h3>
+                <p className="text-xs text-muted-foreground">
                   {metrics?.tasks?.backlog || 0} tarefas no backlog
                 </p>
               </div>
@@ -243,15 +246,15 @@ export const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="card-hover cursor-pointer" onClick={() => navigate('/scorecard')} data-testid="quick-action-scorecard">
-          <CardContent className="pt-6">
+        <Card className="pillar-card cursor-pointer group" onClick={() => navigate('/scorecard')} data-testid="quick-action-scorecard">
+          <CardContent className="pt-6 pb-5">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
-                <CheckCircle2 className="h-6 w-6 text-amber-600" />
+              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center border border-amber-100">
+                <CheckCircle2 className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <h3 className="font-heading font-semibold">Decisões</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-heading font-semibold text-sm">Decisões</h3>
+                <p className="text-xs text-muted-foreground">
                   {metrics?.decisions?.pending || 0} pendentes
                 </p>
               </div>
@@ -259,15 +262,15 @@ export const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="card-hover cursor-pointer" onClick={() => navigate('/narratives')} data-testid="quick-action-narratives">
-          <CardContent className="pt-6">
+        <Card className="pillar-card cursor-pointer group" onClick={() => navigate('/narratives')} data-testid="quick-action-narratives">
+          <CardContent className="pt-6 pb-5">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                <Sparkles className="h-6 w-6 text-purple-600" />
+              <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center border border-purple-100">
+                <Sparkles className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <h3 className="font-heading font-semibold">Narrativas</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-heading font-semibold text-sm">Narrativas</h3>
+                <p className="text-xs text-muted-foreground">
                   Histórias e manifesto
                 </p>
               </div>
