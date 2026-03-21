@@ -17,7 +17,6 @@ Plataforma interna para gestão de marcas de clientes da agência. Inclui desenv
 - Auth: JWT + Emergent Google OAuth
 - AI: OpenAI GPT-4o (Emergent LLM Key)
 - Email: Resend
-- Payments: Stripe (REMOVIDO)
 
 ### Users
 - Admin: admin@labrand.com.br / Labrand@2026!
@@ -38,13 +37,8 @@ Plataforma interna para gestão de marcas de clientes da agência. Inclui desenv
 - Settings (profile, security, brands, team)
 - Auto-load de marcas no BrandContext
 - CORS fix para produção (origins explícitas com credentials)
-
-### Recent Changes (2026-03-21)
-1. **CORS Fix (P0)** - Corrigido `allow_origins=["*"]` → origins explícitas do .env. Resolvia o bloqueio total de dados em produção
-2. **Planos REMOVIDOS** - Sidebar, backend routes, admin stats, registro/login responses
-3. **BrandContext auto-load** - Marcas carregam automaticamente ao autenticar
-4. **Troca de senha real** - POST /api/auth/change-password funcional
-5. **Login redirect** - navigate() em vez de window.location.href
+- Login text: "Brand Builder for Equity"
+- Refatoração: remoção de arquivos mortos (plans, stripe, backups, PlanContext, FeatureGate)
 
 ### Priority Backlog
 - P1: White Label (subdomínios, cores, logo por cliente)
@@ -54,18 +48,26 @@ Plataforma interna para gestão de marcas de clientes da agência. Inclui desenv
   - Admin vê tudo de todos os White Labels
 - P2: Better PDF Reports
 - P2: Push Notifications for Collaboration
-- P3: Refactoring
+- P3: Refatoração contínua
 
 ### Architecture
 ```
 /app/backend/
   routes/: auth.py, brands.py, admin.py, admin_emails.py, collaboration.py, 
-           naming.py, touchpoints.py, credits.py, maturity.py
+           naming.py, touchpoints.py, credits.py, maturity.py, pillars.py,
+           ai.py, brand_tools.py, brand_equity.py, brand_tracking.py, bvs.py,
+           brand_health.py, brand_funnel.py, culture.py, academy.py, ads.py,
+           crm.py, email_alerts.py, extras.py, integrations.py, reports.py,
+           team.py, disaster_check.py, value_waves.py, social_listening.py,
+           share_of_voice.py, conversion_attributes.py
+  models/: schemas.py
+  services/: brand_data_service.py, email_service.py
   utils/: helpers.py
+  tests/: (pytest suite)
   server_new.py, config.py
 /app/frontend/src/
   contexts/: AuthContext.js, BrandContext.js
-  components/: LoginPage.js, Layout.js, AuthCallback.js, ProtectedRoute.js
+  components/: LoginPage.js, Layout.js, AuthCallback.js, ProtectedRoute.js, Tutorial.js
   pages/: Dashboard.js, Settings.js, AdminDashboard.js, etc.
   App.js
 ```
@@ -79,5 +81,4 @@ Plataforma interna para gestão de marcas de clientes da agência. Inclui desenv
 ### Critical Notes
 - Production needs "Save to Github" + deploy for code updates
 - Code changes NEVER affect MongoDB data
-- Planos/Trial/Stripe routes REMOVIDOS do server_new.py
-- PlanContext.js e FeatureGate.js existem mas não são importados
+- Planos/Trial/Stripe routes REMOVIDOS (arquivos deletados)

@@ -101,7 +101,7 @@ export const LoginPage = () => {
               alt="LABrand" 
               className="h-24 w-auto"
             />
-            <p className="text-white/60 text-sm mt-8">desenvolvido por Claudio Gabilan</p>
+            <p className="text-white/60 text-sm mt-8">Brand Builder for Equity</p>
           </div>
         </div>
       </div>
