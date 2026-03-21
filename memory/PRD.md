@@ -41,6 +41,7 @@ Plataforma interna para gestão de marcas de clientes da agência. Inclui desenv
 - Refatoração: remoção de arquivos mortos (plans, stripe, backups, PlanContext, FeatureGate)
 - AI Credits: compra via Stripe corrigida (import fix), polling de status, payment_transactions
 - PDF Reports: layout profissional com capa, índice, gráficos, BVS, touchpoints, recomendações
+- Reports page: botões "Gerar PDF" e "Gerar Relatório Personalizado" corrigidos, histórico real da API
 
 ### Priority Backlog
 - P1: White Label (subdomínios, cores, logo por cliente)
