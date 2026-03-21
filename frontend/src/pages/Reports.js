@@ -84,8 +84,15 @@ export const Reports = () => {
         'performance': ['score', 'touchpoints', 'recommendations'],
         'tasks': ['summary', 'recommendations']
       };
+      const titleMap = {
+        'brand-health': 'Relatório de Saúde da Marca',
+        'pillar-detail': 'Relatório de Detalhamento de Pilares',
+        'performance': 'Relatório de Performance',
+        'tasks': 'Relatório de Tarefas e Execução'
+      };
       
       const sections = sectionMap[reportType] || ['summary', 'pillars', 'score', 'touchpoints', 'recommendations'];
+      const report_title = titleMap[reportType] || 'Relatório Executivo';
       
       const response = await fetch(`${API}/brands/${currentBrand.brand_id}/reports/executive-pdf`, {
         method: 'POST',
@@ -93,7 +100,7 @@ export const Reports = () => {
           ...getAuthHeaders(),
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ sections, include_charts: true })
+        body: JSON.stringify({ sections, include_charts: true, report_title })
       });
       
       if (!response.ok) {
@@ -138,7 +145,7 @@ export const Reports = () => {
           ...getAuthHeaders(),
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ sections, include_charts: true })
+        body: JSON.stringify({ sections, include_charts: true, report_title: 'Relatório Personalizado' })
       });
       
       if (!response.ok) {
