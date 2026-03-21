@@ -1,0 +1,95 @@
+{
+  "summary": "Iteration 17: AI Credits purchase (Stripe) and PDF report generation - ALL TESTS PASSED. Fixed import from emergentintegrations.payments.stripe.checkout is working correctly. Comprar button successfully redirects to Stripe checkout without showing 'Erro ao iniciar compra' error.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "Backend: POST /api/auth/login with admin@labrand.com.br returns token",
+    "Backend: GET /api/ai-credits/balance returns available_credits, total_credits, used_credits",
+    "Backend: GET /api/ai-credits/history returns history array",
+    "Backend: POST /api/ai-credits/purchase with package_id 'starter' returns checkout_url and session_id",
+    "Backend: POST /api/ai-credits/purchase with package_id 'pro' returns checkout_url and session_id",
+    "Backend: POST /api/ai-credits/purchase with package_id 'enterprise' returns checkout_url and session_id",
+    "Backend: POST /api/ai-credits/purchase with invalid package_id returns 400 error",
+    "Backend: POST /api/ai-credits/purchase without origin_url returns 400 error",
+    "Backend: POST /api/brands/{brand_id}/reports/executive-pdf returns application/pdf content-type",
+    "Backend: PDF generation with minimal sections works",
+    "Backend: PDF generation with invalid brand_id returns 404",
+    "Backend: GET /api/brands/{brand_id}/reports/history returns report list",
+    "Backend: Balance endpoint requires authentication (401)",
+    "Backend: History endpoint requires authentication (401)",
+    "Backend: Purchase endpoint requires authentication (401)",
+    "Backend: PDF report endpoint requires authentication (401)",
+    "Frontend: AI Credits page loads at /ai-credits",
+    "Frontend: Credits balance displayed (99 available, Total: 100, Usados: 1)",
+    "Frontend: All 3 packages displayed (Starter, Pro, Enterprise)",
+    "Frontend: All 3 buy buttons present with data-testid",
+    "Frontend: Clicking 'Comprar' button does NOT show 'Erro ao iniciar compra' toast - BUG FIXED",
+    "Frontend: Clicking 'Comprar' redirects to Stripe checkout (checkout.stripe.com)"
+  ],
+
+  "test_report_links": [
+    "/app/backend/tests/test_ai_credits_purchase_and_pdf.py",
+    "/app/test_reports/pytest/pytest_ai_credits_purchase_pdf.xml"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "credits.py: Fixed import 'from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest' is correct",
+    "credits.py: payment_transactions collection properly records pending transactions with session_id",
+    "credits.py: checkout-status endpoint properly handles payment fulfillment with double-credit prevention",
+    "reports.py: PDF generation uses reportlab with professional layout, cover page, table of contents, charts",
+    "AICredits.js: Uses correct data-testid attributes for testing (package-starter, buy-starter-btn, etc.)",
+    "AICredits.js: Proper error handling with toast.error for API failures"
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_ai_credits_purchase_and_pdf.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "100% (All flows verified)"
+  },
+
+  "test_credentials": {
+    "admin_email": "admin@labrand.com.br",
+    "admin_password": "Labrand@2026!",
+    "test_brand_id": "brand_0902ead1b80c"
+  },
+
+  "seed_data_creation": "None - used existing admin account and brand",
+
+  "stripe_integration_verification": {
+    "issue": "AI credits purchase button was throwing 'Erro ao iniciar compra'",
+    "root_cause": "Incorrect import path for Stripe checkout",
+    "fix": "Changed import to 'from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest'",
+    "verification": "VERIFIED - Purchase API returns checkout_url starting with https://checkout.stripe.com and session_id starting with cs_"
+  },
+
+  "pdf_report_verification": {
+    "features_tested": [
+      "PDF returns application/pdf content-type",
+      "PDF starts with %PDF magic bytes",
+      "Content-Disposition header includes attachment and .pdf filename",
+      "PDF generation with all sections (summary, pillars, score, touchpoints, recommendations)",
+      "PDF generation with minimal sections",
+      "Report history endpoint returns list of generated reports"
+    ]
+  },
+
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "AI Credits purchase flow fully working with Stripe integration. Import fix from emergentintegrations.payments.stripe.checkout verified. PDF report generation working with professional layout. Admin credentials: admin@labrand.com.br / Labrand@2026!. Test brand ID: brand_0902ead1b80c. All 16 backend tests pass. Frontend AI Credits page shows 3 packages with working Comprar buttons that redirect to Stripe checkout."
+}
