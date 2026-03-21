@@ -39,7 +39,7 @@
 
   "critical_code_review_comments": [
     "server_new.py (lines 127-167): CORS fix correctly implemented - reads CORS_ORIGINS and FRONTEND_URL from env vars, builds explicit allowed_origins list, uses DynamicCORSMiddleware as fallback",
-    "backend/.env: CORS_ORIGINS correctly set to 'https://labrand.com.br,https://white-label-hub-9.preview.emergentagent.com'",
+    "backend/.env: CORS_ORIGINS correctly set to 'https://labrand.com.br,https://labrand-build.preview.emergentagent.com'",
     "AuthContext.js: Uses withCredentials: true on all axios calls - compatible with explicit CORS origins",
     "BrandContext.js: Uses withCredentials: true and auto-fetches brands when user+token available"
   ],

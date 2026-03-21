@@ -1,126 +1,132 @@
 <analysis>**original_problem_statement**: 
-The user (Claudio Gabilan) is building LaBrand – Brand OS, which has pivoted from a SaaS product to an **internal agency tool**. 
+The user is building LaBrand – Brand OS, an internal agency tool for brand management. 
 PRODUCT REQUIREMENTS: 
-- Remove all SaaS subscription plans (free, founder, pro, etc.) from the platform.
-- Prepare and implement **White-Labeling** (Phase 1: Allow each client to have custom branding, logo, colors, and a custom domain like ).
-- Maintain AI credits system, but restricted to the brand owner.
-- Fix severe production data loading / login issues.
+- Implement White-Labeling (Phase 1: Allow clients to have custom branding, logo, colors, and a custom domain like ).
+- Maintain AI credits system via Stripe, restricted to the brand owner/internal team.
+- Ensure PDF reports are high-quality, pull data from all correct modules, and feature dynamic titles with correct branding (LABrand logos).
+- Enhance the UI/UX to a premium, Linear-inspired aesthetic.
 
 **User's preferred language**: **pt-BR** (Brazilian Portuguese). 
-*INSTRUCTION FOR NEXT AGENT*: Você DEVE responder sempre em Português do Brasil (pt-BR). Sempre tranquilize o usuário garantindo que nenhum dado do banco de produção foi apagado.
+*INSTRUCTION FOR NEXT AGENT*: Você DEVE responder SEMPRE em Português do Brasil (pt-BR).
 
 **what currently exists?** 
-A full-stack React + FastAPI + MongoDB app. The previous agent fixed several critical frontend race conditions related to login, implemented auto-fetching for brands, replaced a mock password-change function with a real API endpoint, and completely scrubbed the Plans/Subscriptions system from the codebase. However, a critical CORS error was introduced/exposed in production which is blocking the frontend from fetching any data.
+A full-stack React + FastAPI + MongoDB app. The previous agent fixed a critical P0 CORS issue, removed leftover SaaS subscription code, completely rewrote the PDF report generation (now correctly pulling data from 7 separate MongoDB collections and applying LABrand logos), fixed the Stripe AI Credits integration using the  playbook, and performed a massive UI/UX overhaul to give the platform a premium, Linear-inspired dark/light theme.
 
 **Last working item**:
-- **Last item agent was working**: Diagnosing why production frontend shows Nenhuma marca cadastrada (No brands registered) and hides features like integrations/invites despite the database being intact. The agent checked the browser console and found a severe **CORS policy error**.
-- **Status**: IN PROGRESS (P0)
-- **Agent Testing Done**: Y (Agent retrieved the exact console error from production).
-- **Which testing method agent to use?** curl / manual testing, followed by screenshot tool to verify frontend data loading.
-- **User Testing Done**: Y (User reported the issue and provided screenshots).
+- **Last item agent was working**: Adjusting Stripe AI Credit package prices/values. The user uploaded a screenshot of their Stripe dashboard and requested to change the AI credit package values/prices because the platform is now strictly for internal team use. The agent invoked  to get the exact new values from the user.
+- **Status**: USER VERIFICATION PENDING (Waiting for user response with the new plan details).
+- **Agent Testing Done**: N/A (Waiting for user input).
+- **Which testing method agent to use?** manual testing by curl / frontend screenshot tool to verify UI changes after updating the package dictionaries.
+- **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-  - **Issue 1: Production CORS Policy Blockage (P0 - HIGHEST)**
-     - **Attempted fixes**: Agent identified the root cause in the very last step: 
-     - **Next debug checklist**: Check  or wherever  is configured. Change  to explicitly include the production domains (e.g., ) or use dynamic origin matching. Wildcard  fails when .
-     - **Why fix this issue and what will be achieved with the fix?** Currently, the production app is completely broken. Resolving this will restore access to all client data, brands, integrations, and invites for the user.
-     - **Status**: IN PROGRESS
+  - **Issue 1: Stripe AI Credits plan adjustments (P0)**
+     - **Attempted fixes**: Agent paused and used  to ask the user what the new credit amounts, prices, and Stripe Price IDs should be.
+     - **Next debug checklist**: Await user's reply. Update the  dictionary in  and potentially any hardcoded values in .
+     - **Why fix this issue and what will be achieved with the fix?** User needs to adjust the Stripe pricing for AI credits since the platform pivoted to internal agency use rather than public SaaS.
+     - **Status**: BLOCKED (On user response).
      - **Is recurring issue?** N
      - **Should Test frontend/backend/both after fix?** Both.
      - **Blocked on other issue**: None.
 
 **In progress Task List**:
-  *(None active; priority is the P0 CORS bug)*
+  *(None currently active; waiting on the P0 AI Credits adjustment)*
 
-**Upcoming and Future Tasks**:
+**Upcoming and Future Tasks**
   - **Task 1: White-labeling - Phase 1 (P1)**
-     - **Where to resume**: After fixing CORS, begin planning the architecture for tenants. Create an Admin interface to register tenants (clients) with custom logos, primary colors, and custom domains.
+     - **Where to resume**: Plan the architecture for tenants. Create an Admin interface to register tenants (clients) with custom logos, primary colors, and custom domains (e.g., ).
      - **What will be achieved with this?** Allows the agency to present a personalized platform environment to each of their clients.
-  - **Task 2: Better PDF Reports (P2)**
-     - Improve PDF generation formatting and capabilities across the platform.
-  - **Task 3: Push Notifications for Collaboration (P3)**
+  - **Task 2: Push Notifications for Collaboration (P2)**
      - Add notifications for approval requests/responses in the collaboration module.
+  - **Task 3: Continuous Refactoring (P3)**
+     - Ongoing cleanup of legacy code.
 
-**Completed work in this session**:
-- Login Redirect fix (, ): Replaced  with React Router's  to prevent state wipeout (DONE).
-- Brand Auto-Load (): Refactored to automatically fetch brands upon authentication instead of relying on  component mounts (DONE).
-- Change Password API (, ): Replaced a dummy  mock with a real  flow (DONE).
-- Subscription Plans Removal (, , , , , ): Purged all code related to plans, trial, and Stripe, as the platform is now an internal tool (DONE).
+**Completed work in this session**
+- Production CORS Error Fix (): Replaced wildcard origin with explicit domains to fix  conflict (DONE).
+- Code Cleanup: Deleted unused legacy SaaS code (, , backups, ) (DONE).
+- AI Credits Stripe Fix (, ): Fixed incorrect checkout import using  playbook. Polling UI working (DONE).
+- PDF Generator Frontend (): Fixed missing  event on the Custom Report button and corrected ID mismatches (DONE).
+- PDF Generator Backend Rewrite (): Rewrote logic to fetch data from all 7 distinct pillar collections (, , etc.) instead of just one. Added dynamic titles, formatted tables, and embedded real LABrand logos (white on cover, black on inner pages) (DONE).
+- Premium UI/UX Redesign (, , , , ): Applied Linear-inspired aesthetics via Design Agent, utilizing pure black/white for login and glassmorphism/ambient orbs for internal pages (DONE).
 
-**Earlier issues found/mentioned but not fixed**:
-- User reported missing Team invites and Google integrations. 
-  *Note: These are NOT actual missing features. They are failing to render because the CORS error is blocking the initial  and  requests, leaving the frontend in a degraded state. Fixing Issue 1 will resolve this.*
+**Earlier issues found/mentioned but not fixed**
+- None.
 
-**Known issue recurrence from previous fork**:
-  - Issue recurrence in previous fork: Authentication and data-loading race conditions.
-  - Recurrence count: 4
-  - Status: RESOLVED (But masked by the new CORS blocker).
-  - Note: Make sure any new API calls include proper credentials and respect CORS rules.
+**Known issue recurrence from previous fork**
+  - Issue recurrence in previous fork: None active.
+  - Recurrence count: 0
+  - Status: RESOLVED
 
-**Code Architecture**:
+**Code Architecture**
 
 
-**Key Technical Concepts**:
-- **CORS Middleware**: FastAPI handles CORS. Currently misconfigured for credentialed requests (cannot use  with cookies/auth headers).
-- **Frontend Build**: Uses  with path aliases ().
-- **Data Filtering via RBAC**:  allows a user to see all brands.
+**Key Technical Concepts**
+- React frontend (Tailwind + Shadcn UI).
+- FastAPI backend with modular routers.
+- Stripe Integration heavily relies on the  wrapper library.
+- PDF generation uses standard Python libraries but must consolidate data from multiple disjointed MongoDB collections.
 
-**key DB schema**:
-- : , ,  (Removed: , ).
-- : Brand data linked to .
+**key DB schema**
+  - : , , 
+  - : , linked to 
+  -  collections: Pillar data is NOT centralized. It is split across , , , , , , .
 
-**changes in tech stack**:
-- SaaS subscription logic removed.
+**changes in tech stack**
+  - Completely removed legacy SaaS subscription models. Stripe is now EXCLUSIVELY used for AI credits.
 
-**All files of reference**:
--  (Must fix CORS here).
--  (Modified to auto-load).
+**All files of reference**
+-  (Must be updated with new Stripe plan values).
+-  (Frontend display of credit packages).
+-  (Updated to handle complex PDF rendering).
+-  (Contains the new premium design system variables).
 
 **Areas that need refactoring**:
--  CORS configuration. Needs explicit origins list, ideally reading a comma-separated list of allowed origins from  to support future White-Label domains.
+- Frontend modularization. Some pages (like Reports and Dashboard) are large and could be split into smaller components.
 
-**key api endpoints**:
-- 
-- 
-- 
-
-**Critical Info for New Agent**:
-- **PANICKED USER**: The user is highly anxious and believes client data was deleted because the UI shows empty dashboards. **You must immediately reassure him in Portuguese that his database is 100% intact** and explain that a security configuration (CORS) is simply blocking the screen from showing the data.
-- **NO MOCK DATA**: Never inject mock data.
-- **DEPLOYMENTS**: The user tests directly on . The agent must instruct the user to Save to Github to push fixes.
-
-**documents and test reports created in this job**:
--  (Updated)
-- 
+**key api endpoints**
+-  (Stripe checkout generation)
 - 
 
-**Last 10 User Messages and any pending HUMAN messages**:
-1. User complains login fails and credits are consumed.
-2. User mentions they changed password to Cla@2026 but no info loads.
-3. User states the platform is no longer going to market, it's an internal agency tool. Asks to remove plans and prepare WhiteLabel.
-4. User clarifies WhiteLabel requirements (custom domain, colors, admin sees all). Asks for estimate.
-5. User tells agent to start removing plans.
-6. User says they deployed, but client data disappeared from production, along with team invites and Google integration features. Panics and demands an immediate fix. *(Pending CORS fix)*
+**Critical Info for New Agent**
+- **Stripe & Integrations**: Do not manually install Stripe SDKs. ALWAYS use the  library as mandated. The current AI Credits code does this correctly.
+- **PDF Data Fetching**: Remember that brand data is scattered across multiple collections (, , etc.). The  file has been updated to aggregate this, do not break this aggregation if modifying PDFs further.
+- **Design Guidelines**: A  is present. Maintain the high-contrast, Linear-inspired aesthetic (pure black/white login, glassmorphic dashboards).
 
-**Project Health Check**:
-- Broken: Production environment API calls (CORS Error:  wildcard conflict with credentials).
-- Mocked: None.
+**documents and test reports created in this job**
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
 
-**3rd Party Integrations**:
-- OpenAI GPT-4o — uses Emergent LLM Key
-- Google Auth — Emergent-managed
-- Resend (Emails) — requires User API Key
-- Stripe (Payments) — REMOVED.
+**Last 10 User Messages and any pending HUMAN messages** 
+1. User: vamos trabalhar os relatórios melhorados em PDF e créditos de IA que dá erro ao comprar -> Agent fixed Stripe checkout and PDF backend.
+2. User: pode seguir -> Agent proceeded.
+3. User: quais meus dados de acesso na Stripe? -> Agent explained it only has API keys, not dashboard login.
+4. User: ele não gera relatórios personalizados. clico e nao acontece nada -> Agent fixed missing frontend  and mismatches.
+5. User: os relatórios na capa devem vir com título... não puxa dados corretamente... quadros embolados... incluir logo branco e preto do LABrand -> Agent rewrote PDF generator and embedded real logos.
+6. User: esses sãos os logos do LABrand -> Agent downloaded and applied the images.
+7. User: antes de avançar... pode deixar o design mais premium? Linear, Preto e Branco no login... -> Agent executed full UI/UX overhaul using Design Agent.
+8. User: consegui acessar a conta no Stripe. esses sãos os planos... podemos ajustar esses valores, como será apenas para o time interno. (Uploaded screenshot of Stripe plans). -> **PENDING**: Agent asked for clarification on what the new values/prices should be via  and is waiting for a response.
 
-**Testing status**:
-- Testing agent used after significant changes: YES
-- Troubleshoot agent used after agent stuck in loop: NO
-- Test files created: None
-- Known regressions: Production CORS blockage.
+**Project Health Check:**
+- All features functional and recently verified by .
 
-**Credentials to test flow**:
+**3rd Party Integrations** 
+  • OpenAI GPT-4o — uses Emergent LLM Key
+  • Google Auth — Emergent-managed
+  • Stripe (Payments for AI Credits) — requires User API Key ( present in backend ), uses  wrapper.
+  • Resend (Emails) — requires User API Key
+
+**Testing status**
+  - Testing agent used after significant changes: YES
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: Handled by testing subagent
+  - Known regressions: None
+
+**Credentials to test flow:**
 - Admin:  / 
-- Claudio Prod:  / 
 
-**What agent forgot to execute**:
-- The agent forgot that when  is enabled in FastAPI's ,  cannot be . This caused the application to instantly break on the production domain.</analysis>
+**What agent forgot to execute**
+- The agent successfully executed all requested tasks and paused precisely to gather required configuration data from the user.</analysis>
