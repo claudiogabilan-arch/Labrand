@@ -39,6 +39,8 @@ Plataforma interna para gestão de marcas de clientes da agência. Inclui desenv
 - CORS fix para produção (origins explícitas com credentials)
 - Login text: "Brand Builder for Equity"
 - Refatoração: remoção de arquivos mortos (plans, stripe, backups, PlanContext, FeatureGate)
+- AI Credits: compra via Stripe corrigida (import fix), polling de status, payment_transactions
+- PDF Reports: layout profissional com capa, índice, gráficos, BVS, touchpoints, recomendações
 
 ### Priority Backlog
 - P1: White Label (subdomínios, cores, logo por cliente)

@@ -1,5 +1,13 @@
 # LaBrand - Changelog
 
+## 2026-03-21 - AI Credits Fix + PDF Reports Enhanced
+- **Fixed**: Compra de créditos IA ("Erro ao iniciar compra") — import corrigido para `emergentintegrations.payments.stripe.checkout`
+- **Added**: Endpoint `/api/ai-credits/checkout-status/{session_id}` para polling de status
+- **Added**: Registro de transações em `payment_transactions` collection
+- **Added**: Webhook endpoint `/api/webhook/stripe`
+- **Enhanced**: Relatório PDF profissional com capa dark, índice, gráfico de pilares, seção BVS Score, touchpoints detalhados, recomendações com prioridade
+- Files: `credits.py`, `reports.py`, `AICredits.js`
+
 ## 2026-03-21 - CORS Fix (P0 Critical)
 - **Fixed**: `allow_origins=["*"]` with `allow_credentials=True` broke all API calls in production
 - **Solution**: Read explicit origins from `CORS_ORIGINS` and `FRONTEND_URL` env vars
