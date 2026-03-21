@@ -1,168 +1,143 @@
 {
-  "identity": {
-    "name": "LaBrand – Brand OS",
-    "mission": "Facilitate brand management from diagnosis to execution.",
-    "tone": "Professional, Strategic, Clear, Trustworthy, Organized, Insightful",
-    "metaphor": "The Digital Canvas for Brand Building"
-  },
+  "theme": "Linear-Inspired, Minimalist, Refined, Sophisticated",
   "typography": {
-    "font_family": {
-      "headings": "Manrope, sans-serif",
-      "body": "Inter, sans-serif",
-      "accent": "Libre Baskerville, serif",
-      "mono": "JetBrains Mono, monospace"
+    "headings": {
+      "family": "Manrope",
+      "weights": ["500", "600", "700"],
+      "classes": "font-heading tracking-tight text-foreground",
+      "usage": "Page titles, card headers, section titles, login branding"
     },
-    "scale": {
-      "h1": "text-4xl md:text-5xl font-bold tracking-tight",
-      "h2": "text-3xl md:text-4xl font-semibold tracking-tight",
-      "h3": "text-2xl font-semibold tracking-tight",
-      "h4": "text-xl font-medium",
-      "body_lg": "text-lg leading-relaxed",
-      "body_base": "text-base leading-relaxed",
-      "caption": "text-sm text-muted-foreground"
+    "body": {
+      "family": "Inter",
+      "weights": ["400", "500"],
+      "classes": "font-sans leading-relaxed text-muted-foreground",
+      "usage": "Paragraphs, descriptions, secondary text"
     },
-    "imports": [
-      "@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');"
-    ]
+    "labels": {
+      "classes": "font-sans text-xs font-medium uppercase tracking-[0.05em] text-muted-foreground",
+      "usage": "Overlines, small caps labels, sidebar category headers"
+    }
   },
   "colors": {
-    "palette": {
-      "primary": {
-        "DEFAULT": "hsl(222.2 47.4% 11.2%)",
-        "foreground": "hsl(210 40% 98%)",
-        "description": "Deep Indigo/Slate - Represents Authority and Strategy"
-      },
-      "secondary": {
-        "DEFAULT": "hsl(24.6 95% 53.1%)",
-        "foreground": "hsl(26 83.3% 14.1%)",
-        "description": "Vibrant Orange - Represents Creativity and Action"
-      },
-      "accent": {
-        "DEFAULT": "hsl(217.2 91.2% 59.8%)",
-        "foreground": "hsl(222.2 47.4% 11.2%)",
-        "description": "Electric Blue - Digital touchpoints and highlights"
-      },
-      "background": "hsl(210 40% 98%)",
-      "foreground": "hsl(222.2 84% 4.9%)",
-      "card": "hsl(0 0% 100%)",
-      "card_foreground": "hsl(222.2 84% 4.9%)",
-      "muted": "hsl(210 40% 96.1%)",
-      "muted_foreground": "hsl(215.4 16.3% 46.9%)",
-      "border": "hsl(214.3 31.8% 91.4%)"
+    "strategy": "Evolve to a sophisticated warm palette. Move away from blue-tinted neutrals to crisp, high-contrast Zinc neutrals. Evolve the existing orange (#e67e22) to a richer, warmer Terracotta/Rust for accents on interior pages.",
+    "css_variables_light": {
+      "--background": "0 0% 99%",
+      "--foreground": "240 10% 3.9%",
+      "--card": "0 0% 100%",
+      "--card-foreground": "240 10% 3.9%",
+      "--popover": "0 0% 100%",
+      "--popover-foreground": "240 10% 3.9%",
+      "--primary": "240 5.9% 10%",
+      "--primary-foreground": "0 0% 98%",
+      "--secondary": "20 85% 50%",
+      "--secondary-foreground": "0 0% 98%",
+      "--accent": "20 85% 96%",
+      "--accent-foreground": "20 85% 40%",
+      "--muted": "240 4.8% 95.9%",
+      "--muted-foreground": "240 3.8% 46.1%",
+      "--border": "240 5.9% 90%",
+      "--input": "240 5.9% 90%",
+      "--ring": "20 85% 50%",
+      "--radius": "0.5rem"
     },
-    "usage": {
-      "gradients": "Avoid full-screen gradients. Use subtle mesh gradients in hero sections only.",
-      "status": {
-        "success": "text-emerald-600 bg-emerald-50 border-emerald-200",
-        "warning": "text-amber-600 bg-amber-50 border-amber-200",
-        "error": "text-rose-600 bg-rose-50 border-rose-200",
-        "info": "text-blue-600 bg-blue-50 border-blue-200"
-      }
-    }
-  },
-  "layout": {
-    "grid_system": {
-      "dashboard": "grid grid-cols-1 md:grid-cols-12 gap-6",
-      "canvas": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8",
-      "form": "grid grid-cols-1 gap-6 max-w-2xl"
-    },
-    "spacing": {
-      "container_padding": "p-6 md:p-8 lg:p-12",
-      "section_gap": "gap-8 md:gap-12",
-      "component_gap": "gap-4"
-    },
-    "structure": {
-      "sidebar_width": "w-64",
-      "sidebar_collapsed_width": "w-16",
-      "header_height": "h-16"
-    }
-  },
-  "components": {
-    "buttons": {
-      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-md px-4 py-2 font-medium transition-all active:scale-95",
-      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-sm rounded-md px-4 py-2 font-medium transition-all active:scale-95",
-      "outline": "border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md px-4 py-2 transition-all",
-      "ghost": "hover:bg-accent hover:text-accent-foreground rounded-md px-4 py-2 transition-all"
-    },
-    "cards": {
-      "base": "rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow duration-200",
-      "interactive": "cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all duration-300"
-    },
-    "inputs": {
-      "base": "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-    },
-    "navigation": {
-      "sidebar": "bg-card border-r h-screen sticky top-0 flex flex-col",
-      "sidebar_item": "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
+    "css_variables_dark": {
+      "--background": "240 10% 3.9%",
+      "--foreground": "0 0% 98%",
+      "--card": "240 10% 3.9%",
+      "--card-foreground": "0 0% 98%",
+      "--popover": "240 10% 3.9%",
+      "--popover-foreground": "0 0% 98%",
+      "--primary": "0 0% 98%",
+      "--primary-foreground": "240 5.9% 10%",
+      "--secondary": "20 85% 55%",
+      "--secondary-foreground": "0 0% 98%",
+      "--accent": "20 25% 15%",
+      "--accent-foreground": "20 85% 65%",
+      "--muted": "240 3.7% 15.9%",
+      "--muted-foreground": "240 5% 64.9%",
+      "--border": "240 3.7% 15.9%",
+      "--input": "240 3.7% 15.9%",
+      "--ring": "20 85% 55%"
     }
   },
   "visual_enhancers": {
-    "shadows": {
-      "soft": "shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
-      "medium": "shadow-[0_8px_24px_rgba(0,0,0,0.08)]",
-      "glow": "shadow-[0_0_16px_rgba(59,130,246,0.3)]"
+    "login_page": {
+      "rule": "STRICTLY Black and White. No orange, no secondary colors.",
+      "layout": "50/50 Split screen.",
+      "left_panel": "Deep black (bg-zinc-950) with pure white LABrand logo and Manrope typography. Use lots of negative space.",
+      "right_panel": "Pure white (bg-white) with crisp minimalist login form. Primary button is solid black. Inputs have 1px borders."
     },
-    "borders": {
-      "subtle": "border border-border",
-      "active": "border-l-4 border-primary"
+    "interior_pages": {
+      "rule": "More life and color while maintaining professionalism. Use the evolved warm orange.",
+      "ambient_life": "Add a very subtle, blurred ambient orb in the background of the main dashboard (e.g., an absolute positioned div with bg-secondary/5 blur-[100px] w-96 h-96 top-0 right-0) to break the clinical feel without distracting from data.",
+      "borders": "Linear-style: 1px subtle borders (border-border/60) on all cards and containers. No heavy drop shadows.",
+      "shadows": "Replace heavy shadows with subtle inset borders or extremely diffuse small shadows (shadow-sm)."
+    }
+  },
+  "grids": {
+    "dashboard_pillars": {
+      "type": "Bento Grid Protocol",
+      "classes": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6",
+      "behavior": "Pillar cards should have uniform heights but can span columns if one is prioritized (e.g. 'Start' pillar). Use generous padding (p-6 to p-8)."
     },
-    "radius": {
-      "default": "rounded-lg",
-      "large": "rounded-xl",
-      "pill": "rounded-full"
+    "settings_reports": {
+      "type": "Dense Bento Grid",
+      "classes": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4",
+      "behavior": "High density, strict grid hierarchy. Every pixel utilized."
     }
   },
-  "assets": {
-    "images": [
-      {
-        "category": "hero_background",
-        "url": "https://images.unsplash.com/photo-1770368437389-86bde15fcb33?crop=entropy&cs=srgb&fm=jpg&q=85",
-        "description": "Abstract blue and orange geometric shapes - Use for Login/Landing Hero"
-      },
-      {
-        "category": "team_collaboration",
-        "url": "https://images.unsplash.com/photo-1565351311113-3c5d50eb3c0c?crop=entropy&cs=srgb&fm=jpg&q=85",
-        "description": "Creative agency meeting - Use for 'About' or 'Team' section"
-      },
-      {
-        "category": "strategy_focus",
-        "url": "https://images.unsplash.com/photo-1764204295508-37d89e699266?crop=entropy&cs=srgb&fm=jpg&q=85",
-        "description": "Concentric circles - Use for 'Targeting' or 'Focus' metaphors"
-      },
-      {
-        "category": "office_vibe",
-        "url": "https://images.unsplash.com/photo-1629787177096-9fbe3e2ef6f3?crop=entropy&cs=srgb&fm=jpg&q=85",
-        "description": "Modern office detail - Use for general branding imagery"
-      }
-    ],
-    "icons": {
-      "library": "lucide-react",
-      "style": "Stroke width 1.5px, size 20px for UI, 24px for nav"
+  "components": {
+    "sidebar": {
+      "style": "bg-background border-r border-border/50",
+      "nav_items": "Clean text-muted-foreground, hover:text-foreground. Active state uses bg-accent text-accent-foreground.",
+      "collapse_icon": "Smooth rotation (transition-transform duration-200) for chevrons."
+    },
+    "header": {
+      "style": "Crystal Glassmorphism. bg-background/80 backdrop-blur-xl border-b border-border/50 sticky top-0 z-50.",
+      "brand_selector": "Minimalist dropdown, remove heavy background, use 1px border."
+    },
+    "cards": {
+      "base": "bg-card border border-border/50 rounded-xl overflow-hidden",
+      "hover_state": "transition-all duration-300 hover:shadow-md hover:border-secondary/30 hover:-translate-y-[2px]",
+      "icons": "Icons inside cards should use the secondary color (warm orange) or primary color depending on context."
+    },
+    "progress_bar": {
+      "style": "Thin and elegant. h-1.5 or h-2, rounded-full bg-muted overflow-hidden",
+      "fill": "bg-secondary transition-all duration-500 ease-out"
+    },
+    "tabs": {
+      "style": "Linear style. Transparent background for tab list. Active tab has a clean bottom border or floating pill style. No bulky gray backgrounds for the tab list."
     }
   },
-  "motion": {
-    "transitions": "transition-all duration-200 ease-in-out",
-    "hover_lift": "hover:-translate-y-1 hover:shadow-lg",
-    "page_transition": {
-      "initial": { "opacity": 0, "y": 10 },
-      "animate": { "opacity": 1, "y": 0 },
-      "exit": { "opacity": 0, "y": -10 },
-      "transition": { "duration": 0.3 }
-    }
+  "layouts": {
+    "app_shell": "Flex layout. Sidebar fixed on left. Main content flex-1 with sticky header and scrollable area.",
+    "page_container": "Max-width wrapper (max-w-7xl) inside main content with generous horizontal padding (px-6 md:px-8) and vertical padding (py-8)."
   },
-  "accessibility": {
-    "contrast": "Ensure text meets WCAG AA (4.5:1). Use slate-900 for body text on white.",
-    "focus": "Visible focus rings on all interactive elements (ring-2 ring-offset-2 ring-primary).",
-    "aria": "Use aria-label for icon-only buttons. Use role='status' for live updates."
-  },
-  "universal_guidelines": [
-    "Do not use generic centered layouts. Use asymmetric grids.",
-    "Use 2-3x more spacing than typical designs (p-8, p-12).",
-    "Every interaction needs micro-animations (hover, focus, active).",
-    "Use 'Manrope' for headings to give a modern, geometric feel.",
-    "Use 'Libre Baskerville' for the 'Manifesto' and 'Story' sections to add editorial weight.",
-    "Primary color is Deep Indigo, Secondary is Vibrant Orange. Use Orange sparingly for CTAs.",
-    "All interactive elements MUST include data-testid attribute."
+  "instructions_to_main_agent": [
+    "1. Read this JSON file carefully.",
+    "2. Update /app/frontend/src/index.css: Replace the existing color variables with the evolved 'css_variables_light' and 'css_variables_dark' provided in this JSON.",
+    "3. Update /app/frontend/tailwind.config.js if any new keyframes or extensions are needed (e.g., ambient orbs or Linear-style shadows).",
+    "4. Refactor the Login Page (/app/frontend/src/components/LoginPage.js): Enforce the strict Black & White rule. Ensure it uses a split layout with Manrope headings. Remove all orange/accent colors here.",
+    "5. Refactor the Sidebar and Header (/app/frontend/src/components/Layout.js): Apply the subtle borders, glassmorphism header, and the new accent color for active nav items.",
+    "6. Refactor the Dashboard (/app/frontend/src/pages/Dashboard.js): Implement the Bento Grid for the 7 pillar cards. Add the subtle ambient blurred orb for 'life/color'. Refine the progress bar to be thin and elegant.",
+    "7. Refactor Cards (Pillar cards in App.css / custom components): Update '.pillar-card' and '.card-hover' in index.css to match the subtle 1px border and refined hover states.",
+    "8. Refactor Settings and inner pages: Ensure tabs use the minimalist Linear style. Ensure generous padding and proper typography hierarchy.",
+    "9. DO NOT remove or change any 'data-testid' attributes.",
+    "10. Run lint checks after modifying frontend files."
   ],
-  "instructions_to_main_agent": "You are building 'LaBrand – Brand OS'. Start by setting up the global CSS with the font imports and color variables. Then, build the 'Sidebar' layout shell. Create the 'Dashboard' with a bento grid layout. Implement the 8 pillars as distinct modules using a 'Canvas' metaphor (white cards on light gray bg). Use the provided image URLs for the landing page and empty states. Ensure the app is fully responsive and accessible."
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "You tend to converge toward generic, 'on distribution' outputs. Avoid this: make creative, distinctive frontends that surprise and delight.",
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy and 1px borders.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur) for sticky headers.",
+    "You MUST NOT apply universal transition (e.g., 'transition: all'). Always add transitions for specific properties (transition-colors, transition-transform).",
+    "You MUST NOT center align the app container. Do not add '.App { text-align: center; }' in the css file.",
+    "Always use modern button styles (sharp or subtle 8px radius) with interaction animations & color relevant to the app style.",
+    "NEVER use AI assistant Emoji characters for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, and entrance animations.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap (e.g., use p-6 or p-8 inside cards).",
+    "All interactive and key informational elements MUST include a 'data-testid' attribute.",
+    "DO NOT use complete 'transparent' background in header, overlays, or any surface that has content under it."
+  ]
 }
