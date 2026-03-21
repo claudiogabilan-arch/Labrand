@@ -17,7 +17,7 @@ Plataforma interna para gestão de marcas de clientes da agência. Inclui desenv
 - Auth: JWT + Emergent Google OAuth
 - AI: OpenAI GPT-4o (Emergent LLM Key)
 - Email: Resend
-- Payments: Stripe (mantido para créditos IA)
+- Payments: Stripe (REMOVIDO)
 
 ### Users
 - Admin: admin@labrand.com.br / Labrand@2026!
@@ -37,16 +37,17 @@ Plataforma interna para gestão de marcas de clientes da agência. Inclui desenv
 - Naming module with semantic map
 - Settings (profile, security, brands, team)
 - Auto-load de marcas no BrandContext
+- CORS fix para produção (origins explícitas com credentials)
 
 ### Recent Changes (2026-03-21)
-1. **Planos REMOVIDOS** - Sidebar, backend routes, admin stats, registro/login responses
-2. **BrandContext auto-load** - Marcas carregam automaticamente ao autenticar
-3. **Troca de senha real** - POST /api/auth/change-password funcional
-4. **Login redirect** - navigate() em vez de window.location.href
-5. **Admin badge** - Mostra "Admin" corretamente
+1. **CORS Fix (P0)** - Corrigido `allow_origins=["*"]` → origins explícitas do .env. Resolvia o bloqueio total de dados em produção
+2. **Planos REMOVIDOS** - Sidebar, backend routes, admin stats, registro/login responses
+3. **BrandContext auto-load** - Marcas carregam automaticamente ao autenticar
+4. **Troca de senha real** - POST /api/auth/change-password funcional
+5. **Login redirect** - navigate() em vez de window.location.href
 
 ### Priority Backlog
-- P0: White Label (subdomínios, cores, logo por cliente)
+- P1: White Label (subdomínios, cores, logo por cliente)
   - Config por cliente: logo, cores, nome
   - Login personalizado
   - Subdomínios: cliente1.labrand.com.br
@@ -68,6 +69,12 @@ Plataforma interna para gestão de marcas de clientes da agência. Inclui desenv
   pages/: Dashboard.js, Settings.js, AdminDashboard.js, etc.
   App.js
 ```
+
+### CORS Configuration
+- `CORS_ORIGINS` no .env: lista de domínios separados por vírgula
+- `FRONTEND_URL` no .env: sempre adicionado à lista de origins
+- Fallback: DynamicCORSMiddleware quando nenhum origin configurado
+- NUNCA usar `allow_origins=["*"]` com `allow_credentials=True`
 
 ### Critical Notes
 - Production needs "Save to Github" + deploy for code updates
