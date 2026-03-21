@@ -689,6 +689,9 @@ function Step4({ S, arch, langOpt, handleGenerate, toggleName }) {
             <Sparkles className="h-4 w-4" />
             {S.generatedNames.length ? 'Gerar Novos Nomes' : 'Gerar Nomes'}
           </button>
+          {!S.keywords.length && !S.archetype && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 text-center">Dica: Adicione palavras-chave na Etapa 3 e selecione um arquétipo na Etapa 2 para resultados melhores.</p>
+          )}
         </CardContent>
       </Card>
 

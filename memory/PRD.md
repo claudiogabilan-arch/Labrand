@@ -1,88 +1,95 @@
 # LaBrand - Brand OS
-## Strategic Brand Infrastructure Platform (Uso Interno da Agência)
 
-### Problem Statement
-Plataforma interna para gestão de marcas de clientes da agência. Inclui desenvolvimento estratégico, avaliação (BVS), análise de risco, comparação competitiva, alertas de consistência, touchpoints offline, colaboração avançada e dashboard executivo.
+## Problema Original
+Ferramenta interna de gestão de marcas para agência de branding. Plataforma que unifica estratégia, criatividade e colaboração em um único ambiente.
 
-### Modelo de Negócio
-- **USO INTERNO** da agência (não vai ao mercado)
-- Planos REMOVIDOS (sem trial, sem assinaturas)
-- Créditos IA mantidos (exclusivos do dono da marca)
-- White Label planejado (cada cliente com subdomínio e visual próprio)
+## Personas
+- **Admin/Agência**: Equipe interna LABrand que gerencia marcas de clientes
+- **Clientes**: (Futuro) Acesso white-label com branding personalizado
 
-### Tech Stack
-- Frontend: React + Shadcn UI + Tailwind CSS
-- Backend: FastAPI + Python
-- Database: MongoDB
-- Auth: JWT + Emergent Google OAuth
-- AI: OpenAI GPT-4o (Emergent LLM Key)
-- Email: Resend
+## Requisitos Core
+1. Autenticação (Google Auth + JWT)
+2. Dashboard com métricas da marca
+3. Pilares de Marca (7 coleções: start, values, personality, valuation, brand_culture, bvs_scores, pillars)
+4. Naming (Ferramenta de criação de nomes - 7 etapas)
+5. Relatórios PDF (Executivo + Custom)
+6. Créditos de IA via Stripe
+7. UI/UX premium (Linear-inspired)
 
-### Users
-- Admin: admin@labrand.com.br / Labrand@2026!
-- Owner: claudiogabilan@gmail.com / Cla@2026
-- Production: labrand.com.br
+## Arquitetura
+- **Frontend**: React + Tailwind + Shadcn UI
+- **Backend**: FastAPI + MongoDB
+- **Integrações**: OpenAI GPT-4o (Emergent Key), Google Auth (Emergent), Stripe (AI Credits)
 
-### Completed Features
-- Full auth system (JWT + Google OAuth + password change real)
-- Brand CRUD with pillar system
-- BVS Score calculation
-- Executive reports / Mind map PDF export
-- Brand tracking with timeline
-- Offline Touchpoints
-- Advanced Collaboration (approvals, comments)
-- Admin Dashboard (sem filtro de planos)
-- Admin System Emails (Resend)
-- Naming module with semantic map
-- Settings (profile, security, brands, team)
-- Auto-load de marcas no BrandContext
-- CORS fix para produção (origins explícitas com credentials)
-- Login text: "Brand Builder for Equity"
-- Refatoração: remoção de arquivos mortos (plans, stripe, backups, PlanContext, FeatureGate)
-- AI Credits: compra via Stripe corrigida (import fix), polling de status, payment_transactions
-- PDF Reports: layout profissional com capa, índice, gráficos, BVS, touchpoints, recomendações
-- Reports page: botões "Gerar PDF" e "Gerar Relatório Personalizado" corrigidos, histórico real da API
-- UI/UX Premium Redesign: Linear-inspired, login preto/branco, dashboard com ambient orb, sidebar refinada com glassmorphism, pillar-cards com hover, sistema de cores quente (laranja como accent)
+## Stack Técnica
+- React 18, Tailwind CSS, Shadcn UI, Axios
+- FastAPI, Motor (MongoDB async), Pydantic
+- emergentintegrations (Stripe + LLM)
 
-### Priority Backlog
-- P1: White Label (subdomínios, cores, logo por cliente)
-  - Config por cliente: logo, cores, nome
-  - Login personalizado
-  - Subdomínios: cliente1.labrand.com.br
-  - Admin vê tudo de todos os White Labels
-- P2: Better PDF Reports
-- P2: Push Notifications for Collaboration
-- P3: Refatoração contínua
+---
 
-### Architecture
-```
-/app/backend/
-  routes/: auth.py, brands.py, admin.py, admin_emails.py, collaboration.py, 
-           naming.py, touchpoints.py, credits.py, maturity.py, pillars.py,
-           ai.py, brand_tools.py, brand_equity.py, brand_tracking.py, bvs.py,
-           brand_health.py, brand_funnel.py, culture.py, academy.py, ads.py,
-           crm.py, email_alerts.py, extras.py, integrations.py, reports.py,
-           team.py, disaster_check.py, value_waves.py, social_listening.py,
-           share_of_voice.py, conversion_attributes.py
-  models/: schemas.py
-  services/: brand_data_service.py, email_service.py
-  utils/: helpers.py
-  tests/: (pytest suite)
-  server_new.py, config.py
-/app/frontend/src/
-  contexts/: AuthContext.js, BrandContext.js
-  components/: LoginPage.js, Layout.js, AuthCallback.js, ProtectedRoute.js, Tutorial.js
-  pages/: Dashboard.js, Settings.js, AdminDashboard.js, etc.
-  App.js
-```
+## O que foi implementado
 
-### CORS Configuration
-- `CORS_ORIGINS` no .env: lista de domínios separados por vírgula
-- `FRONTEND_URL` no .env: sempre adicionado à lista de origins
-- Fallback: DynamicCORSMiddleware quando nenhum origin configurado
-- NUNCA usar `allow_origins=["*"]` com `allow_credentials=True`
+### Fase 1 - Core (Concluído)
+- [x] Login/Auth (Google + JWT)
+- [x] Dashboard com métricas
+- [x] CRUD de Marcas
+- [x] 7 Pilares de Marca
+- [x] BVS Score
+- [x] Mapa Mental
+- [x] Ferramentas (Frameworks, Análise Competitiva)
+- [x] Relatórios PDF (Executivo + Custom com logos LABrand)
+- [x] Créditos de IA via Stripe
 
-### Critical Notes
-- Production needs "Save to Github" + deploy for code updates
-- Code changes NEVER affect MongoDB data
-- Planos/Trial/Stripe routes REMOVIDOS (arquivos deletados)
+### Fase 2 - UI/UX Premium (Concluído)
+- [x] Redesign "Linear-inspired" (login preto/branco, glassmorphism interno)
+- [x] Design system com CSS variables
+- [x] Fonte Inter, accent laranja (#f97316)
+
+### Fase 3 - Naming Module Rewrite (Concluído - 21/03/2026)
+- [x] Wizard de 7 etapas (Essência → Propulsor → Semântico → Geração → Sonoro → Global → Avaliação)
+- [x] Geração algorítmica local (sem IA, sem créditos)
+- [x] 10+ técnicas: Composição, Portmanteau, Prefixo, Sufixo, Acrônimo, Inversão, Subtração, Substituição
+- [x] 12 Arquétipos com word banks em 11 idiomas
+- [x] 20 Provocações metodológicas (Inspiração, Construção, Implementação)
+- [x] 39 idiomas suportados com seletor e busca
+- [x] Análise fonética local (sílabas, memorabilidade, pronúncia, fluidez, ritmo, aliteração)
+- [x] Verificação internacional em 6 idiomas
+- [x] Avaliação por estrelas (5 critérios: Memorável, Sonoridade, Ortografia, Conceito, Originalidade)
+- [x] Export relatório .txt
+- [x] Auto-save (debounced 2s) no MongoDB
+- [x] CRUD completo de projetos
+- [x] Backend: 100% testes passando (7/7)
+- [x] Frontend: 95% testes passando
+
+---
+
+## Backlog Priorizado
+
+### P0 - Crítico
+- [ ] Ajuste dos planos de Créditos IA no Stripe (aguardando valores do usuário)
+
+### P1 - Alta Prioridade
+- [ ] White-labeling Fase 1 (tenants, logos, cores, subdomínios)
+
+### P2 - Média Prioridade
+- [ ] Push Notifications para Colaboração
+- [ ] Melhorar outros fluxos de módulos (conforme solicitado pelo usuário)
+
+### P3 - Baixa Prioridade
+- [ ] Refatoração contínua (modularização de páginas grandes)
+- [ ] Testes de regressão automatizados
+
+---
+
+## Arquivos Chave
+- `/app/frontend/src/pages/Naming.js` - Wizard de Naming (7 etapas)
+- `/app/frontend/src/data/namingData.js` - Constantes do Naming
+- `/app/frontend/src/utils/namingUtils.js` - Algoritmos de geração
+- `/app/backend/routes/naming.py` - API CRUD Naming
+- `/app/backend/routes/credits.py` - Créditos IA / Stripe
+- `/app/backend/routes/reports.py` - Geração de PDF
+- `/app/frontend/src/index.css` - Design System
+
+## Credenciais de Teste
+- Admin: `admin@labrand.com.br` / `Labrand@2026!`
