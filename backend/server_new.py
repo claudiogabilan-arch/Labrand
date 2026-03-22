@@ -45,6 +45,7 @@ from routes.bvs import router as bvs_router
 from routes.brand_health import router as brand_health_router
 from routes.admin_emails import router as admin_emails_router
 from routes.collaboration import router as collaboration_router
+from routes.notifications import router as notifications_router
 
 # Create the main app
 app = FastAPI(title="LaBrand - Brand OS API")
@@ -104,6 +105,7 @@ api_router.include_router(bvs_router)
 api_router.include_router(brand_health_router)
 api_router.include_router(admin_emails_router)
 api_router.include_router(collaboration_router)
+api_router.include_router(notifications_router)
 
 # Serve uploaded files (avatars)
 @api_router.get("/uploads/avatars/{filename}")

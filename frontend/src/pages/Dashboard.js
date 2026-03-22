@@ -25,12 +25,23 @@ import {
   Plus,
   Lightbulb,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Bell,
+  MessageSquare
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (diff < 60) return 'agora';
+  if (diff < 3600) return `${Math.floor(diff / 60)}min`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+  return `${Math.floor(diff / 86400)}d`;
+}
 
 const pillarInfo = [
   { key: 'start', name: 'Start', icon: Target, color: 'bg-blue-500', href: '/pillars/start', description: 'Diagnóstico inicial e cenários' },
@@ -44,11 +55,14 @@ const pillarInfo = [
 
 export const Dashboard = () => {
   const { currentBrand, metrics, fetchMetrics } = useBrand();
-  const { user, getAuthHeaders } = useAuth();
+  const { user, getAuthHeaders, token } = useAuth();
   const navigate = useNavigate();
   const [showTutorial, setShowTutorial] = useState(false);
   const [mentorInsights, setMentorInsights] = useState(null);
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [pendingApprovals, setPendingApprovals] = useState(0);
+  const [unreadNotifs, setUnreadNotifs] = useState(0);
 
   useEffect(() => {
     // Show tutorial on first visit
@@ -61,8 +75,25 @@ export const Dashboard = () => {
   useEffect(() => {
     if (currentBrand?.brand_id) {
       fetchMetrics(currentBrand.brand_id);
+      loadDashboardData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentBrand?.brand_id, fetchMetrics]);
+
+  const loadDashboardData = async () => {
+    if (!currentBrand?.brand_id || !token) return;
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const [actRes, appRes, notifRes] = await Promise.all([
+        axios.get(`${API}/brands/${currentBrand.brand_id}/activity?limit=5`, { headers }).catch(() => ({ data: { activities: [] } })),
+        axios.get(`${API}/brands/${currentBrand.brand_id}/approvals?status=pending`, { headers }).catch(() => ({ data: { counts: {} } })),
+        axios.get(`${API}/notifications?unread_only=true`, { headers }).catch(() => ({ data: { unread_count: 0 } }))
+      ]);
+      setRecentActivity(actRes.data.activities || []);
+      setPendingApprovals(appRes.data.counts?.pending || 0);
+      setUnreadNotifs(notifRes.data.unread_count || 0);
+    } catch { /* silent */ }
+  };
 
   const generateMentorInsights = async () => {
     if (!currentBrand?.brand_id) return;
@@ -274,6 +305,89 @@ export const Dashboard = () => {
                   Histórias e manifesto
                 </p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Activity + Approvals Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 relative z-10">
+        {/* Recent Activity */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-heading flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                Atividade Recente
+              </CardTitle>
+              <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate('/collaboration')} data-testid="view-all-activity">
+                Ver tudo <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {recentActivity.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">Nenhuma atividade recente</p>
+            ) : (
+              <div className="space-y-3">
+                {recentActivity.map((act, i) => (
+                  <div key={act.activity_id || i} className="flex items-start gap-3 text-sm" data-testid={`activity-${i}`}>
+                    <div className="mt-0.5 h-2 w-2 rounded-full bg-secondary flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm leading-snug truncate">{act.description}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{act.user_name} · {timeAgo(act.created_at)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Quick Status */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-heading flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-muted-foreground" />
+              Status Rapido
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors" onClick={() => navigate('/collaboration')} data-testid="pending-approvals-card">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Aprovacoes Pendentes</p>
+                  <p className="text-xs text-muted-foreground">Aguardando sua acao</p>
+                </div>
+              </div>
+              <span className="text-lg font-bold text-amber-600">{pendingApprovals}</span>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors" onClick={() => {}} data-testid="unread-notifs-card">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-secondary/10 flex items-center justify-center">
+                  <Bell className="h-4 w-4 text-secondary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Notificacoes</p>
+                  <p className="text-xs text-muted-foreground">Nao lidas</p>
+                </div>
+              </div>
+              <span className="text-lg font-bold text-secondary">{unreadNotifs}</span>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors" onClick={() => navigate('/naming')} data-testid="naming-card">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Naming</p>
+                  <p className="text-xs text-muted-foreground">Ferramenta de criacao de nomes</p>
+                </div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>

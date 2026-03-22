@@ -7,6 +7,7 @@ import uuid
 
 from config import db
 from utils.helpers import get_current_user
+from routes.notifications import create_notification
 
 router = APIRouter(tags=["Collaboration"])
 
@@ -66,6 +67,17 @@ async def create_approval(brand_id: str, data: ApprovalRequest, user: dict = Dep
     # Log activity
     await log_activity(brand_id, user, "approval_created", f"Solicitou aprovacao: {data.item_name}", {"approval_id": approval_id, "item_type": data.item_type})
 
+    # Notify assigned reviewer
+    if data.assigned_to:
+        await create_notification(
+            user_id=data.assigned_to, brand_id=brand_id,
+            notif_type="approval_request",
+            title="Nova solicitacao de aprovacao",
+            message=f"{user.get('name', 'Alguem')} solicitou sua aprovacao para: {data.item_name}",
+            link=f"/collaboration",
+            actor_name=user.get("name", "")
+        )
+
     return doc
 
 
@@ -93,6 +105,19 @@ async def approval_action(brand_id: str, approval_id: str, data: ApprovalAction,
 
     action_labels = {"approve": "Aprovou", "reject": "Rejeitou", "request_changes": "Pediu alteracoes"}
     await log_activity(brand_id, user, f"approval_{data.action}", f"{action_labels[data.action]}: {approval.get('item_name', '')}", {"approval_id": approval_id})
+
+    # Notify the original requester about the action
+    requester_id = approval.get("requested_by")
+    if requester_id and requester_id != user["user_id"]:
+        status_labels = {"approve": "aprovada", "reject": "rejeitada", "request_changes": "com alteracoes solicitadas"}
+        await create_notification(
+            user_id=requester_id, brand_id=brand_id,
+            notif_type="approval_action",
+            title=f"Aprovacao {status_labels.get(data.action, 'atualizada')}",
+            message=f"{user.get('name', 'Alguem')} {action_labels[data.action].lower()}: {approval.get('item_name', '')}",
+            link=f"/collaboration",
+            actor_name=user.get("name", "")
+        )
 
     updated = await db.approvals.find_one({"approval_id": approval_id}, {"_id": 0})
     return updated
@@ -156,6 +181,21 @@ async def create_comment(brand_id: str, data: CommentRequest, user: dict = Depen
     doc.pop("_id", None)
 
     await log_activity(brand_id, user, "comment_added", f"Comentou em {data.item_type}", {"comment_id": comment_id, "item_type": data.item_type, "item_id": data.item_id})
+
+    # Notify other collaborators on the same item (except commenter)
+    other_commenters = await db.comments.distinct("user_id", {
+        "brand_id": brand_id, "item_type": data.item_type, "item_id": data.item_id,
+        "user_id": {"$ne": user["user_id"]}
+    })
+    for uid in other_commenters:
+        await create_notification(
+            user_id=uid, brand_id=brand_id,
+            notif_type="comment",
+            title="Novo comentario",
+            message=f"{user.get('name', 'Alguem')} comentou em {data.item_type}: {data.content[:80]}",
+            link=f"/collaboration",
+            actor_name=user.get("name", "")
+        )
 
     return doc
 

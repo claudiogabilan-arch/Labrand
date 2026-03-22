@@ -57,8 +57,11 @@ import {
   Radio,
   Volume2,
   Gem,
-  Share2
+  Share2,
+  Bell,
+  Check
 } from 'lucide-react';
+import axios from 'axios';
 
 // Top-level items (always visible, no section)
 const topItems = [
@@ -376,9 +379,68 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
 };
 
 export const Header = ({ collapsed }) => {
-  const { user, logout, isEstrategista } = useAuth();
+  const { user, logout, isEstrategista, token } = useAuth();
   const { currentBrand, brands, setCurrentBrand } = useBrand();
   const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef(null);
+  const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+  const fetchNotifications = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await axios.get(`${API}/notifications?limit=15`, { headers: { Authorization: `Bearer ${token}` } });
+      setNotifications(res.data.notifications || []);
+      setUnreadCount(res.data.unread_count || 0);
+    } catch { /* silent */ }
+  }, [token, API]);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    function handler(e) {
+      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const markRead = async (notifId) => {
+    try {
+      await axios.post(`${API}/notifications/${notifId}/read`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      setNotifications(prev => prev.map(n => n.notif_id === notifId ? { ...n, read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch { /* silent */ }
+  };
+
+  const markAllRead = async () => {
+    try {
+      await axios.post(`${API}/notifications/read-all`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+    } catch { /* silent */ }
+  };
+
+  const handleNotifClick = (notif) => {
+    if (!notif.read) markRead(notif.notif_id);
+    if (notif.link) navigate(notif.link);
+    setNotifOpen(false);
+  };
+
+  const timeAgo = (dateStr) => {
+    if (!dateStr) return '';
+    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+    if (diff < 60) return 'agora';
+    if (diff < 3600) return `${Math.floor(diff / 60)}min`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+    return `${Math.floor(diff / 86400)}d`;
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -428,8 +490,66 @@ export const Header = ({ collapsed }) => {
           </DropdownMenu>
         </div>
 
-        {/* User Menu */}
-        <div className="flex items-center gap-4">
+        {/* Notifications + User Menu */}
+        <div className="flex items-center gap-2">
+          {/* Notification Bell */}
+          <div className="relative" ref={notifRef}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative h-9 w-9"
+              onClick={() => { setNotifOpen(!notifOpen); if (!notifOpen) fetchNotifications(); }}
+              data-testid="notification-bell"
+            >
+              <Bell className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-white px-1" data-testid="notification-count">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Button>
+
+            {notifOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-background border rounded-xl shadow-xl z-50 overflow-hidden" data-testid="notification-dropdown">
+                <div className="flex items-center justify-between px-4 py-3 border-b">
+                  <h3 className="text-sm font-semibold">Notificacoes</h3>
+                  {unreadCount > 0 && (
+                    <button onClick={markAllRead} className="text-xs text-secondary hover:underline flex items-center gap-1" data-testid="mark-all-read">
+                      <Check className="h-3 w-3" /> Marcar todas como lidas
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-[360px] overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="py-10 text-center">
+                      <Bell className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
+                      <p className="text-sm text-muted-foreground">Nenhuma notificacao</p>
+                    </div>
+                  ) : (
+                    notifications.map(n => (
+                      <button
+                        key={n.notif_id}
+                        onClick={() => handleNotifClick(n)}
+                        data-testid={`notif-${n.notif_id}`}
+                        className={`w-full text-left px-4 py-3 border-b border-border/50 hover:bg-muted/50 transition-colors ${!n.read ? 'bg-secondary/5' : ''}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          {!n.read && <span className="mt-1.5 h-2 w-2 rounded-full bg-secondary flex-shrink-0" />}
+                          <div className={`flex-1 min-w-0 ${n.read ? 'ml-5' : ''}`}>
+                            <p className="text-sm font-medium leading-tight truncate">{n.title}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
+                            <p className="text-[10px] text-muted-foreground/60 mt-1">{timeAgo(n.created_at)}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="gap-2 px-2" data-testid="user-menu">

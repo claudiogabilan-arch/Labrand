@@ -427,11 +427,19 @@ export const Settings = () => {
   const handleSavePersonalization = async () => {
     setIsSaving(true);
     try {
-      // Save to localStorage for now
       localStorage.setItem('labrand_personalization', JSON.stringify(personalization));
-      toast.success('Preferências salvas!');
+      // Also save notification preferences to backend
+      await axios.put(`${API}/notifications/preferences`, {
+        email_enabled: personalization.notifications.email,
+        types: {
+          approval_request: personalization.notifications.tasks,
+          approval_action: personalization.notifications.tasks,
+          comment: personalization.notifications.browser
+        }
+      }, { headers: getAuthHeaders() });
+      toast.success('Preferencias salvas!');
     } catch (error) {
-      toast.error('Erro ao salvar preferências');
+      toast.error('Erro ao salvar preferencias');
     } finally {
       setIsSaving(false);
     }
@@ -1428,16 +1436,16 @@ export const Settings = () => {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Bell className="h-5 w-5" />
-                Notificações
+                Notificacoes
               </CardTitle>
-              <CardDescription>Configure suas preferências de notificação</CardDescription>
+              <CardDescription>Configure suas preferencias de notificacao</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {[
-                { key: 'email', label: 'Notificações por Email', desc: 'Receba atualizações no seu email' },
-                { key: 'browser', label: 'Notificações do Navegador', desc: 'Receba alertas no navegador' },
-                { key: 'tasks', label: 'Lembretes de Tarefas', desc: 'Seja notificado sobre tarefas pendentes' },
-                { key: 'reports', label: 'Relatórios Semanais', desc: 'Receba resumos semanais por email' }
+                { key: 'email', label: 'Notificacoes por Email', desc: 'Receba alertas de aprovacoes e comentarios no seu email' },
+                { key: 'browser', label: 'Comentarios', desc: 'Seja notificado quando alguem comentar em seus itens' },
+                { key: 'tasks', label: 'Aprovacoes', desc: 'Seja notificado sobre solicitacoes e respostas de aprovacao' },
+                { key: 'reports', label: 'Relatorios Semanais', desc: 'Receba resumos semanais por email' }
               ].map(item => (
                 <div key={item.key} className="flex items-center justify-between py-2">
                   <div>
