@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useBrand } from '../contexts/BrandContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -14,7 +13,6 @@ export default function AcceptInvite() {
   const { token } = useParams();
   const navigate = useNavigate();
   const { user, getAuthHeaders } = useAuth();
-  const { refreshBrands } = useBrand();
   const [status, setStatus] = useState('loading'); // loading, success, error, needLogin
   const [inviteData, setInviteData] = useState(null);
   const [error, setError] = useState('');
@@ -36,8 +34,6 @@ export default function AcceptInvite() {
       setStatus('success');
       // Clear pending invite from localStorage
       localStorage.removeItem('pending_invite');
-      // Refresh brands list so the new team brand appears
-      await refreshBrands();
     } catch (error) {
       setError(error.response?.data?.detail || 'Erro ao aceitar convite');
       setStatus('error');
@@ -97,7 +93,7 @@ export default function AcceptInvite() {
               <Badge variant="outline" className="mx-auto">
                 {inviteData.role === 'admin' ? 'Administrador' : 'Editor'}
               </Badge>
-              <Button onClick={() => navigate('/dashboard')} className="w-full">
+              <Button onClick={() => { window.location.href = '/dashboard'; }} className="w-full">
                 Ir para o Dashboard
               </Button>
             </div>
