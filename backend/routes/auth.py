@@ -239,7 +239,7 @@ async def login(user_data: UserLogin, response: Response):
 
 
 @router.post("/auth/forgot-password")
-async def forgot_password(data: ForgotPasswordRequest):
+async def forgot_password(data: ForgotPasswordRequest, request: Request):
     """Send password reset email"""
     user = await db.users.find_one({"email": data.email}, {"_id": 0})
     if not user:
@@ -259,8 +259,10 @@ async def forgot_password(data: ForgotPasswordRequest):
         upsert=True
     )
     
-    frontend_url = os.environ.get("FRONTEND_URL", "https://labrand.com.br")
-    reset_link = f"{frontend_url}/reset-password?token={reset_token}"
+    origin = request.headers.get("origin") or request.headers.get("referer", "").rstrip("/")
+    if not origin:
+        origin = os.environ.get("FRONTEND_URL", "")
+    reset_link = f"{origin}/reset-password?token={reset_token}"
     
     html = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
