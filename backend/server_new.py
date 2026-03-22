@@ -131,10 +131,10 @@ cors_origins_env = os.environ.get("CORS_ORIGINS", "")
 frontend_url = os.environ.get("FRONTEND_URL", "")
 
 allowed_origins = []
-if cors_origins_env and cors_origins_env != "*":
+if cors_origins_env and cors_origins_env.strip() != "*":
     allowed_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
-if frontend_url and frontend_url not in allowed_origins:
-    allowed_origins.append(frontend_url)
+    if frontend_url and frontend_url not in allowed_origins:
+        allowed_origins.append(frontend_url)
 
 # Fallback: if no explicit origins configured, allow all via dynamic origin matching
 if not allowed_origins:

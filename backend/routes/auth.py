@@ -353,14 +353,7 @@ async def google_login(request: Request):
     redirect_url = request.query_params.get("redirect")
     
     if not redirect_url:
-        # Fallback: use the referer header to construct redirect
-        referer = request.headers.get("referer", "")
-        if referer:
-            from urllib.parse import urlparse
-            parsed = urlparse(referer)
-            redirect_url = f"{parsed.scheme}://{parsed.netloc}/dashboard"
-        else:
-            raise HTTPException(status_code=400, detail="redirect URL is required")
+        raise HTTPException(status_code=400, detail="redirect URL is required")
     
     # Redirect to Emergent Auth
     auth_url = f"https://auth.emergentagent.com/?redirect={redirect_url}"
