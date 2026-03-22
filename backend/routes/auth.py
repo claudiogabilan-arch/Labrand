@@ -10,8 +10,56 @@ import os
 from config import db, PLANS
 from models.schemas import UserCreate, UserLogin, VerifyEmailRequest, ResendCodeRequest, ForgotPasswordRequest, ResetPasswordRequest, OnboardingData
 from utils.helpers import pwd_context, create_jwt_token, get_current_user, send_email
+import logging
 
 router = APIRouter(tags=["Authentication"])
+logger = logging.getLogger(__name__)
+
+
+async def auto_accept_pending_invites(user_id: str, email: str):
+    """Auto-accept any pending team invites for this email when user logs in."""
+    try:
+        pending = await db.team_invites.find(
+            {"email": email, "status": "pending"},
+            {"_id": 0}
+        ).to_list(50)
+        
+        if not pending:
+            return
+        
+        # Get user details for the member record
+        user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0, "name": 1, "picture": 1})
+        user_name = (user_doc or {}).get("name", "")
+        user_picture = (user_doc or {}).get("picture")
+        
+        for invite in pending:
+            brand_id = invite.get("brand_id")
+            if not brand_id:
+                continue
+            # Check if already a team member
+            existing = await db.team_members.find_one(
+                {"brand_id": brand_id, "user_id": user_id}
+            )
+            if not existing:
+                now = datetime.now(timezone.utc).isoformat()
+                await db.team_members.insert_one({
+                    "member_id": f"member_{uuid.uuid4().hex[:12]}",
+                    "brand_id": brand_id,
+                    "user_id": user_id,
+                    "email": email,
+                    "name": user_name,
+                    "picture": user_picture,
+                    "role": invite.get("role", "viewer"),
+                    "joined_at": now
+                })
+            # Mark invite as accepted
+            await db.team_invites.update_one(
+                {"email": email, "brand_id": brand_id, "status": "pending"},
+                {"$set": {"status": "accepted", "accepted_at": datetime.now(timezone.utc).isoformat()}}
+            )
+            logger.info(f"Auto-accepted invite for {email} to brand {brand_id}")
+    except Exception as e:
+        logger.error(f"Error auto-accepting invites: {e}")
 
 
 @router.post("/auth/register")
@@ -104,6 +152,9 @@ async def verify_email(data: VerifyEmailRequest):
     
     token = create_jwt_token(user["user_id"], user["email"], user.get("role", "estrategista"))
     
+    # Auto-accept any pending team invites for this user
+    await auto_accept_pending_invites(user["user_id"], user["email"])
+    
     return {
         "user_id": user["user_id"],
         "email": user["email"],
@@ -168,6 +219,9 @@ async def login(user_data: UserLogin, response: Response):
     
     if not password_valid:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
+    
+    # Auto-accept any pending team invites for this user
+    await auto_accept_pending_invites(user["user_id"], user["email"])
     
     token = create_jwt_token(user["user_id"], user["email"], user.get("role", "cliente"))
     
@@ -388,6 +442,9 @@ async def process_session(request: Request, response: Response):
     )
     
     token = create_jwt_token(user_id, email, user.get("role", "estrategista"))
+    
+    # Auto-accept any pending team invites for this user
+    await auto_accept_pending_invites(user_id, email)
     
     return {
         "token": token,

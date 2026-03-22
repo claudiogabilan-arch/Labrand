@@ -116,13 +116,14 @@ async def invite_team_member(
     
     # Check permissions
     is_owner = brand.get("owner_id") == user["user_id"]
+    is_global_admin = user.get("is_admin") or user.get("role") == "admin"
     team_member = await db.team_members.find_one({
         "brand_id": request.brand_id,
         "user_id": user["user_id"],
         "role": "admin"
     }, {"_id": 0})
     
-    if not is_owner and not team_member:
+    if not is_owner and not team_member and not is_global_admin:
         raise HTTPException(status_code=403, detail="Sem permissão para convidar membros")
     
     # Check if already invited or member
@@ -231,6 +232,47 @@ async def cancel_invite(
     await db.team_invites.delete_one({"invite_id": invite_id})
     
     return {"success": True, "message": "Convite cancelado"}
+
+
+@router.post("/team/force-accept-pending")
+async def force_accept_pending(user: dict = Depends(get_current_user)):
+    """Admin: Force-accept all pending invites where the user has already registered."""
+    if not user.get("is_admin") and user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    
+    pending = await db.team_invites.find({"status": "pending"}, {"_id": 0}).to_list(500)
+    accepted = 0
+    
+    for invite in pending:
+        email = invite.get("email")
+        brand_id = invite.get("brand_id")
+        if not email or not brand_id:
+            continue
+        # Check if user with this email exists
+        registered_user = await db.users.find_one({"email": email}, {"_id": 0})
+        if not registered_user:
+            continue
+        # Check if already a member
+        existing = await db.team_members.find_one({"brand_id": brand_id, "user_id": registered_user["user_id"]})
+        if not existing:
+            await db.team_members.insert_one({
+                "member_id": f"member_{uuid.uuid4().hex[:12]}",
+                "brand_id": brand_id,
+                "user_id": registered_user["user_id"],
+                "email": email,
+                "name": registered_user.get("name", ""),
+                "picture": registered_user.get("picture"),
+                "role": invite.get("role", "viewer"),
+                "joined_at": datetime.now(timezone.utc).isoformat()
+            })
+        await db.team_invites.update_one(
+            {"email": email, "brand_id": brand_id, "status": "pending"},
+            {"$set": {"status": "accepted", "accepted_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        accepted += 1
+    
+    return {"success": True, "accepted_count": accepted, "total_pending": len(pending)}
+
 
 
 @router.post("/team/accept/{token}")
