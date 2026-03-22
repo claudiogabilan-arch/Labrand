@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useBrand } from '../contexts/BrandContext';
+import { PillarNavigation } from '../components/PillarNavigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -139,6 +140,7 @@ export const PillarPromise = () => {
 
   return (
     <div className="space-y-6" data-testid="pillar-promise">
+      <PillarNavigation />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">

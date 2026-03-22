@@ -34,6 +34,8 @@ import {
   MapPin
 } from 'lucide-react';
 
+import { PillarNavigation } from '../components/PillarNavigation';
+
 // Definição das finalidades de marca
 const BRAND_PURPOSES = [
   { id: 'influencer', label: 'Influencer/Creator', icon: User, color: 'bg-pink-500', description: 'Personal branding e criação de conteúdo' },
@@ -346,6 +348,7 @@ export const PillarStart = () => {
 
   return (
     <div className="space-y-6" data-testid="pillar-start">
+      <PillarNavigation />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">
