@@ -47,13 +47,19 @@ Ferramenta interna de gestão de marcas para agência de branding. Plataforma qu
 - [x] CRUD completo com auto-save MongoDB
 
 ### Fase 4 - Notifications + Module Improvements + Refactoring (Concluído - 22/03/2026)
-- [x] **Push Notifications**: Sino in-app no header com dropdown, badge de contagem, marcar como lida
-- [x] **Email Notifications**: Envio via Resend quando aprovação/comentário é criado
-- [x] **Preferências de Notificação**: Seção em Settings com toggles (email, comentários, aprovações, relatórios) conectada ao backend
-- [x] **Dashboard Enriquecido**: Atividade Recente (feed de atividades), Status Rápido (aprovações pendentes + notificações não lidas + link Naming)
-- [x] **Navegação entre Pilares**: Componente PillarNavigation compartilhado em todas as 7 páginas de pilares (barra de progresso, prev/next, "Pilar X de 7")
-- [x] **Colaboração + Notificações**: Auto-criação de notificações quando aprovação é solicitada/respondida ou comentário é adicionado
-- [x] **Refatoração**: Remoção de código morto (Plans.js), criação de componentes compartilhados (PillarNavigation)
+- [x] Push Notifications: Sino in-app no header, email via Resend
+- [x] Preferências de Notificação: Settings com toggles conectadas ao backend
+- [x] Dashboard Enriquecido: Atividade Recente + Status Rápido
+- [x] Navegação entre Pilares: Componente PillarNavigation compartilhado (7 páginas)
+- [x] Colaboração + Notificações: Auto-criação de notificações em aprovações/comentários
+- [x] Refatoração: Remoção de Plans.js (código morto), componentes compartilhados
+
+### Bug Fix - Convite de Equipe (Concluído - 22/03/2026)
+- [x] BrandContext: adicionado `refreshBrands()` que reseta `hasFetchedRef` e recarrega marcas
+- [x] AcceptInvite: chama `refreshBrands()` após aceitar convite
+- [x] BrandContext: auto-seleciona marca corretamente quando marca atual não está na lista
+- [x] AuthCallback: verifica `pending_invite` após Google Auth e redireciona para aceitação
+- [x] ProtectedRoute: verifica `pending_invite` ao acessar rotas protegidas
 
 ---
 
@@ -73,16 +79,18 @@ Ferramenta interna de gestão de marcas para agência de branding. Plataforma qu
 ---
 
 ## Arquivos Chave
+- `/app/frontend/src/contexts/BrandContext.js` - Context com refreshBrands
+- `/app/frontend/src/pages/AcceptInvite.js` - Fluxo de aceitação de convite
+- `/app/frontend/src/components/AuthCallback.js` - Google Auth callback
+- `/app/frontend/src/components/ProtectedRoute.js` - Verificação de pending_invite
 - `/app/frontend/src/components/PillarNavigation.js` - Navegação compartilhada dos pilares
 - `/app/frontend/src/components/Layout.js` - Header com sino de notificações
 - `/app/frontend/src/pages/Dashboard.js` - Dashboard com atividade + status
 - `/app/frontend/src/pages/Naming.js` - Wizard de Naming (7 etapas)
-- `/app/frontend/src/pages/Settings.js` - Preferências de notificação
 - `/app/backend/routes/notifications.py` - Sistema de notificações
 - `/app/backend/routes/collaboration.py` - Colaboração + triggers de notificação
-- `/app/backend/routes/naming.py` - API CRUD Naming
-- `/app/backend/routes/credits.py` - Créditos IA / Stripe
-- `/app/backend/routes/reports.py` - Geração de PDF
+- `/app/backend/routes/team.py` - Convites de equipe
 
 ## Credenciais de Teste
 - Admin: `admin@labrand.com.br` / `Labrand@2026!`
+- Teste convidado: `sandro@test.com` / `Test@123`

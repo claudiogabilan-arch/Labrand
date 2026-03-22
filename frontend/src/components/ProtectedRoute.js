@@ -19,12 +19,17 @@ export const ProtectedRoute = ({ children }) => {
     if (!loading) {
       if (user) {
         setIsAuthenticated(true);
+        // Check for pending invite after authentication
+        const pendingInvite = localStorage.getItem('pending_invite');
+        if (pendingInvite && !location.pathname.startsWith('/invite')) {
+          navigate(`/invite/${pendingInvite}`, { replace: true });
+        }
       } else {
         setIsAuthenticated(false);
         navigate('/login', { replace: true });
       }
     }
-  }, [user, loading, navigate, location.state]);
+  }, [user, loading, navigate, location.state, location.pathname]);
 
   if (loading || isAuthenticated === null) {
     return (

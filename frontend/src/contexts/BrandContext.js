@@ -35,11 +35,14 @@ export const BrandProvider = ({ children }) => {
       });
       const brandsList = response.data || [];
       setBrands(brandsList);
-      // Auto-select first brand if none selected
-      if (brandsList.length > 0 && !currentBrand) {
+      // Auto-select first brand if none selected or current brand is not in list
+      if (brandsList.length > 0) {
         const savedBrandId = localStorage.getItem('labrand_current_brand');
         const saved = savedBrandId ? brandsList.find(b => b.brand_id === savedBrandId) : null;
-        setCurrentBrand(saved || brandsList[0]);
+        const currentInList = currentBrand ? brandsList.find(b => b.brand_id === currentBrand.brand_id) : null;
+        if (!currentInList) {
+          setCurrentBrand(saved || brandsList[0]);
+        }
       }
       return brandsList;
     } catch (error) {
@@ -49,6 +52,12 @@ export const BrandProvider = ({ children }) => {
       setLoading(false);
     }
   }, [token, currentBrand]);
+
+  // Force refresh brands (used after accepting invites)
+  const refreshBrands = useCallback(async () => {
+    hasFetchedRef.current = false;
+    return fetchBrands();
+  }, [fetchBrands]);
 
   // AUTO-FETCH: Load brands whenever user is authenticated
   useEffect(() => {
@@ -246,6 +255,7 @@ export const BrandProvider = ({ children }) => {
       metrics,
       loading,
       fetchBrands,
+      refreshBrands,
       fetchBrand,
       createBrand,
       updateBrand,

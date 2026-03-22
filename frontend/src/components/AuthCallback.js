@@ -24,11 +24,16 @@ export const AuthCallback = () => {
           const sessionId = sessionIdMatch[1];
           const user = await processOAuthSession(sessionId);
           
-          // Navigate to dashboard with user data
-          navigate('/dashboard', { 
-            replace: true, 
-            state: { user } 
-          });
+          // Check if user has a pending invite to accept
+          const pendingInvite = localStorage.getItem('pending_invite');
+          if (pendingInvite) {
+            navigate(`/invite/${pendingInvite}`, { replace: true });
+          } else {
+            navigate('/dashboard', { 
+              replace: true, 
+              state: { user } 
+            });
+          }
         } else {
           // No session_id found, redirect to login
           navigate('/login', { replace: true });
