@@ -112,6 +112,19 @@ PLATFORM_SETUP_GUIDES = {
             "Cole os dados nos campos abaixo"
         ],
         "doc_url": "https://developers.google.com/youtube/v3/getting-started"
+    },
+    "tiktok": {
+        "name": "TikTok",
+        "fields": [
+            {"key": "access_token", "label": "Access Token (TikTok for Developers)", "type": "password"}
+        ],
+        "steps": [
+            "Acesse developers.tiktok.com e crie um App",
+            "Solicite permissões: user.info.basic, video.list",
+            "Gere um Access Token via fluxo OAuth",
+            "Cole o token abaixo"
+        ],
+        "doc_url": "https://developers.tiktok.com/doc/getting-started"
     }
 }
 

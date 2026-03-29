@@ -1,7 +1,7 @@
 """ClickUp OAuth 2.0 Integration Routes"""
 from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import RedirectResponse
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import httpx
 import os
 import logging
@@ -242,13 +242,27 @@ async def sync_task_to_clickup(brand_id: str, data: dict, user: dict = Depends(g
 
 
 @router.get("/sync-history/{brand_id}")
-async def get_sync_history(brand_id: str, limit: int = 10, user: dict = Depends(get_current_user)):
-    """Get recent sync history for a brand"""
+async def get_sync_history(brand_id: str, limit: int = 10, days: int = 0, user: dict = Depends(get_current_user)):
+    """Get recent sync history for a brand, optionally filtered by period"""
+    query = {"brand_id": brand_id}
+    if days > 0:
+        since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        query["synced_at"] = {"$gte": since}
     history = await db.clickup_sync_history.find(
-        {"brand_id": brand_id},
-        {"_id": 0},
+        query, {"_id": 0},
     ).sort("synced_at", -1).to_list(limit)
     return history
+
+
+@router.get("/sync-stats/{brand_id}")
+async def get_sync_stats(brand_id: str, user: dict = Depends(get_current_user)):
+    """Get sync statistics for a brand"""
+    total = await db.clickup_sync_history.count_documents({"brand_id": brand_id})
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    month_ago = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+    this_week = await db.clickup_sync_history.count_documents({"brand_id": brand_id, "synced_at": {"$gte": week_ago}})
+    this_month = await db.clickup_sync_history.count_documents({"brand_id": brand_id, "synced_at": {"$gte": month_ago}})
+    return {"total": total, "this_week": this_week, "this_month": this_month}
 
 
 @router.delete("/disconnect/{brand_id}")

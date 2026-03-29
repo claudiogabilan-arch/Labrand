@@ -13,7 +13,8 @@ import {
   Radio, MessageCircle, Heart, ThumbsUp, ThumbsDown, Minus,
   Loader2, RefreshCw, ExternalLink, TrendingUp, TrendingDown,
   Instagram, Facebook, Linkedin, Youtube, CheckCircle2, 
-  XCircle, ChevronRight, Link2, Eye, EyeOff, Unplug
+  XCircle, ChevronRight, Link2, Eye, EyeOff, Unplug,
+  Music, Download, Users
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -23,14 +24,16 @@ const PLATFORM_ICONS = {
   instagram: Instagram,
   facebook: Facebook,
   linkedin: Linkedin,
-  youtube: Youtube
+  youtube: Youtube,
+  tiktok: Music
 };
 
 const PLATFORM_COLORS = {
   instagram: { from: 'from-pink-500', to: 'to-orange-400', text: '#E4405F' },
   facebook: { from: 'from-blue-600', to: 'to-blue-500', text: '#1877F2' },
   linkedin: { from: 'from-blue-700', to: 'to-cyan-600', text: '#0A66C2' },
-  youtube: { from: 'from-red-600', to: 'to-red-500', text: '#FF0000' }
+  youtube: { from: 'from-red-600', to: 'to-red-500', text: '#FF0000' },
+  tiktok: { from: 'from-gray-900', to: 'to-gray-700', text: '#000000' }
 };
 
 const SENTIMENT_STYLES = {
@@ -40,10 +43,11 @@ const SENTIMENT_STYLES = {
 };
 
 // Platform Connection Card
-function PlatformCard({ platform, onConnect, onDisconnect }) {
+function PlatformCard({ platform, onConnect, onDisconnect, onFetch }) {
   const [expanded, setExpanded] = useState(false);
   const [credentials, setCredentials] = useState({});
   const [saving, setSaving] = useState(false);
+  const [fetching, setFetching] = useState(false);
   const [showSecrets, setShowSecrets] = useState({});
 
   const Icon = PLATFORM_ICONS[platform.id] || Radio;
@@ -86,9 +90,18 @@ function PlatformCard({ platform, onConnect, onDisconnect }) {
           </div>
           <div className="flex items-center gap-2">
             {platform.connected ? (
-              <Button variant="outline" size="sm" onClick={() => onDisconnect(platform.id)} className="text-red-500 hover:text-red-700" data-testid={`disconnect-${platform.id}`}>
-                <Unplug className="h-4 w-4 mr-1" /> Desconectar
-              </Button>
+              <>
+                <Button variant="outline" size="sm" onClick={async () => {
+                  setFetching(true);
+                  try { await onFetch(platform.id); } finally { setFetching(false); }
+                }} disabled={fetching} data-testid={`fetch-${platform.id}`}>
+                  {fetching ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Download className="h-4 w-4 mr-1" />}
+                  Buscar Dados
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => onDisconnect(platform.id)} className="text-red-500 hover:text-red-700" data-testid={`disconnect-${platform.id}`}>
+                  <Unplug className="h-4 w-4 mr-1" /> Desconectar
+                </Button>
+              </>
             ) : (
               <Button variant={expanded ? "secondary" : "default"} size="sm" onClick={() => setExpanded(!expanded)} data-testid={`connect-${platform.id}`}>
                 {expanded ? 'Fechar' : 'Conectar'}
@@ -165,7 +178,9 @@ export default function SocialListening() {
   const [mentions, setMentions] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [platforms, setPlatforms] = useState([]);
+  const [profiles, setProfiles] = useState([]);
   const [showSetup, setShowSetup] = useState(false);
+  const [fetchingAll, setFetchingAll] = useState(false);
   const headers = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
@@ -175,16 +190,18 @@ export default function SocialListening() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [dashRes, mentionsRes, alertsRes, platRes] = await Promise.all([
+      const [dashRes, mentionsRes, alertsRes, platRes, profRes] = await Promise.all([
         axios.get(`${API}/brands/${currentBrand.brand_id}/social-listening/dashboard?days=30`, { headers }),
         axios.get(`${API}/brands/${currentBrand.brand_id}/social-listening/mentions?limit=20`, { headers }),
         axios.get(`${API}/brands/${currentBrand.brand_id}/social-listening/alerts`, { headers }),
-        axios.get(`${API}/brands/${currentBrand.brand_id}/social-listening/platforms`, { headers })
+        axios.get(`${API}/brands/${currentBrand.brand_id}/social-listening/platforms`, { headers }),
+        axios.get(`${API}/brands/${currentBrand.brand_id}/social-profiles`, { headers }).catch(() => ({ data: { profiles: [] } })),
       ]);
       setDashboard(dashRes.data);
       setMentions(mentionsRes.data.mentions || []);
       setAlerts(alertsRes.data.alerts || []);
       setPlatforms(platRes.data.platforms || []);
+      setProfiles(profRes.data.profiles || []);
     } catch (error) {
       console.error('Error loading social data');
     } finally {
@@ -213,6 +230,35 @@ export default function SocialListening() {
       toast.error('Erro ao desconectar');
     }
   };
+
+  const handleFetch = async (platformId) => {
+    try {
+      const res = await axios.post(`${API}/brands/${currentBrand.brand_id}/social-fetcher/${platformId}`, {}, { headers });
+      const data = res.data;
+      toast.success(`${platformId}: ${data.fetched} posts encontrados, ${data.new_saved} novos salvos`);
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || `Erro ao buscar dados de ${platformId}`);
+    }
+  };
+
+  const handleFetchAll = async () => {
+    setFetchingAll(true);
+    try {
+      const res = await axios.post(`${API}/brands/${currentBrand.brand_id}/social-fetcher/all`, {}, { headers });
+      const results = res.data.results || {};
+      const summary = Object.entries(results).map(([k, v]) => `${k}: ${v.success ? v.new_saved + ' novos' : 'erro'}`).join(', ');
+      toast.success(`Dados atualizados! ${summary}`);
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao buscar dados');
+    } finally {
+      setFetchingAll(false);
+    }
+  };
+
+  const getProfile = (platformId) => profiles.find(p => p.platform === platformId);
+  const formatNum = (n) => n >= 1000000 ? `${(n/1000000).toFixed(1)}M` : n >= 1000 ? `${(n/1000).toFixed(1)}K` : String(n || 0);
 
   if (!currentBrand) {
     return <div className="flex items-center justify-center h-64"><p className="text-muted-foreground">Selecione uma marca primeiro</p></div>;
@@ -259,7 +305,8 @@ export default function SocialListening() {
                 key={platform.id} 
                 platform={platform} 
                 onConnect={handleConnect} 
-                onDisconnect={handleDisconnect} 
+                onDisconnect={handleDisconnect}
+                onFetch={handleFetch}
               />
             ))}
           </CardContent>
@@ -282,6 +329,10 @@ export default function SocialListening() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button onClick={handleFetchAll} variant="outline" size="sm" disabled={fetchingAll} data-testid="fetch-all-btn">
+            {fetchingAll ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+            Buscar Todas
+          </Button>
           <Button onClick={() => setShowSetup(!showSetup)} variant="outline" size="sm">
             <Link2 className="h-4 w-4 mr-2" />
             Redes ({connectedCount})
@@ -292,13 +343,38 @@ export default function SocialListening() {
         </div>
       </div>
 
+      {/* Profile Metrics Cards */}
+      {profiles.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3" data-testid="social-profiles-grid">
+          {profiles.map(profile => {
+            const Icon = PLATFORM_ICONS[profile.platform] || Radio;
+            const colors = PLATFORM_COLORS[profile.platform] || {};
+            return (
+              <Card key={profile.platform} data-testid={`profile-${profile.platform}`}>
+                <CardContent className="pt-4 pb-3 text-center">
+                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${colors.from || 'from-gray-500'} ${colors.to || 'to-gray-400'} flex items-center justify-center mx-auto mb-2`}>
+                    <Icon className="h-4 w-4 text-white" />
+                  </div>
+                  <p className="text-xl font-bold">{formatNum(profile.followers || profile.subscribers || 0)}</p>
+                  <p className="text-xs text-muted-foreground">Seguidores</p>
+                  {profile.name && <p className="text-xs text-muted-foreground mt-1 truncate">@{profile.username || profile.name}</p>}
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {profile.updated_at ? new Date(profile.updated_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
       {/* Inline setup panel (toggled) */}
       {showSetup && (
         <Card>
           <CardHeader><CardTitle className="text-base">Gerenciar Conexões</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {platforms.map(platform => (
-              <PlatformCard key={platform.id} platform={platform} onConnect={handleConnect} onDisconnect={handleDisconnect} />
+              <PlatformCard key={platform.id} platform={platform} onConnect={handleConnect} onDisconnect={handleDisconnect} onFetch={handleFetch} />
             ))}
           </CardContent>
         </Card>

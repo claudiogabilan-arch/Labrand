@@ -65,7 +65,8 @@ export const Dashboard = () => {
   const [recentActivity, setRecentActivity] = useState([]);
   const [pendingApprovals, setPendingApprovals] = useState(0);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
-  const [clickupData, setClickupData] = useState({ connected: false, history: [] });
+  const [clickupData, setClickupData] = useState({ connected: false, history: [], stats: {} });
+  const [clickupPeriod, setClickupPeriod] = useState('all');
 
   useEffect(() => {
     // Show tutorial on first visit
@@ -100,14 +101,28 @@ export const Dashboard = () => {
       const cuStatus = clickupStatusRes.data;
       if (cuStatus.connected) {
         try {
-          const histRes = await axios.get(`${API}/integrations/clickup/sync-history/${currentBrand.brand_id}?limit=5`, { headers });
-          setClickupData({ connected: true, ...cuStatus, history: histRes.data || [] });
+          const [histRes, statsRes] = await Promise.all([
+            axios.get(`${API}/integrations/clickup/sync-history/${currentBrand.brand_id}?limit=5`, { headers }),
+            axios.get(`${API}/integrations/clickup/sync-stats/${currentBrand.brand_id}`, { headers }),
+          ]);
+          setClickupData({ connected: true, ...cuStatus, history: histRes.data || [], stats: statsRes.data || {} });
         } catch {
-          setClickupData({ connected: true, ...cuStatus, history: [] });
+          setClickupData({ connected: true, ...cuStatus, history: [], stats: {} });
         }
       } else {
-        setClickupData({ connected: false, history: [] });
+        setClickupData({ connected: false, history: [], stats: {} });
       }
+    } catch { /* silent */ }
+  };
+
+  const loadClickupHistoryByPeriod = async (period) => {
+    if (!currentBrand?.brand_id || !token) return;
+    setClickupPeriod(period);
+    const headers = { Authorization: `Bearer ${token}` };
+    const daysParam = period === 'week' ? 7 : period === 'month' ? 30 : 0;
+    try {
+      const res = await axios.get(`${API}/integrations/clickup/sync-history/${currentBrand.brand_id}?limit=10&days=${daysParam}`, { headers });
+      setClickupData(prev => ({ ...prev, history: res.data || [] }));
     } catch { /* silent */ }
   };
 
@@ -414,21 +429,52 @@ export const Dashboard = () => {
         <Card className="relative z-10" data-testid="clickup-dashboard-widget">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-heading flex items-center gap-2">
-                <Link2 className="h-4 w-4 text-violet-600" />
-                ClickUp — Atividades Sincronizadas
-              </CardTitle>
+              <div className="flex items-center gap-3">
+                <CardTitle className="text-base font-heading flex items-center gap-2">
+                  <Link2 className="h-4 w-4 text-violet-600" />
+                  ClickUp
+                </CardTitle>
+                {clickupData.stats?.total > 0 && (
+                  <Badge variant="secondary" className="text-xs font-bold" data-testid="clickup-total-badge">
+                    {clickupData.stats.total} sincronizada{clickupData.stats.total !== 1 ? 's' : ''}
+                  </Badge>
+                )}
+              </div>
               <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate('/planning')} data-testid="clickup-widget-go-planning">
                 Planejamento <ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             </div>
-            {clickupData.selected_list_name && (
-              <p className="text-xs text-muted-foreground">Lista: <span className="font-medium">{clickupData.selected_list_name}</span></p>
-            )}
+            <div className="flex items-center justify-between mt-1">
+              {clickupData.selected_list_name && (
+                <p className="text-xs text-muted-foreground">Lista: <span className="font-medium">{clickupData.selected_list_name}</span></p>
+              )}
+              <div className="flex border rounded-md overflow-hidden" data-testid="clickup-period-filter">
+                {[
+                  { key: 'week', label: 'Semana', count: clickupData.stats?.this_week },
+                  { key: 'month', label: 'Mês', count: clickupData.stats?.this_month },
+                  { key: 'all', label: 'Todos', count: clickupData.stats?.total },
+                ].map(p => (
+                  <button
+                    key={p.key}
+                    onClick={() => loadClickupHistoryByPeriod(p.key)}
+                    className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+                      clickupPeriod === p.key
+                        ? 'bg-violet-600 text-white'
+                        : 'hover:bg-muted text-muted-foreground'
+                    }`}
+                    data-testid={`clickup-filter-${p.key}`}
+                  >
+                    {p.label}{p.count > 0 ? ` (${p.count})` : ''}
+                  </button>
+                ))}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {clickupData.history.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Nenhuma tarefa sincronizada ainda. Crie tarefas no Planejamento para vê-las aqui.</p>
+              <p className="text-sm text-muted-foreground text-center py-4">
+                {clickupPeriod === 'all' ? 'Nenhuma tarefa sincronizada ainda. Crie tarefas no Planejamento para vê-las aqui.' : 'Nenhuma sincronização neste período.'}
+              </p>
             ) : (
               <div className="space-y-2">
                 {clickupData.history.map((item, i) => (
