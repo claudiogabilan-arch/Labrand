@@ -324,7 +324,6 @@ async def fetch_linkedin(brand_id: str, user: dict = Depends(get_current_user)):
         # Get organization info
         me_resp = await client.get(f"{LINKEDIN_API}/me", headers=headers)
         org_name = ""
-        org_id = ""
 
         if me_resp.status_code == 200:
             me_data = me_resp.json()
@@ -489,3 +488,91 @@ async def get_social_profiles(brand_id: str, user: dict = Depends(get_current_us
         {"brand_id": brand_id}, {"_id": 0}
     ).to_list(10)
     return {"profiles": profiles}
+
+
+
+# ──────────────────────────────────────────────────
+# CONSOLIDATED SOCIAL DASHBOARD
+# ──────────────────────────────────────────────────
+@router.get("/brands/{brand_id}/social-dashboard")
+async def get_social_dashboard(brand_id: str, user: dict = Depends(get_current_user)):
+    """Cross-platform consolidated social metrics"""
+    from datetime import timedelta
+
+    profiles = await db.social_profiles.find(
+        {"brand_id": brand_id}, {"_id": 0}
+    ).to_list(10)
+
+    # Aggregate mentions by platform
+    mentions = await db.social_mentions.find(
+        {"brand_id": brand_id, "source": "api"}, {"_id": 0}
+    ).to_list(500)
+
+    total_followers = 0
+    platform_summary = {}
+
+    for p in profiles:
+        plat = p.get("platform", "unknown")
+        followers = p.get("followers", 0) or p.get("subscribers", 0) or 0
+        total_followers += followers
+        platform_summary[plat] = {
+            "name": p.get("name", p.get("username", "")),
+            "followers": followers,
+            "updated_at": p.get("updated_at", ""),
+        }
+
+    # Engagement totals per platform
+    engagement_by_platform = {}
+    total_engagement = {"likes": 0, "comments": 0, "shares": 0, "views": 0, "posts": 0}
+    recent_posts = []
+
+    for m in mentions:
+        plat = m.get("platform", "unknown")
+        eng = m.get("engagement", {})
+        if plat not in engagement_by_platform:
+            engagement_by_platform[plat] = {"likes": 0, "comments": 0, "shares": 0, "views": 0, "posts": 0}
+
+        likes = eng.get("likes", 0)
+        comments = eng.get("comments", 0)
+        shares = eng.get("shares", 0)
+        views = eng.get("views", 0)
+
+        engagement_by_platform[plat]["likes"] += likes
+        engagement_by_platform[plat]["comments"] += comments
+        engagement_by_platform[plat]["shares"] += shares
+        engagement_by_platform[plat]["views"] += views
+        engagement_by_platform[plat]["posts"] += 1
+
+        total_engagement["likes"] += likes
+        total_engagement["comments"] += comments
+        total_engagement["shares"] += shares
+        total_engagement["views"] += views
+        total_engagement["posts"] += 1
+
+    # Sort by posted_at desc for recent posts
+    sorted_mentions = sorted(mentions, key=lambda x: x.get("posted_at", ""), reverse=True)
+    recent_posts = sorted_mentions[:10]
+    # Strip heavy raw_metrics from response
+    for rp in recent_posts:
+        rp.pop("raw_metrics", None)
+
+    # Top posts by engagement
+    top_posts = sorted(mentions, key=lambda x: sum(x.get("engagement", {}).get(k, 0) for k in ["likes", "comments", "views"]), reverse=True)[:5]
+    for tp in top_posts:
+        tp.pop("raw_metrics", None)
+
+    # Merge platform summary with engagement
+    for plat, eng_data in engagement_by_platform.items():
+        if plat in platform_summary:
+            platform_summary[plat]["engagement"] = eng_data
+        else:
+            platform_summary[plat] = {"engagement": eng_data}
+
+    return {
+        "total_followers": total_followers,
+        "total_engagement": total_engagement,
+        "platforms": platform_summary,
+        "recent_posts": recent_posts,
+        "top_posts": top_posts,
+        "connected_count": len(profiles),
+    }

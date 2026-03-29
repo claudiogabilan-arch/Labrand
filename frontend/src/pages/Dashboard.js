@@ -29,12 +29,21 @@ import {
   Bell,
   MessageSquare,
   Link2,
-  ExternalLink
+  ExternalLink,
+  Instagram,
+  Facebook,
+  Linkedin,
+  Youtube,
+  Music,
+  Eye,
+  Share2,
+  BarChart3
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const formatNum = (n) => n >= 1000000 ? `${(n / 1000000).toFixed(1)}M` : n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n || 0);
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -67,6 +76,7 @@ export const Dashboard = () => {
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const [clickupData, setClickupData] = useState({ connected: false, history: [], stats: {} });
   const [clickupPeriod, setClickupPeriod] = useState('all');
+  const [socialDash, setSocialDash] = useState(null);
 
   useEffect(() => {
     // Show tutorial on first visit
@@ -88,15 +98,17 @@ export const Dashboard = () => {
     if (!currentBrand?.brand_id || !token) return;
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const [actRes, appRes, notifRes, clickupStatusRes] = await Promise.all([
+      const [actRes, appRes, notifRes, clickupStatusRes, socialDashRes] = await Promise.all([
         axios.get(`${API}/brands/${currentBrand.brand_id}/activity?limit=5`, { headers }).catch(() => ({ data: { activities: [] } })),
         axios.get(`${API}/brands/${currentBrand.brand_id}/approvals?status=pending`, { headers }).catch(() => ({ data: { counts: {} } })),
         axios.get(`${API}/notifications?unread_only=true`, { headers }).catch(() => ({ data: { unread_count: 0 } })),
-        axios.get(`${API}/integrations/clickup/status/${currentBrand.brand_id}`, { headers }).catch(() => ({ data: { connected: false } }))
+        axios.get(`${API}/integrations/clickup/status/${currentBrand.brand_id}`, { headers }).catch(() => ({ data: { connected: false } })),
+        axios.get(`${API}/brands/${currentBrand.brand_id}/social-dashboard`, { headers }).catch(() => ({ data: null }))
       ]);
       setRecentActivity(actRes.data.activities || []);
       setPendingApprovals(appRes.data.counts?.pending || 0);
       setUnreadNotifs(notifRes.data.unread_count || 0);
+      setSocialDash(socialDashRes.data?.connected_count > 0 ? socialDashRes.data : null);
 
       const cuStatus = clickupStatusRes.data;
       if (cuStatus.connected) {
@@ -503,6 +515,87 @@ export const Dashboard = () => {
                 ))}
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Social Media Consolidated Dashboard */}
+      {socialDash && (
+        <Card data-testid="social-dashboard-widget">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-heading flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-pink-500" />
+                Social Media — Visão Geral
+              </CardTitle>
+              <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate('/social-listening')} data-testid="social-widget-go-listening">
+                Social Listening <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Platform followers */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {Object.entries(socialDash.platforms || {}).map(([plat, data]) => {
+                const icons = { instagram: Instagram, facebook: Facebook, linkedin: Linkedin, youtube: Youtube, tiktok: Music };
+                const colors = { instagram: 'text-pink-500', facebook: 'text-blue-600', linkedin: 'text-blue-700', youtube: 'text-red-600', tiktok: 'text-gray-800' };
+                const Icon = icons[plat] || Globe;
+                return (
+                  <div key={plat} className="text-center p-3 rounded-lg bg-muted/50 border" data-testid={`social-plat-${plat}`}>
+                    <Icon className={`h-5 w-5 mx-auto mb-1 ${colors[plat] || 'text-gray-500'}`} />
+                    <p className="text-lg font-bold">{formatNum(data.followers || 0)}</p>
+                    <p className="text-[10px] text-muted-foreground capitalize">{plat}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Engagement totals */}
+            <div className="grid grid-cols-4 gap-3">
+              {[
+                { icon: Heart, label: 'Curtidas', value: socialDash.total_engagement?.likes || 0, color: 'text-red-500' },
+                { icon: MessageSquare, label: 'Comentários', value: socialDash.total_engagement?.comments || 0, color: 'text-blue-500' },
+                { icon: Share2, label: 'Shares', value: socialDash.total_engagement?.shares || 0, color: 'text-green-500' },
+                { icon: Eye, label: 'Views', value: socialDash.total_engagement?.views || 0, color: 'text-purple-500' },
+              ].map((m, i) => (
+                <div key={i} className="text-center">
+                  <m.icon className={`h-4 w-4 mx-auto mb-0.5 ${m.color}`} />
+                  <p className="text-sm font-bold">{formatNum(m.value)}</p>
+                  <p className="text-[10px] text-muted-foreground">{m.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Top posts */}
+            {socialDash.top_posts?.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Top Posts</p>
+                <div className="space-y-2">
+                  {socialDash.top_posts.slice(0, 3).map((post, i) => {
+                    const icons = { instagram: Instagram, facebook: Facebook, linkedin: Linkedin, youtube: Youtube, tiktok: Music };
+                    const Icon = icons[post.platform] || Globe;
+                    const eng = post.engagement || {};
+                    return (
+                      <div key={i} className="flex items-center justify-between py-1.5 border-b last:border-0 text-sm" data-testid={`top-post-${i}`}>
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <Icon className="h-4 w-4 flex-shrink-0" />
+                          <p className="truncate text-xs">{post.content || '(sem texto)'}</p>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0 ml-2">
+                          {eng.likes > 0 && <span><Heart className="h-3 w-3 inline text-red-400" /> {formatNum(eng.likes)}</span>}
+                          {eng.views > 0 && <span><Eye className="h-3 w-3 inline text-purple-400" /> {formatNum(eng.views)}</span>}
+                          {post.url && <a href={post.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3" /></a>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <p className="text-[10px] text-muted-foreground text-center">
+              {socialDash.total_engagement?.posts || 0} posts analisados de {socialDash.connected_count} rede{socialDash.connected_count > 1 ? 's' : ''}
+            </p>
           </CardContent>
         </Card>
       )}

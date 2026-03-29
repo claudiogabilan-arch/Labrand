@@ -1,0 +1,95 @@
+{
+  "summary": "Iteration 26: Complete testing of Campaigns CRUD + Social Post Linking (P1) and Social Dashboard Consolidated (P2). Backend 100% passed (22/22 tests), Frontend 100% passed. All features working correctly.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Link Post Dialog", "issues": ["Minor: Missing aria-describedby for DialogContent (accessibility warning in console)"]}
+    ]
+  },
+
+  "passed_tests": [
+    "Backend: GET /api/brands/{brand_id}/campaigns requires auth (401)",
+    "Backend: POST /api/brands/{brand_id}/campaigns requires auth (401)",
+    "Backend: PUT /api/brands/{brand_id}/campaigns/{campaign_id} requires auth (401)",
+    "Backend: DELETE /api/brands/{brand_id}/campaigns/{campaign_id} requires auth (401)",
+    "Backend: GET /api/brands/{brand_id}/campaigns returns array of campaigns",
+    "Backend: POST /api/brands/{brand_id}/campaigns creates campaign with title, type, dates, budget",
+    "Backend: PUT /api/brands/{brand_id}/campaigns/{campaign_id} updates campaign fields",
+    "Backend: PUT with invalid campaign_id returns 404",
+    "Backend: DELETE /api/brands/{brand_id}/campaigns/{campaign_id} deletes campaign",
+    "Backend: DELETE with invalid campaign_id returns 404",
+    "Backend: POST link-post requires auth (401)",
+    "Backend: POST link-post returns 400 when mention_id missing",
+    "Backend: POST link-post returns 404 for invalid mention",
+    "Backend: GET campaign posts requires auth (401)",
+    "Backend: GET /api/brands/{brand_id}/campaigns/{campaign_id}/posts returns posts and totals structure",
+    "Backend: GET campaign posts returns 404 for invalid campaign_id",
+    "Backend: DELETE unlink-post requires auth (401)",
+    "Backend: DELETE unlink-post works (idempotent operation)",
+    "Backend: GET /api/brands/{brand_id}/social-dashboard requires auth (401)",
+    "Backend: GET social-dashboard returns consolidated metrics structure (total_followers, total_engagement, platforms, recent_posts, top_posts, connected_count)",
+    "Backend: Social dashboard returns connected_count=0 when no platforms connected",
+    "Backend: Test campaign camp_97532ec08752 exists",
+    "Frontend: Campaigns page loads with data-testid='campaigns-page'",
+    "Frontend: New Campaign button visible (data-testid='new-campaign-btn')",
+    "Frontend: Campaign form has all required fields (title, start_date, end_date, type, budget, goals, description)",
+    "Frontend: Campaign creation works - success toast 'Campanha criada!' shown",
+    "Frontend: Campaign list shows campaigns with calendar view",
+    "Frontend: Campaign detail view loads with engagement metrics (Curtidas, Comentários, Compartilhamentos, Visualizações)",
+    "Frontend: Link Post button visible in detail view (data-testid='link-post-btn')",
+    "Frontend: Link post dialog opens correctly",
+    "Frontend: Link post dialog shows 'Nenhum post disponível' when no social posts (correct behavior)",
+    "Frontend: Back to list button works (data-testid='back-to-list-btn')",
+    "Frontend: Social dashboard widget hidden on Dashboard when connected_count=0 (correct behavior)"
+  ],
+
+  "test_report_links": [
+    "/app/backend/tests/test_campaigns_social_dashboard.py",
+    "/app/test_reports/pytest/pytest_campaigns_social_dashboard.xml"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "campaigns.py: Full CRUD implementation with proper auth via Depends(get_current_user)",
+    "campaigns.py: linked_posts stored as array of mention_id strings, uses $addToSet for linking and $pull for unlinking",
+    "campaigns.py: get_campaign_posts (line 96-121) correctly aggregates engagement totals from linked social_mentions",
+    "social_fetcher.py: social-dashboard endpoint (line 497-578) properly aggregates all social_profiles and social_mentions with source='api'",
+    "social_fetcher.py: Returns connected_count based on profiles count, allowing frontend to hide widget when 0",
+    "Campaigns.js: Complete UI with calendar view, form modal, detail view, and link post dialog",
+    "Campaigns.js: CampaignDetail component (line 437-534) shows engagement totals and linked posts with unlink functionality",
+    "Dashboard.js: Social dashboard widget (line 522-601) correctly hidden when socialDash is null or connected_count=0"
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_campaigns_social_dashboard.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (22/22 tests passed)",
+    "frontend": "100% (All features working correctly)"
+  },
+
+  "test_credentials": {
+    "admin_email": "admin@labrand.com.br",
+    "admin_password": "Labrand@2026!",
+    "brand_id": "brand_0902ead1b80c",
+    "test_campaign_id": "camp_97532ec08752"
+  },
+
+  "seed_data_creation": "Created and deleted TEST_Playwright_Campaign during frontend testing",
+
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "Iteration 26 tested: 1) Campaign CRUD - full create/read/update/delete working, 2) Campaign post linking - link-post requires valid mention_id, returns 404 for invalid, unlink-post is idempotent, 3) get_campaign_posts returns posts array with engagement totals, 4) social-dashboard endpoint returns consolidated metrics (total_followers, total_engagement, platforms, recent_posts, top_posts, connected_count), 5) Frontend Campaigns page has calendar view, form modal, detail view with engagement metrics, link post dialog, 6) Social dashboard widget on Dashboard is correctly hidden when no social profiles connected (connected_count=0). NO MOCKED APIs - all endpoints are real. Test campaign camp_97532ec08752 exists for testing.",
+
+  "notes": "All P1 (Campanhas + Social Posts) and P2 (Dashboard Social Consolidado) features working correctly. Social platforms are NOT connected in test environment, so social-dashboard returns connected_count=0 and the widget is correctly hidden on Dashboard. Link post dialog shows appropriate message when no posts available. Campaign CRUD fully functional with calendar visualization."
+}
