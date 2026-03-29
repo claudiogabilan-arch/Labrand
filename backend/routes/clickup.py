@@ -149,7 +149,7 @@ async def get_folders(brand_id: str, space_id: str, user: dict = Depends(get_cur
     folders = data.get("folders", [])
     result = []
     for f in folders:
-        lists = [{"id": l["id"], "name": l["name"]} for l in f.get("lists", [])]
+        lists = [{"id": li["id"], "name": li["name"]} for li in f.get("lists", [])]
         result.append({"id": f["id"], "name": f["name"], "lists": lists})
     return result
 
@@ -159,7 +159,7 @@ async def get_folderless_lists(brand_id: str, space_id: str, user: dict = Depend
     """Get folderless lists in a space"""
     data = await _clickup_get(brand_id, f"/space/{space_id}/list?archived=false")
     lists = data.get("lists", [])
-    return [{"id": l["id"], "name": l["name"]} for l in lists]
+    return [{"id": li["id"], "name": li["name"]} for li in lists]
 
 
 @router.post("/select-list/{brand_id}")
@@ -219,6 +219,20 @@ async def sync_task_to_clickup(brand_id: str, data: dict, user: dict = Depends(g
         raise HTTPException(status_code=resp.status_code, detail="Erro ao criar tarefa no ClickUp")
 
     clickup_task = resp.json()
+
+    # Save sync history
+    await db.clickup_sync_history.insert_one({
+        "brand_id": brand_id,
+        "task_title": data.get("title", ""),
+        "task_priority": data.get("priority", "medium"),
+        "clickup_task_id": clickup_task.get("id"),
+        "clickup_url": clickup_task.get("url", ""),
+        "clickup_list_name": integration.get("selected_list_name", ""),
+        "synced_by": user.get("user_id"),
+        "synced_by_name": user.get("name", ""),
+        "synced_at": datetime.now(timezone.utc).isoformat(),
+    })
+
     return {
         "success": True,
         "clickup_task_id": clickup_task.get("id"),
@@ -227,8 +241,19 @@ async def sync_task_to_clickup(brand_id: str, data: dict, user: dict = Depends(g
     }
 
 
+@router.get("/sync-history/{brand_id}")
+async def get_sync_history(brand_id: str, limit: int = 10, user: dict = Depends(get_current_user)):
+    """Get recent sync history for a brand"""
+    history = await db.clickup_sync_history.find(
+        {"brand_id": brand_id},
+        {"_id": 0},
+    ).sort("synced_at", -1).to_list(limit)
+    return history
+
+
 @router.delete("/disconnect/{brand_id}")
 async def disconnect_clickup(brand_id: str, user: dict = Depends(get_current_user)):
     """Disconnect ClickUp integration"""
     await db.clickup_integrations.delete_one({"brand_id": brand_id})
+    await db.clickup_sync_history.delete_many({"brand_id": brand_id})
     return {"success": True, "message": "ClickUp desconectado"}

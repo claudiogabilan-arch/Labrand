@@ -282,6 +282,7 @@ export const Planning = () => {
   const [viewMode, setViewMode] = useState('kanban');
   const [syncToClickUp, setSyncToClickUp] = useState(true);
   const [clickupStatus, setClickupStatus] = useState({ connected: false });
+  const [syncHistory, setSyncHistory] = useState([]);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -301,8 +302,22 @@ export const Planning = () => {
         { headers }
       );
       setClickupStatus(res.data);
+      if (res.data.connected) loadSyncHistory();
     } catch {
       setClickupStatus({ connected: false });
+    }
+  }, [currentBrand?.brand_id, token]);
+
+  const loadSyncHistory = useCallback(async () => {
+    if (!currentBrand?.brand_id) return;
+    try {
+      const res = await axios.get(
+        `${API}/integrations/clickup/sync-history/${currentBrand.brand_id}?limit=5`,
+        { headers }
+      );
+      setSyncHistory(res.data || []);
+    } catch {
+      setSyncHistory([]);
     }
   }, [currentBrand?.brand_id, token]);
 
@@ -350,6 +365,7 @@ export const Planning = () => {
           } else {
             toast.success('Tarefa criada e sincronizada com ClickUp!');
           }
+          loadSyncHistory();
         } catch (err) {
           toast.warning('Tarefa criada localmente, mas falhou ao sincronizar com ClickUp');
         }
@@ -534,6 +550,46 @@ export const Planning = () => {
         clickupStatus={clickupStatus}
         setClickupStatus={setClickupStatus}
       />
+
+      {/* Sync History Log */}
+      {clickupStatus.connected && syncHistory.length > 0 && (
+        <Card data-testid="clickup-sync-log">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                Sincronizações Recentes
+              </CardTitle>
+              <Badge variant="outline" className="text-xs">{syncHistory.length}</Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {syncHistory.map((item, i) => (
+                <div key={i} className="flex items-center justify-between py-2 border-b last:border-0 text-sm" data-testid={`sync-log-${i}`}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-2 w-2 rounded-full bg-green-500 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{item.task_title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.synced_by_name} · {item.clickup_list_name} · {new Date(item.synced_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                  {item.clickup_url && (
+                    <a href={item.clickup_url} target="_blank" rel="noopener noreferrer"
+                      className="text-violet-600 hover:text-violet-800 flex-shrink-0 ml-2"
+                      data-testid={`sync-log-link-${i}`}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Gantt View */}
       {viewMode === 'gantt' && (

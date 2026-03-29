@@ -27,7 +27,9 @@ import {
   Loader2,
   RefreshCw,
   Bell,
-  MessageSquare
+  MessageSquare,
+  Link2,
+  ExternalLink
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -63,6 +65,7 @@ export const Dashboard = () => {
   const [recentActivity, setRecentActivity] = useState([]);
   const [pendingApprovals, setPendingApprovals] = useState(0);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
+  const [clickupData, setClickupData] = useState({ connected: false, history: [] });
 
   useEffect(() => {
     // Show tutorial on first visit
@@ -84,14 +87,27 @@ export const Dashboard = () => {
     if (!currentBrand?.brand_id || !token) return;
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const [actRes, appRes, notifRes] = await Promise.all([
+      const [actRes, appRes, notifRes, clickupStatusRes] = await Promise.all([
         axios.get(`${API}/brands/${currentBrand.brand_id}/activity?limit=5`, { headers }).catch(() => ({ data: { activities: [] } })),
         axios.get(`${API}/brands/${currentBrand.brand_id}/approvals?status=pending`, { headers }).catch(() => ({ data: { counts: {} } })),
-        axios.get(`${API}/notifications?unread_only=true`, { headers }).catch(() => ({ data: { unread_count: 0 } }))
+        axios.get(`${API}/notifications?unread_only=true`, { headers }).catch(() => ({ data: { unread_count: 0 } })),
+        axios.get(`${API}/integrations/clickup/status/${currentBrand.brand_id}`, { headers }).catch(() => ({ data: { connected: false } }))
       ]);
       setRecentActivity(actRes.data.activities || []);
       setPendingApprovals(appRes.data.counts?.pending || 0);
       setUnreadNotifs(notifRes.data.unread_count || 0);
+
+      const cuStatus = clickupStatusRes.data;
+      if (cuStatus.connected) {
+        try {
+          const histRes = await axios.get(`${API}/integrations/clickup/sync-history/${currentBrand.brand_id}?limit=5`, { headers });
+          setClickupData({ connected: true, ...cuStatus, history: histRes.data || [] });
+        } catch {
+          setClickupData({ connected: true, ...cuStatus, history: [] });
+        }
+      } else {
+        setClickupData({ connected: false, history: [] });
+      }
     } catch { /* silent */ }
   };
 
@@ -392,6 +408,58 @@ export const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* ClickUp Activity Widget */}
+      {clickupData.connected && (
+        <Card className="relative z-10" data-testid="clickup-dashboard-widget">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-heading flex items-center gap-2">
+                <Link2 className="h-4 w-4 text-violet-600" />
+                ClickUp — Atividades Sincronizadas
+              </CardTitle>
+              <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate('/planning')} data-testid="clickup-widget-go-planning">
+                Planejamento <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
+            </div>
+            {clickupData.selected_list_name && (
+              <p className="text-xs text-muted-foreground">Lista: <span className="font-medium">{clickupData.selected_list_name}</span></p>
+            )}
+          </CardHeader>
+          <CardContent>
+            {clickupData.history.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhuma tarefa sincronizada ainda. Crie tarefas no Planejamento para vê-las aqui.</p>
+            ) : (
+              <div className="space-y-2">
+                {clickupData.history.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between py-2 border-b last:border-0" data-testid={`clickup-activity-${i}`}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-8 w-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
+                        <CheckCircle2 className="h-4 w-4 text-violet-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{item.task_title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.synced_by_name} · {new Date(item.synced_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                    {item.clickup_url && (
+                      <a href={item.clickup_url} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 flex-shrink-0 ml-2"
+                        data-testid={`clickup-activity-link-${i}`}
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Abrir</span>
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Mentor / AI Insights */}
       <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30">
