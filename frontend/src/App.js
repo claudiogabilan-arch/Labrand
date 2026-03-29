@@ -63,6 +63,7 @@ import BrandMindmap from "./pages/BrandMindmap";
 import Culture from "./pages/Culture";
 import Academy from "./pages/Academy";
 import Collaboration from "./pages/Collaboration";
+import ClickUpCallback from "./pages/ClickUpCallback";
 import "./App.css";
 
 // Router wrapper to handle auth callback
@@ -93,6 +94,7 @@ function AppRouter() {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/invite/:token" element={<AcceptInvite />} />
+      <Route path="/integracoes/clickup/callback" element={<ProtectedRoute><ClickUpCallback /></ProtectedRoute>} />
       <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
       <Route
         path="/dashboard"

@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useBrand } from '../contexts/BrandContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -9,7 +10,14 @@ import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { toast } from 'sonner';
-import { ListTodo, Plus, Loader2, Calendar, User, Flag, GripVertical, CheckCircle2, Clock, AlertCircle, BarChart3, List } from 'lucide-react';
+import {
+  ListTodo, Plus, Loader2, Calendar, Flag, GripVertical, CheckCircle2,
+  Clock, AlertCircle, BarChart3, List, Link2, Unlink, ChevronRight,
+  ExternalLink, RefreshCw
+} from 'lucide-react';
+import axios from 'axios';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const statusConfig = {
   backlog: { label: 'Backlog', color: 'bg-gray-100 text-gray-700', icon: Clock },
@@ -36,13 +44,244 @@ const pillars = [
   { value: 'general', label: 'Geral' }
 ];
 
+// ClickUp Integration Panel
+const ClickUpPanel = ({ brandId, token, clickupStatus, setClickupStatus }) => {
+  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState('idle'); // idle, workspaces, spaces, folders, done
+  const [workspaces, setWorkspaces] = useState([]);
+  const [spaces, setSpaces] = useState([]);
+  const [folders, setFolders] = useState([]);
+  const [folderlessLists, setFolderlessLists] = useState([]);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [selectedSpace, setSelectedSpace] = useState(null);
+  const [disconnecting, setDisconnecting] = useState(false);
+
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const handleConnect = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API}/integrations/clickup/auth-url`, {
+        params: { brand_id: brandId },
+        headers,
+      });
+      window.location.href = res.data.auth_url;
+    } catch (err) {
+      toast.error('Erro ao gerar URL de autorização');
+      setLoading(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    setDisconnecting(true);
+    try {
+      await axios.delete(`${API}/integrations/clickup/disconnect/${brandId}`, { headers });
+      setClickupStatus({ connected: false });
+      toast.success('ClickUp desconectado');
+    } catch (err) {
+      toast.error('Erro ao desconectar');
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  const loadWorkspaces = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API}/integrations/clickup/workspaces/${brandId}`, { headers });
+      setWorkspaces(res.data);
+      setStep('workspaces');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao carregar workspaces');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadSpaces = async (teamId) => {
+    setLoading(true);
+    setSelectedTeam(teamId);
+    try {
+      const res = await axios.get(`${API}/integrations/clickup/spaces/${brandId}/${teamId}`, { headers });
+      setSpaces(res.data);
+      setStep('spaces');
+    } catch (err) {
+      toast.error('Erro ao carregar spaces');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadLists = async (spaceId) => {
+    setLoading(true);
+    setSelectedSpace(spaceId);
+    try {
+      const [foldersRes, listsRes] = await Promise.all([
+        axios.get(`${API}/integrations/clickup/folders/${brandId}/${spaceId}`, { headers }),
+        axios.get(`${API}/integrations/clickup/lists/${brandId}/${spaceId}`, { headers }),
+      ]);
+      setFolders(foldersRes.data);
+      setFolderlessLists(listsRes.data);
+      setStep('folders');
+    } catch (err) {
+      toast.error('Erro ao carregar listas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectList = async (listId, listName) => {
+    setLoading(true);
+    try {
+      await axios.post(
+        `${API}/integrations/clickup/select-list/${brandId}`,
+        { list_id: listId, list_name: listName },
+        { headers }
+      );
+      setClickupStatus(prev => ({ ...prev, selected_list_id: listId, selected_list_name: listName }));
+      setStep('done');
+      toast.success(`Lista "${listName}" selecionada!`);
+    } catch (err) {
+      toast.error('Erro ao selecionar lista');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!clickupStatus.connected) {
+    return (
+      <Card className="border-dashed" data-testid="clickup-connect-card">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-violet-100 flex items-center justify-center">
+                <Link2 className="h-5 w-5 text-violet-600" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">ClickUp</p>
+                <p className="text-xs text-muted-foreground">Sincronize tarefas com o ClickUp</p>
+              </div>
+            </div>
+            <Button size="sm" onClick={handleConnect} disabled={loading} data-testid="connect-clickup-btn">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Link2 className="h-4 w-4 mr-2" />}
+              Conectar ClickUp
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card data-testid="clickup-panel">
+      <CardContent className="py-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">ClickUp Conectado</p>
+              {clickupStatus.selected_list_name ? (
+                <p className="text-xs text-muted-foreground">
+                  Lista: <span className="font-medium">{clickupStatus.selected_list_name}</span>
+                </p>
+              ) : (
+                <p className="text-xs text-amber-600">Selecione uma lista para sincronizar</p>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={loadWorkspaces} disabled={loading} data-testid="choose-list-btn">
+              {loading && step !== 'done' ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+              {clickupStatus.selected_list_id ? 'Trocar Lista' : 'Escolher Lista'}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={handleDisconnect} disabled={disconnecting} data-testid="disconnect-clickup-btn">
+              {disconnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4 text-red-500" />}
+            </Button>
+          </div>
+        </div>
+
+        {/* Workspace selector */}
+        {step === 'workspaces' && workspaces.length > 0 && (
+          <div className="border rounded-lg p-3 space-y-2 bg-muted/30" data-testid="clickup-workspaces">
+            <p className="text-xs font-medium text-muted-foreground uppercase">Selecione o Workspace</p>
+            {workspaces.map(w => (
+              <button key={w.id} onClick={() => loadSpaces(w.id)}
+                className="w-full flex items-center justify-between p-2 rounded hover:bg-muted text-left text-sm"
+                data-testid={`workspace-${w.id}`}
+              >
+                {w.name} <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Space selector */}
+        {step === 'spaces' && spaces.length > 0 && (
+          <div className="border rounded-lg p-3 space-y-2 bg-muted/30" data-testid="clickup-spaces">
+            <p className="text-xs font-medium text-muted-foreground uppercase">Selecione o Space</p>
+            {spaces.map(s => (
+              <button key={s.id} onClick={() => loadLists(s.id)}
+                className="w-full flex items-center justify-between p-2 rounded hover:bg-muted text-left text-sm"
+                data-testid={`space-${s.id}`}
+              >
+                {s.name} <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* List selector */}
+        {step === 'folders' && (
+          <div className="border rounded-lg p-3 space-y-2 bg-muted/30" data-testid="clickup-lists">
+            <p className="text-xs font-medium text-muted-foreground uppercase">Selecione a Lista</p>
+            {folders.map(f => (
+              <div key={f.id} className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground px-2">{f.name}</p>
+                {f.lists.map(l => (
+                  <button key={l.id} onClick={() => selectList(l.id, l.name)}
+                    className="w-full flex items-center justify-between p-2 rounded hover:bg-primary/10 text-left text-sm pl-4"
+                    data-testid={`list-${l.id}`}
+                  >
+                    {l.name} <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                ))}
+              </div>
+            ))}
+            {folderlessLists.length > 0 && (
+              <>
+                {folders.length > 0 && <p className="text-xs font-medium text-muted-foreground px-2">Sem pasta</p>}
+                {folderlessLists.map(l => (
+                  <button key={l.id} onClick={() => selectList(l.id, l.name)}
+                    className="w-full flex items-center justify-between p-2 rounded hover:bg-primary/10 text-left text-sm"
+                    data-testid={`list-${l.id}`}
+                  >
+                    {l.name} <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                ))}
+              </>
+            )}
+            {folders.length === 0 && folderlessLists.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-2">Nenhuma lista encontrada neste space</p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 export const Planning = () => {
   const { currentBrand, fetchTasks, createTask, updateTask, deleteTask } = useBrand();
+  const { token } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState('kanban'); // 'kanban' or 'gantt'
+  const [viewMode, setViewMode] = useState('kanban');
+  const [syncToClickUp, setSyncToClickUp] = useState(true);
+  const [clickupStatus, setClickupStatus] = useState({ connected: false });
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -52,9 +291,25 @@ export const Planning = () => {
     due_date: ''
   });
 
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const loadClickUpStatus = useCallback(async () => {
+    if (!currentBrand?.brand_id) return;
+    try {
+      const res = await axios.get(
+        `${API}/integrations/clickup/status/${currentBrand.brand_id}`,
+        { headers }
+      );
+      setClickupStatus(res.data);
+    } catch {
+      setClickupStatus({ connected: false });
+    }
+  }, [currentBrand?.brand_id, token]);
+
   useEffect(() => {
     if (currentBrand?.brand_id) {
       loadTasks();
+      loadClickUpStatus();
     }
   }, [currentBrand?.brand_id]);
 
@@ -79,9 +334,31 @@ export const Planning = () => {
     try {
       const created = await createTask(currentBrand.brand_id, newTask);
       setTasks(prev => [...prev, created]);
+
+      // Sync to ClickUp if connected and toggle enabled
+      if (syncToClickUp && clickupStatus.connected && clickupStatus.selected_list_id) {
+        try {
+          const res = await axios.post(
+            `${API}/integrations/clickup/sync-task/${currentBrand.brand_id}`,
+            newTask,
+            { headers }
+          );
+          if (res.data.clickup_url) {
+            toast.success(
+              <span>Tarefa criada e sincronizada! <a href={res.data.clickup_url} target="_blank" rel="noopener noreferrer" className="underline">Ver no ClickUp</a></span>
+            );
+          } else {
+            toast.success('Tarefa criada e sincronizada com ClickUp!');
+          }
+        } catch (err) {
+          toast.warning('Tarefa criada localmente, mas falhou ao sincronizar com ClickUp');
+        }
+      } else {
+        toast.success('Tarefa criada!');
+      }
+
       setNewTask({ title: '', description: '', status: 'backlog', priority: 'medium', pillar: 'general', due_date: '' });
       setDialogOpen(false);
-      toast.success('Tarefa criada!');
     } catch (error) {
       toast.error('Erro ao criar tarefa');
     } finally {
@@ -134,8 +411,8 @@ export const Planning = () => {
         </div>
         <div className="flex gap-2">
           <div className="flex border rounded-lg overflow-hidden">
-            <Button 
-              variant={viewMode === 'kanban' ? 'default' : 'ghost'} 
+            <Button
+              variant={viewMode === 'kanban' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('kanban')}
               className="rounded-none"
@@ -143,8 +420,8 @@ export const Planning = () => {
               <List className="h-4 w-4 mr-2" />
               Kanban
             </Button>
-            <Button 
-              variant={viewMode === 'gantt' ? 'default' : 'ghost'} 
+            <Button
+              variant={viewMode === 'gantt' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('gantt')}
               className="rounded-none"
@@ -160,77 +437,103 @@ export const Planning = () => {
                 Nova Tarefa
               </Button>
             </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Nova Tarefa</DialogTitle>
-              <DialogDescription>Crie uma nova tarefa para o backlog</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Título *</Label>
-                <Input
-                  value={newTask.title}
-                  onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Título da tarefa"
-                  data-testid="task-title-input"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Descrição</Label>
-                <Textarea
-                  value={newTask.description}
-                  onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Descreva a tarefa..."
-                  rows={3}
-                  data-testid="task-description-input"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Nova Tarefa</DialogTitle>
+                <DialogDescription>Crie uma nova tarefa para o backlog</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label>Prioridade</Label>
-                  <Select value={newTask.priority} onValueChange={(v) => setNewTask(prev => ({ ...prev, priority: v }))}>
-                    <SelectTrigger data-testid="task-priority-select">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(priorityConfig).map(([key, config]) => (
-                        <SelectItem key={key} value={key}>{config.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Título *</Label>
+                  <Input
+                    value={newTask.title}
+                    onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Título da tarefa"
+                    data-testid="task-title-input"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Pilar</Label>
-                  <Select value={newTask.pillar} onValueChange={(v) => setNewTask(prev => ({ ...prev, pillar: v }))}>
-                    <SelectTrigger data-testid="task-pillar-select">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {pillars.map(p => (
-                        <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Descrição</Label>
+                  <Textarea
+                    value={newTask.description}
+                    onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Descreva a tarefa..."
+                    rows={3}
+                    data-testid="task-description-input"
+                  />
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Prioridade</Label>
+                    <Select value={newTask.priority} onValueChange={(v) => setNewTask(prev => ({ ...prev, priority: v }))}>
+                      <SelectTrigger data-testid="task-priority-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(priorityConfig).map(([key, config]) => (
+                          <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Pilar</Label>
+                    <Select value={newTask.pillar} onValueChange={(v) => setNewTask(prev => ({ ...prev, pillar: v }))}>
+                      <SelectTrigger data-testid="task-pillar-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {pillars.map(p => (
+                          <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Data de Entrega</Label>
+                  <Input
+                    type="date"
+                    value={newTask.due_date}
+                    onChange={(e) => setNewTask(prev => ({ ...prev, due_date: e.target.value }))}
+                    data-testid="task-due-date-input"
+                  />
+                </div>
+                {/* ClickUp sync toggle */}
+                {clickupStatus.connected && clickupStatus.selected_list_id && (
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border" data-testid="clickup-sync-toggle">
+                    <div className="flex items-center gap-2">
+                      <Link2 className="h-4 w-4 text-violet-600" />
+                      <span className="text-sm">Sincronizar com ClickUp</span>
+                      <Badge variant="outline" className="text-xs">{clickupStatus.selected_list_name}</Badge>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSyncToClickUp(!syncToClickUp)}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${syncToClickUp ? 'bg-violet-600' : 'bg-gray-300'}`}
+                      data-testid="clickup-sync-switch"
+                    >
+                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${syncToClickUp ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                    </button>
+                  </div>
+                )}
+                <Button onClick={handleCreateTask} disabled={isCreating} className="w-full" data-testid="create-task-btn">
+                  {isCreating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
+                  Criar Tarefa
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label>Data de Entrega</Label>
-                <Input
-                  type="date"
-                  value={newTask.due_date}
-                  onChange={(e) => setNewTask(prev => ({ ...prev, due_date: e.target.value }))}
-                  data-testid="task-due-date-input"
-                />
-              </div>
-              <Button onClick={handleCreateTask} disabled={isCreating} className="w-full" data-testid="create-task-btn">
-                {isCreating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
-                Criar Tarefa
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
+
+      {/* ClickUp Integration */}
+      <ClickUpPanel
+        brandId={currentBrand.brand_id}
+        token={token}
+        clickupStatus={clickupStatus}
+        setClickupStatus={setClickupStatus}
+      />
 
       {/* Gantt View */}
       {viewMode === 'gantt' && (
@@ -239,85 +542,85 @@ export const Planning = () => {
 
       {/* Kanban Board */}
       {viewMode === 'kanban' && (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Object.entries(statusConfig).map(([status, config]) => {
-          const StatusIcon = config.icon;
-          const statusTasks = getTasksByStatus(status);
-          return (
-            <Card key={status} className="min-h-[400px]">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <StatusIcon className="h-4 w-4" />
-                    {config.label}
-                  </CardTitle>
-                  <Badge variant="outline">{statusTasks.length}</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {statusTasks.map(task => (
-                  <div
-                    key={task.task_id}
-                    className="p-3 border rounded-lg bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                    data-testid={`task-card-${task.task_id}`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="font-medium text-sm">{task.title}</p>
-                      <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    </div>
-                    {task.description && (
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
-                    )}
-                    <div className="flex items-center gap-2 mt-3 flex-wrap">
-                      {task.pillar && task.pillar !== 'general' && (
-                        <Badge variant="outline" className="text-xs">
-                          {pillars.find(p => p.value === task.pillar)?.label}
-                        </Badge>
-                      )}
-                      <Badge className={`text-xs ${priorityConfig[task.priority]?.color}`}>
-                        {priorityConfig[task.priority]?.label}
-                      </Badge>
-                    </div>
-                    {task.due_date && (
-                      <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(task.due_date).toLocaleDateString('pt-BR')}
-                      </div>
-                    )}
-                    <div className="flex gap-1 mt-3">
-                      {status !== 'backlog' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs h-7"
-                          onClick={() => handleStatusChange(task.task_id, Object.keys(statusConfig)[Object.keys(statusConfig).indexOf(status) - 1])}
-                        >
-                          ← Voltar
-                        </Button>
-                      )}
-                      {status !== 'done' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs h-7"
-                          onClick={() => handleStatusChange(task.task_id, Object.keys(statusConfig)[Object.keys(statusConfig).indexOf(status) + 1])}
-                        >
-                          Avançar →
-                        </Button>
-                      )}
-                    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Object.entries(statusConfig).map(([status, config]) => {
+            const StatusIcon = config.icon;
+            const statusTasks = getTasksByStatus(status);
+            return (
+              <Card key={status} className="min-h-[400px]">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <StatusIcon className="h-4 w-4" />
+                      {config.label}
+                    </CardTitle>
+                    <Badge variant="outline">{statusTasks.length}</Badge>
                   </div>
-                ))}
-                {statusTasks.length === 0 && (
-                  <p className="text-xs text-muted-foreground text-center py-8">
-                    Nenhuma tarefa
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {statusTasks.map(task => (
+                    <div
+                      key={task.task_id}
+                      className="p-3 border rounded-lg bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                      data-testid={`task-card-${task.task_id}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-medium text-sm">{task.title}</p>
+                        <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      </div>
+                      {task.description && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
+                      )}
+                      <div className="flex items-center gap-2 mt-3 flex-wrap">
+                        {task.pillar && task.pillar !== 'general' && (
+                          <Badge variant="outline" className="text-xs">
+                            {pillars.find(p => p.value === task.pillar)?.label}
+                          </Badge>
+                        )}
+                        <Badge className={`text-xs ${priorityConfig[task.priority]?.color}`}>
+                          {priorityConfig[task.priority]?.label}
+                        </Badge>
+                      </div>
+                      {task.due_date && (
+                        <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(task.due_date).toLocaleDateString('pt-BR')}
+                        </div>
+                      )}
+                      <div className="flex gap-1 mt-3">
+                        {status !== 'backlog' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs h-7"
+                            onClick={() => handleStatusChange(task.task_id, Object.keys(statusConfig)[Object.keys(statusConfig).indexOf(status) - 1])}
+                          >
+                            ← Voltar
+                          </Button>
+                        )}
+                        {status !== 'done' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs h-7"
+                            onClick={() => handleStatusChange(task.task_id, Object.keys(statusConfig)[Object.keys(statusConfig).indexOf(status) + 1])}
+                          >
+                            Avançar →
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {statusTasks.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-8">
+                      Nenhuma tarefa
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       )}
     </div>
   );
@@ -353,7 +656,7 @@ const GanttChart = ({ tasks, onStatusChange }) => {
     return daysDiff;
   };
 
-  const todayIndex = 7; // Index of today in our date range
+  const todayIndex = 7;
 
   return (
     <Card>
@@ -363,13 +666,12 @@ const GanttChart = ({ tasks, onStatusChange }) => {
       </CardHeader>
       <CardContent className="overflow-x-auto">
         <div className="min-w-[900px]">
-          {/* Timeline header */}
           <div className="flex border-b pb-2 mb-2">
             <div className="w-48 flex-shrink-0 font-medium text-sm">Tarefa</div>
             <div className="flex-1 flex">
               {dateRange.map((date, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className={`flex-1 text-center text-xs ${i === todayIndex ? 'bg-primary/10 rounded font-bold' : ''}`}
                 >
                   <div className="text-muted-foreground">{date.toLocaleDateString('pt-BR', { weekday: 'short' })}</div>
@@ -378,8 +680,7 @@ const GanttChart = ({ tasks, onStatusChange }) => {
               ))}
             </div>
           </div>
-          
-          {/* Tasks */}
+
           {sortedTasks.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">Nenhuma tarefa cadastrada</p>
           ) : (
@@ -404,8 +705,8 @@ const GanttChart = ({ tasks, onStatusChange }) => {
                   </div>
                   <div className="flex-1 relative h-8 flex">
                     {dateRange.map((_, i) => (
-                      <div 
-                        key={i} 
+                      <div
+                        key={i}
                         className={`flex-1 border-l ${i === todayIndex ? 'border-primary border-l-2' : 'border-gray-100'}`}
                       />
                     ))}
