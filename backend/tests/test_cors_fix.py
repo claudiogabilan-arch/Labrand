@@ -44,7 +44,7 @@ class TestCORSConfiguration:
         response = requests.options(
             f"{INTERNAL_URL}/api/auth/login",
             headers={
-                "Origin": "https://labrand-build.preview.emergentagent.com",
+                "Origin": "https://brand-integrations.preview.emergentagent.com",
                 "Access-Control-Request-Method": "POST",
                 "Access-Control-Request-Headers": "Content-Type, Authorization"
             }
@@ -52,7 +52,7 @@ class TestCORSConfiguration:
         assert response.status_code == 200
         
         allow_origin = response.headers.get("access-control-allow-origin", "")
-        assert allow_origin == "https://labrand-build.preview.emergentagent.com"
+        assert allow_origin == "https://brand-integrations.preview.emergentagent.com"
         assert allow_origin != "*"
     
     def test_cors_allows_required_methods(self):
