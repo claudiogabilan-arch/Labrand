@@ -81,6 +81,13 @@ function AppRouter() {
       // Remove token from URL
       window.history.replaceState({}, '', location.pathname);
     }
+
+    // Intercept ClickUp OAuth callback (?code=...&state=...)
+    const clickupCode = params.get('code');
+    const clickupState = params.get('state');
+    if (clickupCode && clickupState && !location.pathname.includes('/integracoes/clickup/callback')) {
+      window.location.href = `/integracoes/clickup/callback?code=${clickupCode}&state=${clickupState}`;
+    }
   }, [location]);
   
   // Check URL fragment for session_id (OAuth callback)

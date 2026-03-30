@@ -28,7 +28,7 @@ def _get_redirect_uri(request: Request) -> str:
         base = f"{parsed.scheme}://{parsed.netloc}"
     else:
         base = os.environ.get("FRONTEND_URL", "").rstrip("/")
-    return f"{base}/integracoes/clickup/callback"
+    return base
 
 
 @router.get("/auth-url")
