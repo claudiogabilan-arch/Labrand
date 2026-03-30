@@ -55,6 +55,9 @@ const ClickUpPanel = ({ brandId, token, clickupStatus, setClickupStatus }) => {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [selectedSpace, setSelectedSpace] = useState(null);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [showTokenInput, setShowTokenInput] = useState(false);
+  const [personalToken, setPersonalToken] = useState('');
+  const [savingToken, setSavingToken] = useState(false);
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -69,6 +72,28 @@ const ClickUpPanel = ({ brandId, token, clickupStatus, setClickupStatus }) => {
     } catch (err) {
       toast.error('Erro ao gerar URL de autorização');
       setLoading(false);
+    }
+  };
+
+  const handleConnectToken = async () => {
+    if (!personalToken.trim()) {
+      toast.error('Cole o token pessoal do ClickUp');
+      return;
+    }
+    setSavingToken(true);
+    try {
+      const res = await axios.post(`${API}/integrations/clickup/connect-token`, {
+        token: personalToken.trim(),
+        brand_id: brandId,
+      }, { headers });
+      setClickupStatus({ connected: true });
+      setShowTokenInput(false);
+      setPersonalToken('');
+      toast.success(res.data.message);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao conectar com token');
+    } finally {
+      setSavingToken(false);
     }
   };
 
@@ -151,7 +176,7 @@ const ClickUpPanel = ({ brandId, token, clickupStatus, setClickupStatus }) => {
   if (!clickupStatus.connected) {
     return (
       <Card className="border-dashed" data-testid="clickup-connect-card">
-        <CardContent className="py-4">
+        <CardContent className="py-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-violet-100 flex items-center justify-center">
@@ -162,11 +187,38 @@ const ClickUpPanel = ({ brandId, token, clickupStatus, setClickupStatus }) => {
                 <p className="text-xs text-muted-foreground">Sincronize tarefas com o ClickUp</p>
               </div>
             </div>
-            <Button size="sm" onClick={handleConnect} disabled={loading} data-testid="connect-clickup-btn">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Link2 className="h-4 w-4 mr-2" />}
-              Conectar ClickUp
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => setShowTokenInput(!showTokenInput)} data-testid="toggle-token-input-btn">
+                Token Pessoal
+              </Button>
+              <Button size="sm" onClick={handleConnect} disabled={loading} data-testid="connect-clickup-btn">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Link2 className="h-4 w-4 mr-2" />}
+                OAuth
+              </Button>
+            </div>
           </div>
+
+          {showTokenInput && (
+            <div className="border rounded-lg p-3 space-y-2 bg-muted/30" data-testid="token-input-section">
+              <p className="text-xs text-muted-foreground">
+                Gere um token em ClickUp → Settings → Apps → API Token → Generate
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  type="password"
+                  value={personalToken}
+                  onChange={(e) => setPersonalToken(e.target.value)}
+                  placeholder="pk_..."
+                  className="flex-1 text-sm"
+                  data-testid="clickup-token-input"
+                />
+                <Button size="sm" onClick={handleConnectToken} disabled={savingToken} data-testid="save-token-btn">
+                  {savingToken ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
+                  Conectar
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );

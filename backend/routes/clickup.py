@@ -31,6 +31,43 @@ def _get_redirect_uri(request: Request) -> str:
     return base
 
 
+@router.post("/connect-token")
+async def connect_with_personal_token(data: dict, user: dict = Depends(get_current_user)):
+    """Connect ClickUp using a Personal API Token (pk_...)"""
+    token = data.get("token", "").strip()
+    brand_id = data.get("brand_id", "")
+    if not token or not brand_id:
+        raise HTTPException(status_code=400, detail="token e brand_id são obrigatórios")
+
+    # Validate token by calling ClickUp API
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        resp = await client.get(
+            f"{CLICKUP_API}/user",
+            headers={"Authorization": token},
+        )
+    if resp.status_code != 200:
+        raise HTTPException(status_code=400, detail="Token inválido. Verifique e tente novamente.")
+
+    clickup_user = resp.json().get("user", {})
+
+    await db.clickup_integrations.update_one(
+        {"brand_id": brand_id},
+        {"$set": {
+            "brand_id": brand_id,
+            "access_token": token,
+            "connected_by": user["user_id"],
+            "connected_at": datetime.now(timezone.utc).isoformat(),
+            "status": "connected",
+            "method": "personal_token",
+            "clickup_user": clickup_user.get("username", ""),
+            "selected_list_id": None,
+            "selected_list_name": None,
+        }},
+        upsert=True,
+    )
+    return {"success": True, "message": f"ClickUp conectado via token pessoal ({clickup_user.get('username', '')})!"}
+
+
 @router.get("/auth-url")
 async def get_clickup_auth_url(brand_id: str, request: Request, user: dict = Depends(get_current_user)):
     """Generate ClickUp OAuth authorization URL"""
