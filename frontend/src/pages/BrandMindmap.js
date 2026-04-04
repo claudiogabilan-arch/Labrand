@@ -30,7 +30,64 @@ const PILLAR_META = {
   universality:  { label: 'Universal',       color: '#EC4899', route: '/pillars/universality',  icon: 'U',  desc: 'Consistencia em todos os pontos de contato' },
 };
 
+const METADATA_KEYS = new Set(['completion', 'updated_at', 'created_at', 'brand_id', 'pillar_type', '_id', 'type']);
+
 const PILLAR_ORDER = ['start', 'values', 'purpose', 'promise', 'positioning', 'personality', 'universality'];
+
+// Extract displayable text from a value (handles nested objects/arrays)
+function extractDisplayText(value, maxLen = 40) {
+  if (!value) return '';
+  if (typeof value === 'string') return value.length > maxLen ? value.substring(0, maxLen) + '...' : value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '';
+    // Array of strings
+    if (typeof value[0] === 'string') {
+      const joined = value.slice(0, 2).join(', ');
+      return value.length > 2 ? joined + ` (+${value.length - 2})` : joined;
+    }
+    // Array of objects - try to extract text from common keys
+    const textItems = value.map(item => extractObjectLabel(item)).filter(Boolean);
+    if (textItems.length === 0) return '';
+    const joined = textItems.slice(0, 2).join(', ');
+    return textItems.length > 2 ? joined + ` (+${textItems.length - 2})` : joined;
+  }
+  if (typeof value === 'object') {
+    return extractObjectLabel(value) || '';
+  }
+  return '';
+}
+
+// Extract a human-readable label from an object
+function extractObjectLabel(obj) {
+  if (!obj || typeof obj !== 'object') return '';
+  // Try common label keys
+  for (const key of ['name', 'nome', 'title', 'titulo', 'label', 'value', 'valor', 'declaracao', 'descricao', 'description', 'text', 'texto']) {
+    if (typeof obj[key] === 'string' && obj[key].trim()) {
+      return obj[key].trim().length > 35 ? obj[key].trim().substring(0, 35) + '...' : obj[key].trim();
+    }
+  }
+  // Try first string value
+  for (const val of Object.values(obj)) {
+    if (typeof val === 'string' && val.trim() && val.length < 60) return val.trim();
+  }
+  return '';
+}
+
+// Check if a value is displayable
+function isDisplayable(key, value) {
+  if (METADATA_KEYS.has(key)) return false;
+  if (!value) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (Array.isArray(value)) {
+    if (value.length === 0) return false;
+    if (typeof value[0] === 'string') return true;
+    // Array of objects - check if we can extract labels
+    return value.some(item => extractObjectLabel(item));
+  }
+  if (typeof value === 'object') return !!extractObjectLabel(value);
+  return true;
+}
 
 export default function BrandMindmap() {
   const navigate = useNavigate();
@@ -194,13 +251,7 @@ export default function BrandMindmap() {
 
         // Sub-items (max 3 per pillar for cleanliness)
         if (hasData) {
-          const items = Object.entries(pillarContent).filter(([k, v]) => {
-            if (k === 'completion') return false;
-            if (!v) return false;
-            if (typeof v === 'string') return v.trim().length > 0;
-            if (Array.isArray(v)) return v.length > 0;
-            return true;
-          });
+          const items = Object.entries(pillarContent).filter(([k, v]) => isDisplayable(k, v));
 
           const maxItems = 3;
           const displayItems = items.slice(0, maxItems);
@@ -212,12 +263,7 @@ export default function BrandMindmap() {
             const ix = cx + itemR * Math.cos(itemAngle);
             const iy = cy + itemR * Math.sin(itemAngle);
 
-            let displayValue = '';
-            if (typeof value === 'string') displayValue = value.length > 25 ? value.substring(0, 25) + '...' : value;
-            else if (Array.isArray(value)) {
-              displayValue = value.slice(0, 2).join(', ');
-              if (value.length > 2) displayValue += `... (+${value.length - 2})`;
-            }
+            const displayValue = extractDisplayText(value, 25);
 
             const nodeId = `${pillar}-${key}`;
             newNodes.push({
@@ -270,13 +316,7 @@ export default function BrandMindmap() {
   const detailCompletion = selectedPillar && metrics?.pillars ? (metrics.pillars[selectedPillar] || 0) : 0;
   const detailItems = useMemo(() => {
     if (!detailData) return [];
-    return Object.entries(detailData).filter(([k, v]) => {
-      if (k === 'completion') return false;
-      if (!v) return false;
-      if (typeof v === 'string') return v.trim().length > 0;
-      if (Array.isArray(v)) return v.length > 0;
-      return true;
-    });
+    return Object.entries(detailData).filter(([k, v]) => isDisplayable(k, v));
   }, [detailData]);
 
   if (!currentBrand) {
@@ -411,13 +451,6 @@ export default function BrandMindmap() {
 }
 
 function DetailPanel({ meta, items, completion, onNavigate, onClose, isInline = false }) {
-  const formatValue = (val) => {
-    if (typeof val === 'string') return val;
-    if (Array.isArray(val)) return val.join(', ');
-    if (typeof val === 'object') return JSON.stringify(val);
-    return String(val);
-  };
-
   return (
     <div
       className={`${isInline
@@ -474,7 +507,7 @@ function DetailPanel({ meta, items, completion, onNavigate, onClose, isInline = 
                     {key.replace(/_/g, ' ')}
                   </div>
                   <div className="text-xs text-muted-foreground leading-relaxed">
-                    {formatValue(value)}
+                    {extractDisplayText(value, 200)}
                   </div>
                 </div>
               ))}
