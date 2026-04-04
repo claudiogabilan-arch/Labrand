@@ -59,7 +59,8 @@ import {
   Gem,
   Share2,
   Bell,
-  Check
+  Check,
+  Route
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -74,10 +75,11 @@ try {
 // Top-level items (always visible, no section)
 const topItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, featureId: 'dashboard' },
+  { name: 'Jornada', href: '/journey', icon: Route, featureId: 'journey' },
   { name: 'Mapa Mental', href: '/mindmap', icon: Share2, featureId: 'mindmap' },
   { name: 'BVS Score', href: '/bvs', icon: Gem, featureId: 'bvs', pro: true },
   { name: 'Executivo', href: '/executive', icon: Briefcase, featureId: 'executive', pro: true },
-  { name: 'Diagnóstico', href: '/maturity', icon: ClipboardCheck, featureId: 'maturity', pro: true },
+  { name: 'Diagnostico', href: '/maturity', icon: ClipboardCheck, featureId: 'maturity', pro: true },
   { name: 'Ferramentas', href: '/brand-tools', icon: Wrench, featureId: 'brand_tools', pro: true },
 ];
 

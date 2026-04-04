@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useBrand } from '../contexts/BrandContext';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -7,39 +8,32 @@ import {
   Background,
   useNodesState,
   useEdgesState,
+  MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Loader2, ZoomIn, Maximize2, Minimize2, X, Download } from 'lucide-react';
+import { Badge } from '../components/ui/badge';
+import { Loader2, Download, Maximize2, X, ChevronRight, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
-const nodeColors = {
-  brand: '#1a1a1a',
-  start: '#3b82f6',
-  values: '#ef4444',
-  purpose: '#22c55e',
-  promise: '#f59e0b',
-  positioning: '#06b6d4',
-  personality: '#8b5cf6',
-  universality: '#ec4899',
-  item: '#6b7280'
+const PILLAR_META = {
+  start:         { label: 'Start',           color: '#3B82F6', route: '/pillars/start',         icon: 'S',  desc: 'Definicao inicial e essencia da marca' },
+  values:        { label: 'Valores',         color: '#EF4444', route: '/pillars/values',        icon: 'V',  desc: 'Valores fundamentais que guiam a marca' },
+  purpose:       { label: 'Proposito',       color: '#22C55E', route: '/pillars/purpose',       icon: 'P',  desc: 'A razao de existir da marca' },
+  promise:       { label: 'Promessa',        color: '#F59E0B', route: '/pillars/promise',       icon: 'Pr', desc: 'A promessa entregue ao publico' },
+  positioning:   { label: 'Posicionamento',  color: '#06B6D4', route: '/pillars/positioning',   icon: 'Po', desc: 'Como a marca se diferencia no mercado' },
+  personality:   { label: 'Personalidade',   color: '#8B5CF6', route: '/pillars/personality',   icon: 'Pe', desc: 'Tom de voz e carater da marca' },
+  universality:  { label: 'Universal',       color: '#EC4899', route: '/pillars/universality',  icon: 'U',  desc: 'Consistencia em todos os pontos de contato' },
 };
 
-const pillarNames = {
-  start: 'Start',
-  values: 'Valores',
-  purpose: 'Propósito',
-  promise: 'Promessa',
-  positioning: 'Posicionamento',
-  personality: 'Personalidade',
-  universality: 'Universal'
-};
+const PILLAR_ORDER = ['start', 'values', 'purpose', 'promise', 'positioning', 'personality', 'universality'];
 
 export default function BrandMindmap() {
+  const navigate = useNavigate();
   const { currentBrand } = useBrand();
   const { token } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -47,8 +41,11 @@ export default function BrandMindmap() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [selectedPillar, setSelectedPillar] = useState(null);
+  const [pillarsData, setPillarsData] = useState({});
+  const [metrics, setMetrics] = useState(null);
 
-  const handleExportPDF = async () => {
+  const handleExportPNG = async () => {
     setExporting(true);
     try {
       const el = document.querySelector('[data-testid="mindmap-canvas"]');
@@ -59,116 +56,145 @@ export default function BrandMindmap() {
       link.href = canvas.toDataURL('image/png');
       link.click();
       toast.success('Mindmap exportado!');
-    } catch (e) {
-      toast.error('Erro ao exportar');
-    } finally { setExporting(false); }
+    } catch { toast.error('Erro ao exportar'); }
+    finally { setExporting(false); }
   };
 
   const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-    if (!isFullscreen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    setIsFullscreen(prev => {
+      document.body.style.overflow = prev ? '' : 'hidden';
+      return !prev;
+    });
   };
 
   useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === 'Escape' && isFullscreen) {
-        toggleFullscreen();
-      }
-    };
+    const handleEsc = (e) => { if (e.key === 'Escape' && isFullscreen) toggleFullscreen(); };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isFullscreen]);
+
+  const handleNodeClick = useCallback((_event, node) => {
+    const pillarKey = node.id.split('-')[0];
+    if (pillarKey === 'brand') return;
+
+    const meta = PILLAR_META[pillarKey];
+    if (!meta) return;
+
+    // If clicking on a pillar node, show detail panel
+    if (PILLAR_ORDER.includes(node.id)) {
+      setSelectedPillar(node.id);
+    } else {
+      // Sub-item click → navigate directly
+      navigate(meta.route);
+    }
+  }, [navigate]);
+
   const buildMindmap = useCallback(async () => {
     if (!currentBrand) return;
     setLoading(true);
 
     try {
-      const res = await fetch(`${API}/api/brands/${currentBrand.brand_id}/pillars-summary`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (!res.ok) return;
-      const data = await res.json();
+      const [summaryRes, metricsRes] = await Promise.all([
+        fetch(`${API}/api/brands/${currentBrand.brand_id}/pillars-summary`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${API}/api/brands/${currentBrand.brand_id}/metrics`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+      ]);
+
+      const data = summaryRes.ok ? await summaryRes.json() : {};
+      const met = metricsRes.ok ? await metricsRes.json() : null;
+      setPillarsData(data);
+      setMetrics(met);
 
       const newNodes = [];
       const newEdges = [];
 
-      // Nó central - Marca
+      // Central brand node
       newNodes.push({
         id: 'brand',
-        position: { x: 400, y: 50 },
-        data: { 
+        position: { x: 400, y: 300 },
+        data: {
           label: (
-            <div className="text-center">
-              <div className="font-bold text-lg">{currentBrand.name}</div>
-              <div className="text-xs opacity-70">{data.completion}% completo</div>
+            <div className="text-center cursor-default">
+              <div className="text-base font-bold tracking-tight">{currentBrand.name}</div>
+              <div className="text-[11px] mt-1 opacity-80">{data.completion || 0}% completo</div>
             </div>
           )
         },
         style: {
-          background: nodeColors.brand,
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
           color: 'white',
           border: 'none',
-          borderRadius: '12px',
-          padding: '16px 24px',
+          borderRadius: '50%',
+          width: 130,
+          height: 130,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
           fontSize: '14px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-        }
+        },
       });
 
-      // Pilares em círculo ao redor
-      const pillarTypes = ['start', 'values', 'purpose', 'promise', 'positioning', 'personality', 'universality'];
-      const radius = 220;
-      const centerX = 400;
-      const centerY = 280;
+      // Pillars in a circle
+      const radius = 250;
+      const cx = 400, cy = 300;
 
-      pillarTypes.forEach((pillar, index) => {
-        const angle = (index * 2 * Math.PI / pillarTypes.length) - Math.PI / 2;
-        const x = centerX + radius * Math.cos(angle);
-        const y = centerY + radius * Math.sin(angle);
+      PILLAR_ORDER.forEach((pillar, index) => {
+        const meta = PILLAR_META[pillar];
+        const angle = (index * 2 * Math.PI / PILLAR_ORDER.length) - Math.PI / 2;
+        const x = cx + radius * Math.cos(angle);
+        const y = cy + radius * Math.sin(angle);
 
-        const pillarData = data[pillar] || {};
-        const hasData = Object.keys(pillarData).length > 0;
-        const itemCount = Object.values(pillarData).filter(v => v && (typeof v === 'string' ? v.trim() : true)).length;
+        const pillarContent = data[pillar] || {};
+        const hasData = Object.keys(pillarContent).length > 0;
+        const completion = met?.pillars?.[pillar] || 0;
 
         newNodes.push({
           id: pillar,
-          position: { x: x - 60, y: y - 25 },
+          position: { x: x - 65, y: y - 35 },
           data: {
             label: (
-              <div className="text-center">
-                <div className="font-semibold">{pillarNames[pillar]}</div>
-                {hasData && <div className="text-xs opacity-80">{itemCount} itens</div>}
+              <div className="text-center cursor-pointer select-none">
+                <div className="text-xs font-bold uppercase tracking-wider mb-0.5">{meta.label}</div>
+                <div className="text-[10px] opacity-75">{completion}%</div>
+                {/* Mini progress bar */}
+                <div className="w-full h-1 bg-white/20 rounded-full mt-1.5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${completion}%`, backgroundColor: 'rgba(255,255,255,0.7)' }}
+                  />
+                </div>
               </div>
             )
           },
           style: {
-            background: hasData ? nodeColors[pillar] : '#e5e7eb',
-            color: hasData ? 'white' : '#6b7280',
-            border: 'none',
-            borderRadius: '10px',
-            padding: '12px 16px',
-            fontSize: '13px',
-            boxShadow: hasData ? '0 3px 8px rgba(0,0,0,0.12)' : 'none',
-            opacity: hasData ? 1 : 0.6
-          }
+            background: hasData ? meta.color : '#CBD5E1',
+            color: hasData ? 'white' : '#64748B',
+            border: hasData ? `3px solid ${meta.color}` : '2px dashed #94A3B8',
+            borderRadius: '14px',
+            padding: '14px 18px',
+            fontSize: '12px',
+            width: 130,
+            boxShadow: hasData ? `0 4px 20px ${meta.color}40` : 'none',
+            transition: 'transform 0.2s, box-shadow 0.2s',
+          },
         });
 
         newEdges.push({
           id: `brand-${pillar}`,
           source: 'brand',
           target: pillar,
-          style: { stroke: hasData ? nodeColors[pillar] : '#d1d5db', strokeWidth: hasData ? 2 : 1 },
-          animated: hasData
+          style: { stroke: hasData ? meta.color : '#CBD5E1', strokeWidth: hasData ? 2.5 : 1.5 },
+          animated: hasData,
+          markerEnd: { type: MarkerType.ArrowClosed, color: hasData ? meta.color : '#CBD5E1', width: 12, height: 12 },
         });
 
-        // Subitens do pilar
+        // Sub-items (max 3 per pillar for cleanliness)
         if (hasData) {
-          const items = Object.entries(pillarData).filter(([k, v]) => {
+          const items = Object.entries(pillarContent).filter(([k, v]) => {
             if (k === 'completion') return false;
             if (!v) return false;
             if (typeof v === 'string') return v.trim().length > 0;
@@ -176,48 +202,52 @@ export default function BrandMindmap() {
             return true;
           });
 
-          items.slice(0, 4).forEach(([ key, value], itemIndex) => {
-            const itemAngle = angle + (itemIndex - items.length / 2 + 0.5) * 0.3;
-            const itemRadius = radius + 100;
-            const itemX = centerX + itemRadius * Math.cos(itemAngle);
-            const itemY = centerY + itemRadius * Math.sin(itemAngle);
+          const maxItems = 3;
+          const displayItems = items.slice(0, maxItems);
+          const spread = 0.35;
+
+          displayItems.forEach(([key, value], idx) => {
+            const itemAngle = angle + (idx - (displayItems.length - 1) / 2) * spread;
+            const itemR = radius + 120;
+            const ix = cx + itemR * Math.cos(itemAngle);
+            const iy = cy + itemR * Math.sin(itemAngle);
 
             let displayValue = '';
-            if (typeof value === 'string') {
-              displayValue = value.length > 30 ? value.substring(0, 30) + '...' : value;
-            } else if (Array.isArray(value)) {
+            if (typeof value === 'string') displayValue = value.length > 25 ? value.substring(0, 25) + '...' : value;
+            else if (Array.isArray(value)) {
               displayValue = value.slice(0, 2).join(', ');
-              if (value.length > 2) displayValue += '...';
+              if (value.length > 2) displayValue += `... (+${value.length - 2})`;
             }
 
             const nodeId = `${pillar}-${key}`;
             newNodes.push({
               id: nodeId,
-              position: { x: itemX - 50, y: itemY - 15 },
+              position: { x: ix - 55, y: iy - 18 },
               data: {
                 label: (
-                  <div className="text-xs">
-                    <div className="font-medium capitalize">{key.replace(/_/g, ' ')}</div>
-                    {displayValue && <div className="opacity-70 truncate max-w-[120px]">{displayValue}</div>}
+                  <div className="cursor-pointer select-none">
+                    <div className="text-[10px] font-semibold capitalize text-foreground">{key.replace(/_/g, ' ')}</div>
+                    {displayValue && <div className="text-[9px] text-muted-foreground mt-0.5 leading-tight">{displayValue}</div>}
                   </div>
                 )
               },
               style: {
-                background: 'white',
-                color: '#374151',
-                border: `2px solid ${nodeColors[pillar]}`,
-                borderRadius: '8px',
+                background: 'hsl(var(--card))',
+                color: 'hsl(var(--card-foreground))',
+                border: `2px solid ${meta.color}50`,
+                borderRadius: '10px',
                 padding: '8px 12px',
                 fontSize: '11px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-              }
+                maxWidth: 140,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              },
             });
 
             newEdges.push({
               id: `${pillar}-${nodeId}`,
               source: pillar,
               target: nodeId,
-              style: { stroke: nodeColors[pillar], strokeWidth: 1.5 }
+              style: { stroke: `${meta.color}60`, strokeWidth: 1.5, strokeDasharray: '4 2' },
             });
           });
         }
@@ -232,75 +262,88 @@ export default function BrandMindmap() {
     }
   }, [currentBrand, token, setNodes, setEdges]);
 
-  useEffect(() => {
-    buildMindmap();
-  }, [buildMindmap]);
+  useEffect(() => { buildMindmap(); }, [buildMindmap]);
+
+  // Detail panel data
+  const detailMeta = selectedPillar ? PILLAR_META[selectedPillar] : null;
+  const detailData = selectedPillar ? (pillarsData[selectedPillar] || {}) : {};
+  const detailCompletion = selectedPillar && metrics?.pillars ? (metrics.pillars[selectedPillar] || 0) : 0;
+  const detailItems = useMemo(() => {
+    if (!detailData) return [];
+    return Object.entries(detailData).filter(([k, v]) => {
+      if (k === 'completion') return false;
+      if (!v) return false;
+      if (typeof v === 'string') return v.trim().length > 0;
+      if (Array.isArray(v)) return v.length > 0;
+      return true;
+    });
+  }, [detailData]);
 
   if (!currentBrand) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Selecione uma marca para visualizar o mindmap.</p>
+      <div className="text-center py-12" data-testid="brand-mindmap-page">
+        <p className="text-muted-foreground">Selecione uma marca para visualizar o mapa mental.</p>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
+      <div className="flex items-center justify-center h-96" data-testid="brand-mindmap-page">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  const mindmapContent = (
+  const mindmapFlow = (
     <ReactFlow
       nodes={nodes}
       edges={edges}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
+      onNodeClick={handleNodeClick}
       fitView
-      fitViewOptions={{ padding: 0.2 }}
+      fitViewOptions={{ padding: 0.15 }}
       minZoom={0.3}
-      maxZoom={1.5}
+      maxZoom={2}
       attributionPosition="bottom-left"
+      proOptions={{ hideAttribution: true }}
     >
-      <Controls />
-      <Background color="#e5e7eb" gap={20} />
+      <Controls showInteractive={false} />
+      <Background color="#e2e8f0" gap={24} size={1} />
     </ReactFlow>
   );
 
-  // Modo apresentação (tela cheia)
+  // Fullscreen mode
   if (isFullscreen) {
     return (
-      <div className="fixed inset-0 z-50 bg-white" data-testid="mindmap-fullscreen">
-        <div className="absolute top-4 left-4 z-10">
-          <div className="bg-white/90 backdrop-blur rounded-lg p-4 shadow-lg">
-            <h1 className="text-2xl font-bold">{currentBrand.name}</h1>
-            <p className="text-muted-foreground">Mapa Estratégico da Marca</p>
-          </div>
+      <div className="fixed inset-0 z-50 bg-[#f8fafc]" data-testid="mindmap-fullscreen">
+        <div className="absolute top-4 left-4 z-10 bg-background/90 backdrop-blur-sm rounded-xl p-4 shadow-lg border">
+          <h1 className="text-xl font-bold">{currentBrand.name}</h1>
+          <p className="text-sm text-muted-foreground">Mapa Estrategico da Marca</p>
         </div>
         <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <Button variant="outline" size="sm" onClick={buildMindmap}>
-            <ZoomIn className="h-4 w-4 mr-2" />
-            Atualizar
+          <Button variant="outline" size="sm" onClick={handleExportPNG} disabled={exporting}>
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+            PNG
           </Button>
           <Button variant="outline" size="sm" onClick={toggleFullscreen}>
-            <X className="h-4 w-4 mr-2" />
-            Sair (ESC)
+            <X className="h-4 w-4 mr-1" />
+            Sair
           </Button>
         </div>
-        <div className="absolute bottom-4 left-4 z-10 flex gap-4 text-sm bg-white/90 backdrop-blur rounded-lg p-3">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-[#22c55e]"></div>
-            <span>Preenchido</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-gray-300"></div>
-            <span>Pendente</span>
-          </div>
-        </div>
-        <div style={{ height: '100vh', background: '#fafafa' }}>
-          {mindmapContent}
+        {/* Detail panel in fullscreen */}
+        {selectedPillar && detailMeta && (
+          <DetailPanel
+            meta={detailMeta}
+            items={detailItems}
+            completion={detailCompletion}
+            onNavigate={() => navigate(detailMeta.route)}
+            onClose={() => setSelectedPillar(null)}
+          />
+        )}
+        <div className="h-screen" data-testid="mindmap-canvas">
+          {mindmapFlow}
         </div>
       </div>
     );
@@ -308,45 +351,148 @@ export default function BrandMindmap() {
 
   return (
     <div className="space-y-4" data-testid="brand-mindmap-page">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Mapa Mental da Marca</h1>
-          <p className="text-muted-foreground">Visualização estratégica de {currentBrand.name}</p>
+          <h1 className="text-2xl font-bold font-heading">Mapa Mental da Marca</h1>
+          <p className="text-muted-foreground text-sm">Clique nos pilares para ver detalhes ou navegar</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={exporting} data-testid="export-mindmap-btn">
-            {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
-            Exportar PNG
+          <Button variant="outline" size="sm" onClick={handleExportPNG} disabled={exporting} data-testid="export-mindmap-btn">
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+            Exportar
           </Button>
-          <Button variant="outline" size="sm" onClick={buildMindmap}>
-            <ZoomIn className="h-4 w-4 mr-2" />
-            Atualizar
-          </Button>
-          <Button size="sm" onClick={toggleFullscreen}>
-            <Maximize2 className="h-4 w-4 mr-2" />
-            Modo Apresentacao
+          <Button size="sm" onClick={toggleFullscreen} data-testid="fullscreen-mindmap-btn">
+            <Maximize2 className="h-4 w-4 mr-1" />
+            Tela Cheia
           </Button>
         </div>
       </div>
 
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <div style={{ height: '70vh', background: '#fafafa' }} data-testid="mindmap-canvas">
-            {mindmapContent}
+      <div className="flex gap-4">
+        {/* Mindmap */}
+        <Card className="flex-1 overflow-hidden">
+          <CardContent className="p-0">
+            <div style={{ height: '70vh', background: '#f8fafc' }} data-testid="mindmap-canvas">
+              {mindmapFlow}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Detail Panel */}
+        {selectedPillar && detailMeta && (
+          <DetailPanel
+            meta={detailMeta}
+            items={detailItems}
+            completion={detailCompletion}
+            onNavigate={() => navigate(detailMeta.route)}
+            onClose={() => setSelectedPillar(null)}
+            isInline
+          />
+        )}
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+        {PILLAR_ORDER.map((p) => (
+          <button
+            key={p}
+            onClick={() => { setSelectedPillar(p); }}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted transition-colors"
+            data-testid={`legend-${p}`}
+          >
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PILLAR_META[p].color }} />
+            <span>{PILLAR_META[p].label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DetailPanel({ meta, items, completion, onNavigate, onClose, isInline = false }) {
+  const formatValue = (val) => {
+    if (typeof val === 'string') return val;
+    if (Array.isArray(val)) return val.join(', ');
+    if (typeof val === 'object') return JSON.stringify(val);
+    return String(val);
+  };
+
+  return (
+    <div
+      className={`${isInline
+        ? 'w-80 shrink-0'
+        : 'absolute right-4 top-16 bottom-4 w-80 z-20'
+      }`}
+      data-testid="mindmap-detail-panel"
+    >
+      <Card className="h-full flex flex-col shadow-lg">
+        <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm"
+                style={{ backgroundColor: meta.color }}
+              >
+                {meta.icon}
+              </div>
+              <div>
+                <h3 className="font-bold text-base">{meta.label}</h3>
+                <p className="text-xs text-muted-foreground">{meta.desc}</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1" data-testid="close-detail-panel">
+              <X className="h-4 w-4" />
+            </button>
           </div>
+
+          {/* Progress */}
+          <div>
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-muted-foreground">Progresso</span>
+              <span className="font-semibold">{completion}%</span>
+            </div>
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${completion}%`, backgroundColor: meta.color }}
+              />
+            </div>
+          </div>
+
+          {/* Content items */}
+          {items.length > 0 ? (
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Conteudo</h4>
+              {items.map(([key, value]) => (
+                <div
+                  key={key}
+                  className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="text-xs font-semibold capitalize mb-0.5" style={{ color: meta.color }}>
+                    {key.replace(/_/g, ' ')}
+                  </div>
+                  <div className="text-xs text-muted-foreground leading-relaxed">
+                    {formatValue(value)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6 text-muted-foreground">
+              <p className="text-sm">Nenhum conteudo ainda</p>
+              <p className="text-xs mt-1">Clique abaixo para comecar a preencher</p>
+            </div>
+          )}
+
+          {/* Navigate button */}
+          <Button onClick={onNavigate} className="w-full mt-auto" style={{ backgroundColor: meta.color }} data-testid="navigate-to-pillar-btn">
+            <span>Ir para {meta.label}</span>
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
         </CardContent>
       </Card>
-
-      <div className="flex gap-4 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-[#22c55e]"></div>
-          <span>Pilares preenchidos</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-gray-300"></div>
-          <span>Pilares pendentes</span>
-        </div>
-      </div>
     </div>
   );
 }

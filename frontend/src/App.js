@@ -64,6 +64,7 @@ import Culture from "./pages/Culture";
 import Academy from "./pages/Academy";
 import Collaboration from "./pages/Collaboration";
 import ClickUpCallback from "./pages/ClickUpCallback";
+import BrandJourney from "./pages/BrandJourney";
 import { PermissionProvider } from "./contexts/PermissionContext";
 import { WhiteLabelProvider } from "./contexts/WhiteLabelContext";
 import "./App.css";
@@ -167,6 +168,7 @@ function AppRouter() {
       <Route path="/conversion-attributes" element={<AppPage><ConversionAttributes /></AppPage>} />
       <Route path="/bvs" element={<AppPage><BVS /></AppPage>} />
       <Route path="/mindmap" element={<AppPage><BrandMindmap /></AppPage>} />
+      <Route path="/journey" element={<AppPage><BrandJourney /></AppPage>} />
       <Route path="/culture" element={<AppPage><Culture /></AppPage>} />
       <Route path="/academy" element={<AppPage><Academy /></AppPage>} />
       <Route path="/collaboration" element={<AppPage><Collaboration /></AppPage>} />
