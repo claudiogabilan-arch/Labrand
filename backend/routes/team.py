@@ -24,7 +24,7 @@ ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 class TeamInviteRequest(BaseModel):
     email: EmailStr
-    role: str = "editor"  # "admin" or "editor"
+    role: str = "editor"
     brand_id: str
 
 
@@ -114,13 +114,13 @@ async def invite_team_member(
     if not brand:
         raise HTTPException(status_code=404, detail="Marca não encontrada")
     
-    # Check permissions
+    # Check permissions — owner, super_admin, lider_projeto, or cliente_admin can invite
     is_owner = brand.get("owner_id") == user["user_id"]
-    is_global_admin = user.get("is_admin") or user.get("role") == "admin"
+    is_global_admin = user.get("is_admin") or user.get("platform_role") == "super_admin"
     team_member = await db.team_members.find_one({
         "brand_id": request.brand_id,
         "user_id": user["user_id"],
-        "role": "admin"
+        "role": {"$in": ["lider_projeto", "admin", "cliente_admin"]}
     }, {"_id": 0})
     
     if not is_owner and not team_member and not is_global_admin:
@@ -224,7 +224,7 @@ async def cancel_invite(
         team_member = await db.team_members.find_one({
             "brand_id": invite["brand_id"],
             "user_id": user["user_id"],
-            "role": "admin"
+            "role": {"$in": ["lider_projeto", "admin"]}
         }, {"_id": 0})
         if not team_member:
             raise HTTPException(status_code=403, detail="Sem permissão")
@@ -379,10 +379,20 @@ async def update_team_member(
     if not member:
         raise HTTPException(status_code=404, detail="Membro não encontrado")
     
-    # Check permission (only owner can change roles)
+    # Check permission (owner or lider_projeto can change roles)
     brand = await db.brands.find_one({"brand_id": member["brand_id"]}, {"_id": 0})
-    if brand.get("owner_id") != user["user_id"]:
-        raise HTTPException(status_code=403, detail="Apenas o dono pode alterar papéis")
+    is_owner = brand.get("owner_id") == user["user_id"]
+    is_lider = False
+    if not is_owner:
+        caller_member = await db.team_members.find_one({
+            "brand_id": member["brand_id"],
+            "user_id": user["user_id"],
+            "role": "lider_projeto"
+        }, {"_id": 0})
+        is_lider = caller_member is not None
+    
+    if not is_owner and not is_lider and not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Sem permissão para alterar papéis")
     
     await db.team_members.update_one(
         {"member_id": member_id},
@@ -439,7 +449,17 @@ async def get_my_teams(user: dict = Depends(get_current_user)):
 
 # Email template for invitations
 def get_invite_email_template(brand_name: str, inviter_name: str, role: str, invite_link: str) -> str:
-    role_label = "Administrador" if role == "admin" else "Editor"
+    role_labels = {
+        "lider_projeto": "Líder de Projeto",
+        "editor": "Editor",
+        "colaborador": "Colaborador",
+        "visualizador": "Visualizador",
+        "cliente_admin": "Cliente Admin",
+        "aprovador": "Aprovador",
+        "convidado": "Convidado",
+        "admin": "Administrador",
+    }
+    role_label = role_labels.get(role, role.replace("_", " ").title())
     
     return f"""
     <!DOCTYPE html>
@@ -475,7 +495,7 @@ def get_invite_email_template(brand_name: str, inviter_name: str, role: str, inv
                         <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">Seu papel:</p>
                         <p style="margin: 0; color: #1f2937; font-size: 18px; font-weight: 600;">{role_label}</p>
                         <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 13px;">
-                            {"Acesso total para gerenciar a marca" if role == "admin" else "Pode editar conteúdo da marca"}
+                            Acesso à marca {brand_name}
                         </p>
                     </div>
                     

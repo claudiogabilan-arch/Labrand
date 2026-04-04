@@ -36,6 +36,7 @@ async def setup_admin(data: dict):
         hashed = pwd_context.hash(password)
         await db.users.update_one({"email": email}, {"$set": {
             "password": hashed, "role": "admin", "is_admin": True,
+            "platform_role": "super_admin",
             "email_verified": True, "updated_at": datetime.now(timezone.utc).isoformat()
         }})
         return {"message": f"Admin {email} atualizado com sucesso", "action": "updated"}
@@ -47,6 +48,7 @@ async def setup_admin(data: dict):
     user_doc = {
         "user_id": user_id, "email": email, "name": name,
         "password": hashed, "role": "admin", "is_admin": True,
+        "platform_role": "super_admin",
         "user_type": "estrategista", "plan": "internal",
         "email_verified": True, "onboarding_completed": True,
         "created_at": now.isoformat()

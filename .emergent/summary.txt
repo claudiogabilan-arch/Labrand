@@ -2,133 +2,152 @@
 The user is building LaBrand – Brand OS, an internal agency platform for brand management. 
 PRODUCT REQUIREMENTS: 
 - Implement ClickUp OAuth 2.0 integration in the Planning/Integrations module for task synchronization.
+- Implement Social Media Data Fetcher (Instagram, Facebook, YouTube, TikTok, LinkedIn) without mocked data.
+- Implement Campaigns CRUD and link social posts to campaigns, with a consolidated Social Dashboard.
+- Implement Role-Based Access Control (RBAC) / user access levels within teams.
 - Implement White-Labeling (Phase 1: Custom domains, logos, and colors per client).
-- Ensure team invite flows work flawlessly without manual intervention from users.
 
-**User's preferred language**: **pt-BR** (Brazilian Portuguese). 
-*INSTRUCTION FOR NEXT AGENT*: Você DEVE responder SEMPRE em Português do Brasil (pt-BR).
+**User's preferred language**: **pt-BR** (Brazilian Portuguese)
+*INSTRUCT FOR NEXT AGENT*: Você DEVE automaticamente detectar e responder SEMPRE em Português do Brasil (pt-BR).
 
 **what currently exists?** 
-A full-stack React + FastAPI + MongoDB app. The platform features a robust Naming module (100% local without AI credits), a comprehensive Notification system (in-app bell + Resend emails), cross-pillar navigation, and a fixed team invitation flow. Deployment health checks pass successfully with dynamic CORS and relative auth redirects.
+A full-stack React + FastAPI + MongoDB application. It features a complete Naming module, Notifications, ClickUp Integration (OAuth + Personal Token fallback), Social Media API integration (real data fetcher), Campaign Management with social post linking, and a newly implemented Role-Based Access Control (RBAC) system that wraps all protected routes.
 
 **Last working item**:
-- **Last item agent was working**: Implementing the ClickUp OAuth 2.0 integration. The agent had just started exploring  and  routes when the context ended.
-- **Status**: IN PROGRESS
-- **Agent Testing Done**: N
-- **Which testing method agent to use?** Both (backend testing agent for OAuth token exchange/API endpoints, frontend screenshot tool for the connection UI/list selection).
-- **User Testing Done**: N
+    - **Last item agent was working**: Implementing Role-Based Access Control (RBAC). The agent created the backend permissions system (), frontend context (), updated JWT tokens to carry roles, and performed a massive refactoring in . They created an  wrapper to consolidate , , , and  across all routes.
+    - **Status**: TESTING PENDING
+    - **Agent Testing Done**: N (Only a basic screenshot was taken. The  was NOT run after this massive refactor).
+    - **Which testing method agent to use?**: both (Backend/Frontend testing agent). A full E2E test is critical because the  routing refactor could cause blank screens or context breakages.
+    - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-None. All previously reported bugs (white screen on , pending invites not syncing) were resolved and tested.
+  None reported by the user, but the massive  refactor requires immediate validation.
+  Issue 1: Validate RBAC and App.js Route Refactoring (P0)
+     - Attempted fixes: Agent consolidated routing using an  wrapper, but didn't run tests.
+     - Next debug checklist: Check  and . Ensure navigating to various pillars and dashboards does not throw React Context errors or blank screens.
+     - Why fix this issue and what will be achieved with the fix? Verifies that the platform remains stable after modifying the core routing/provider tree.
+     - Status: TESTING PENDING
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on other issue: N/A
 
 **In progress Task List**:
-  Task 1: ClickUp OAuth 2.0 Integration (P0)
-  - Task Detail:
-     - Where to resume: You need to implement the ClickUp OAuth flow in the backend and frontend. The user provided the following credentials to be used as environment variables:
-       
-       
-     - Details: The flow requires: 1) A Conectar ClickUp button redirecting to ClickUp's OAuth page. 2) A callback route at  that exchanges the  for an  and saves it to the client's DB record. 3) Fetching ClickUp workspaces and lists for the user to select. 4) Creating tasks in the selected ClickUp list when a task is added in the LABrand Planning module.
-     - What will be achieved with this? Users will be able to seamlessly sync planning tasks from LABrand directly into their chosen ClickUp lists.
-     - Status: IN PROGRESS
+  Task 1: Complete and Verify RBAC Implementation (P0)
+     - Where to resume: Run  immediately to test the RBAC backend logic and the  frontend routing wrapper. Fix any bugs found by the testing agent.
+     - What will be achieved with this? Secure, role-based access levels across the entire platform.
+     - Status: TESTING PENDING
      - Should Test frontend/backend/both after fix? Both
      - Blocked on something: N/A
 
-**Upcoming and Future Tasks**
+**Upcoming and Future Tasks**:
   - Task 1: White-labeling - Phase 1 (P1)
-    - Implement tenant architecture: custom logos, primary colors, and custom subdomains (e.g., ).
+    - Implement tenant architecture: custom logos, primary colors, and custom subdomains.
   - Task 2: Push Notifications via Browser (P2)
     - Implement Web Push API for real-time notifications beyond the in-app bell.
-  - Task 3: Continuous Refactoring (P3)
-    - Split large files like  (1400+ lines) and  into smaller, manageable components.
+  - Task 3: DB Query Optimization (P3)
+    - Add pagination in  and  (Flagged as a warning by the Deployer Agent for scale readiness).
+  - Task 4: Continuous Refactoring (P3)
+    - Split large files like  and  into smaller components.
+  - Task 5: Monthly Automatic Report Generation (Backlog Feature Suggestion)
+    - Consolidate social metrics from connected networks into an exportable PDF for the agency's clients.
 
-**Completed work in this session**
-- Naming Module: 100% local generation, 7-step wizard (DONE)
-- Notifications System: In-app bell, activity feed, Resend emails for approvals (DONE)
-- Pillar Navigation Component: Smooth step-by-step navigation across all 7 pillar pages (DONE)
-- Team Invites Bug Fix: Added  on registration/login and fixed  state refresh (DONE)
-- Invite Route Bug Fix: Fixed blank screen error on  by removing the decoupled  dependency (DONE)
-- Deployment Readiness: Fixed dynamic CORS origin handling and Auth redirect URL configurations (DONE)
+**Completed work in this session**:
+- ClickUp OAuth 2.0 Integration + Sync History Log + Dashboard Widget (DONE)
+- ClickUp Dual Connection (OAuth + Personal API Token fallback to bypass ClickUp's OAUTH_023 bug) (DONE)
+- Social Media Data Fetcher APIs (Instagram, FB, YT, TikTok, LinkedIn) - no mocked data (DONE)
+- Campaigns CRUD and social post linking feature (DONE)
+- Consolidated Social Dashboard Widget (DONE)
+- Crie sua Personalidade form refactor in  to include Name, Icon, Value Attributes, and Subversive Attributes (DONE)
+- Deployment Health Check execution and clearance (DONE)
 
-**Earlier issues found/mentioned but not fixed**
-None
+**Earlier issues found/mentioned but not fixed**:
+None.
 
-**Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: None active.
+**Known issue recurrence from previous fork**:
+  - Issue recurrence in previous fork: None
   - Recurrence count: 0
   - Status: RESOLVED
 
-**Code Architecture**
+**Code Architecture**:
 
 
-**Key Technical Concepts**
+**Key Technical Concepts**:
 - React frontend (Tailwind + Shadcn UI).
-- FastAPI backend with modular routers.
-- Team invites rely on tokens and an auto-acceptance logic bound to email verification and login events.
-- Notifications use Resend for emails and a MongoDB collection for in-app tracking.
+- FastAPI backend.
+- Role-Based Access Control (RBAC):  and JWT tokens now carry  and team .
+- Social Media Integration: Uses  and  for real data fetching from social APIs.
 
-**key DB schema**
-  - : , , 
-  - : , linked to 
-  - : , 
-  - : mapping between  and 
+**key DB schema**:
   - : , , , 
+  - : , 
+  - , : mapping between  and ClickUp spaces/sync logs.
+  - : added .
 
-**changes in tech stack**
-  - None
+**changes in tech stack**:
+  - Added external HTTP clients (, ) for native social media API integrations.
 
-**All files of reference**
--  (Where ClickUp task sync will occur).
--  or a new  (For OAuth endpoints).
--  (Needs ClickUp credentials).
--  (To register the  route).
+**All files of reference**:
+-  (Heavily modified with  wrapper, highly sensitive).
+-  (Created).
+-  (Created).
+- ,  (ClickUp implementation).
+- ,  (Social APIs & Campaigns).
 
 **Areas that need refactoring**:
--  and  are monolithic and need to be broken down into smaller tabs/components.
+-  and  are still monolithic.
 
-**key api endpoints**
+**key api endpoints**:
 - 
 - 
-- Pending: 
+- 
+- 
 
-**Critical Info for New Agent**
-- **ClickUp OAuth Redirect URI**: The user explicitly requested the callback path to be . Make sure the frontend route and the backend callback handling match this structure securely.
-- **ClickUp API Efficiency**: The user specifically requested to economize the maximum on credits. Since ClickUp uses its own native REST API via standard HTTP requests (axios/requests), reassure the user that this integration **does not consume any AI credits**.
-- **CORS & Auth Redirects**: These were just fixed to pass deployment checks. Do not hardcode specific absolute URLs for redirects or CORS; use dynamic matching or  as established in  and .
+**Critical Info for New Agent**:
+- **App.js Routing Refactor**: The previous agent consolidated all protected routes into an  wrapper component in . This affects the entire application. It must be thoroughly tested.
+- **ClickUp OAuth Bug**: ClickUp's native OAuth throws an  error for some workspaces due to strict redirect URIs. The agent implemented a dual-mode connection: OAuth (using ) + Personal API Token insertion. Retain both.
+- **Admin Setup**: Admin user setup requires a secret key: .
 
-**documents and test reports created in this job**
+**documents and test reports created in this job**:
+  - 
+  - 
   - 
   - 
   - 
   - 
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1. User: Requests Naming module HTML to be integrated and saved 100% locally. -> Agent completes.
-2. User: Instructs to keep Stripe AI credits identical, improve module flows, add Push notifications, and do refactoring. -> Agent completes Notifications and Pillar Navigation.
-3. User: Reports bug where invited users to Sandro Serzedello only see Nova marca after registering. -> Agent fixes  state refresh.
-4. User: Reports invite statuses still show Pending for users who already signed up. -> Agent implements auto-accept logic on signup/login and creates a force-accept admin endpoint.
-5. User: Reports a blank screen error when clicking the actual Accept Invite link. -> Agent fixes the React Context boundary issue in .
-6. User: Asks to run Deployment Health Check. -> Agent runs it, fixes blockers (CORS, redirect URLs), and clears it.
-7. User: Requests **ClickUp OAuth 2.0 integration** with specific , , and a strict  callback URI. Asks about credit consumption. -> **PENDING**: Agent started exploring files. 
+1. User: Instructed not to use mocked data for Social Media integrations (Instagram, Facebook, YT, TikTok, LinkedIn) -> Agent completed Phase A and B.
+2. User: Requested Campaigns + Social Posts link (P1) and Consolidated Social Dashboard (P2). -> Agent completed and verified.
+3. User: Reported ClickUp OAuth bug Opa! Não foi possível autorizar suas equipes. -> Agent discovered strict redirect URI limitation.
+4. User: Provided client ID/secret, said ClickUp didn't allow changing redirect URI. -> Agent updated redirect URI logic.
+5. User: Reported error still persists, shared API documentation. -> Agent diagnosed it as known ClickUp OAUTH_023 bug. Proposed adding Personal Token fallback. User approved. -> Agent implemented dual-mode login.
+6. User: Reported Crie sua Personalidade page lacked actionable buttons and specific form fields. -> Agent refactored it into a complete form.
+7. User: Call Deployer Agent and Run Health Check to Check for Readiness for Deployment. -> Agent ran it, passed.
+8. User: Asked what access levels/roles the agent would recommend based on current features. -> Agent proposed RBAC.
+9. User: dentro das equipes preciso ter tbm um nível de usuários, consegue desenhar? -> Agent asked to confirm implementation.
+10. User: vamos implementar. está perfeito. -> **PENDING**: Agent implemented backend rules, frontend contexts, and massively refactored  routing. Testing via  was **NOT** run.
 
 **Project Health Check:**
-- All existing features functional, deployment blockers cleared.
-- No mocked data; relies on MongoDB.
+- All endpoints working, deployment health check passed.
+- No mocked data used for integrations.
 
 **3rd Party Integrations** 
   • OpenAI GPT-4o — uses Emergent LLM Key
   • Google Auth — Emergent-managed
-  • Stripe (Payments for AI Credits) — requires User API Key ()
-  • Resend (Emails) — requires User API Key ()
-  • ClickUp (Tasks/Planning) — **PENDING IMPLEMENTATION**, requires User API Key provided in the last message.
+  • Stripe (Payments) — requires User API Key
+  • Resend (Emails) — requires User API Key
+  • ClickUp (Tasks/Planning) — requires User API Key/Token
+  • Social APIs (Instagram Graph, Facebook, LinkedIn REST, YouTube Data) — Native HTTP calls.
 
 **Testing status**
-  - Testing agent used after significant changes: YES
+  - Testing agent used after significant changes: YES (up to iteration 26), **NO for the final RBAC/App.js refactor**.
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: Handled by testing subagent
-  - Known regressions: None
+  - Known regressions: None confirmed, but high risk on routing.
 
 **Credentials to test flow:**
-- Admin:  
+- Admin:  (check  for exact password).
+- Admin Setup Secret: 
 
 **What agent forgot to execute**
-- The agent was in the middle of fetching files to start the ClickUp integration when the context limit was reached.</analysis>
+- The agent executed a massive refactoring of  to support  and  wrappers, but **failed to run the ** to validate this foundational structural change. You MUST run the testing agent immediately before picking up new tasks.</analysis>

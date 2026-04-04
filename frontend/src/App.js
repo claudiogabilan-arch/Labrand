@@ -64,7 +64,21 @@ import Culture from "./pages/Culture";
 import Academy from "./pages/Academy";
 import Collaboration from "./pages/Collaboration";
 import ClickUpCallback from "./pages/ClickUpCallback";
+import { PermissionProvider } from "./contexts/PermissionContext";
 import "./App.css";
+
+// Wrapper that adds BrandProvider + PermissionProvider + MainLayout
+function AppPage({ children }) {
+  return (
+    <ProtectedRoute>
+      <BrandProvider>
+        <PermissionProvider>
+          <MainLayout>{children}</MainLayout>
+        </PermissionProvider>
+      </BrandProvider>
+    </ProtectedRoute>
+  );
+}
 
 // Router wrapper to handle auth callback
 function AppRouter() {
@@ -103,606 +117,56 @@ function AppRouter() {
       <Route path="/invite/:token" element={<AcceptInvite />} />
       <Route path="/integracoes/clickup/callback" element={<ProtectedRoute><ClickUpCallback /></ProtectedRoute>} />
       <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Dashboard />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/brands/new"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <NewBrand />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/pillars/start"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <PillarStart />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/pillars/values"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <PillarValues />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/pillars/purpose"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <PillarPurpose />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/pillars/promise"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <PillarPromise />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/pillars/positioning"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <PillarPositioning />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/pillars/personality"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <PillarPersonality />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/pillars/universality"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <PillarUniversality />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/intelligence"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Intelligence />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/audience"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Audience />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/planning"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Planning />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/campaigns"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Campaigns />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/scorecard"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Scorecard />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/narratives"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Narratives />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/reports"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Reports />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Settings />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/valuation"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Valuation />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/executive"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <ExecutiveDashboard />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/benchmark"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Benchmark />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/simulator"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Simulator />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/identity"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <BrandIdentity />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/investment"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <InvestmentMatch />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/brand-way"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <BrandWay />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/brand-risk"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <BrandRisk />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/competitors"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <CompetitorAnalysis />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/consistency"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <ConsistencyAlerts />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/google-integration"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <GoogleIntegration />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/maturity"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <MaturityDiagnosis />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/ai-credits"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <AICredits />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <AdminDashboard />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/touchpoints"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Touchpoints />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/crm"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <CRMIntegration />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/naming"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Naming />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/ads"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <AdsIntegration />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/brand-tools"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <BrandTools />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/brand-tracking"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <BrandTracking />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/disaster-check"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <DisasterCheck />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/value-waves"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <ValueWaves />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/brand-funnel"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <BrandFunnel />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/brand-health"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <BrandHealth />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/integrations"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Integrations />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/social-listening"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <SocialListening />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/share-of-voice"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <ShareOfVoice />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/conversion-attributes"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <ConversionAttributes />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/bvs"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <BVS />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/mindmap"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <BrandMindmap />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/culture"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Culture />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/academy"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Academy />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/collaboration"
-        element={
-          <ProtectedRoute>
-            <BrandProvider>
-              <MainLayout>
-                <Collaboration />
-              </MainLayout>
-            </BrandProvider>
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/dashboard" element={<AppPage><Dashboard /></AppPage>} />
+      <Route path="/brands/new" element={<AppPage><NewBrand /></AppPage>} />
+      <Route path="/pillars/start" element={<AppPage><PillarStart /></AppPage>} />
+      <Route path="/pillars/values" element={<AppPage><PillarValues /></AppPage>} />
+      <Route path="/pillars/purpose" element={<AppPage><PillarPurpose /></AppPage>} />
+      <Route path="/pillars/promise" element={<AppPage><PillarPromise /></AppPage>} />
+      <Route path="/pillars/positioning" element={<AppPage><PillarPositioning /></AppPage>} />
+      <Route path="/pillars/personality" element={<AppPage><PillarPersonality /></AppPage>} />
+      <Route path="/pillars/universality" element={<AppPage><PillarUniversality /></AppPage>} />
+      <Route path="/intelligence" element={<AppPage><Intelligence /></AppPage>} />
+      <Route path="/audience" element={<AppPage><Audience /></AppPage>} />
+      <Route path="/planning" element={<AppPage><Planning /></AppPage>} />
+      <Route path="/campaigns" element={<AppPage><Campaigns /></AppPage>} />
+      <Route path="/scorecard" element={<AppPage><Scorecard /></AppPage>} />
+      <Route path="/narratives" element={<AppPage><Narratives /></AppPage>} />
+      <Route path="/reports" element={<AppPage><Reports /></AppPage>} />
+      <Route path="/settings" element={<AppPage><Settings /></AppPage>} />
+      <Route path="/valuation" element={<AppPage><Valuation /></AppPage>} />
+      <Route path="/executive" element={<AppPage><ExecutiveDashboard /></AppPage>} />
+      <Route path="/benchmark" element={<AppPage><Benchmark /></AppPage>} />
+      <Route path="/simulator" element={<AppPage><Simulator /></AppPage>} />
+      <Route path="/identity" element={<AppPage><BrandIdentity /></AppPage>} />
+      <Route path="/investment" element={<AppPage><InvestmentMatch /></AppPage>} />
+      <Route path="/brand-way" element={<AppPage><BrandWay /></AppPage>} />
+      <Route path="/brand-risk" element={<AppPage><BrandRisk /></AppPage>} />
+      <Route path="/competitors" element={<AppPage><CompetitorAnalysis /></AppPage>} />
+      <Route path="/consistency" element={<AppPage><ConsistencyAlerts /></AppPage>} />
+      <Route path="/google-integration" element={<AppPage><GoogleIntegration /></AppPage>} />
+      <Route path="/maturity" element={<AppPage><MaturityDiagnosis /></AppPage>} />
+      <Route path="/ai-credits" element={<AppPage><AICredits /></AppPage>} />
+      <Route path="/admin" element={<AppPage><AdminDashboard /></AppPage>} />
+      <Route path="/touchpoints" element={<AppPage><Touchpoints /></AppPage>} />
+      <Route path="/crm" element={<AppPage><CRMIntegration /></AppPage>} />
+      <Route path="/naming" element={<AppPage><Naming /></AppPage>} />
+      <Route path="/ads" element={<AppPage><AdsIntegration /></AppPage>} />
+      <Route path="/brand-tools" element={<AppPage><BrandTools /></AppPage>} />
+      <Route path="/brand-tracking" element={<AppPage><BrandTracking /></AppPage>} />
+      <Route path="/disaster-check" element={<AppPage><DisasterCheck /></AppPage>} />
+      <Route path="/value-waves" element={<AppPage><ValueWaves /></AppPage>} />
+      <Route path="/brand-funnel" element={<AppPage><BrandFunnel /></AppPage>} />
+      <Route path="/brand-health" element={<AppPage><BrandHealth /></AppPage>} />
+      <Route path="/integrations" element={<AppPage><Integrations /></AppPage>} />
+      <Route path="/social-listening" element={<AppPage><SocialListening /></AppPage>} />
+      <Route path="/share-of-voice" element={<AppPage><ShareOfVoice /></AppPage>} />
+      <Route path="/conversion-attributes" element={<AppPage><ConversionAttributes /></AppPage>} />
+      <Route path="/bvs" element={<AppPage><BVS /></AppPage>} />
+      <Route path="/mindmap" element={<AppPage><BrandMindmap /></AppPage>} />
+      <Route path="/culture" element={<AppPage><Culture /></AppPage>} />
+      <Route path="/academy" element={<AppPage><Academy /></AppPage>} />
+      <Route path="/collaboration" element={<AppPage><Collaboration /></AppPage>} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
