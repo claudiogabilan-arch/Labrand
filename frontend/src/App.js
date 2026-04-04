@@ -65,15 +65,18 @@ import Academy from "./pages/Academy";
 import Collaboration from "./pages/Collaboration";
 import ClickUpCallback from "./pages/ClickUpCallback";
 import { PermissionProvider } from "./contexts/PermissionContext";
+import { WhiteLabelProvider } from "./contexts/WhiteLabelContext";
 import "./App.css";
 
-// Wrapper that adds BrandProvider + PermissionProvider + MainLayout
+// Wrapper that adds BrandProvider + PermissionProvider + WhiteLabelProvider + MainLayout
 function AppPage({ children }) {
   return (
     <ProtectedRoute>
       <BrandProvider>
         <PermissionProvider>
-          <MainLayout>{children}</MainLayout>
+          <WhiteLabelProvider>
+            <MainLayout>{children}</MainLayout>
+          </WhiteLabelProvider>
         </PermissionProvider>
       </BrandProvider>
     </ProtectedRoute>

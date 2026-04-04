@@ -44,9 +44,11 @@ import {
   Camera,
   UserPlus,
   Crown,
-  X
+  X,
+  Paintbrush
 } from 'lucide-react';
 import axios from 'axios';
+import WhiteLabelSettings from '../components/WhiteLabelSettings';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -489,14 +491,14 @@ export const Settings = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
           <TabsTrigger value="profile" className="gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Perfil</span>
           </TabsTrigger>
           <TabsTrigger value="security" className="gap-2">
             <Shield className="h-4 w-4" />
-            <span className="hidden sm:inline">Segurança</span>
+            <span className="hidden sm:inline">Seguranca</span>
           </TabsTrigger>
           <TabsTrigger value="brands" className="gap-2">
             <Building2 className="h-4 w-4" />
@@ -506,13 +508,17 @@ export const Settings = () => {
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Equipe</span>
           </TabsTrigger>
+          <TabsTrigger value="white-label" className="gap-2" data-testid="tab-white-label">
+            <Paintbrush className="h-4 w-4" />
+            <span className="hidden sm:inline">White Label</span>
+          </TabsTrigger>
           <TabsTrigger value="integrations" className="gap-2">
             <Link2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Integrações</span>
+            <span className="hidden sm:inline">Integracoes</span>
           </TabsTrigger>
           <TabsTrigger value="personalization" className="gap-2">
             <Palette className="h-4 w-4" />
-            <span className="hidden sm:inline">Personalização</span>
+            <span className="hidden sm:inline">Personalizacao</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1208,6 +1214,11 @@ export const Settings = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* White Label Tab */}
+        <TabsContent value="white-label" className="space-y-6">
+          <WhiteLabelSettings />
         </TabsContent>
 
         {/* Integrations Tab */}

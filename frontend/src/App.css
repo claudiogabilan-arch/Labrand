@@ -1,5 +1,25 @@
 /* LaBrand - Premium App Styles */
 
+/* White-label CSS variable overrides */
+:root {
+  --wl-primary: initial;
+  --wl-accent: initial;
+  --wl-sidebar-bg: initial;
+  --wl-sidebar-text: initial;
+  --wl-radius: initial;
+}
+
+/* When white-label primary is set, override secondary/accent colors */
+:root:has([style*="--wl-primary"]) {
+  --secondary: var(--wl-primary);
+  --ring: var(--wl-primary);
+}
+
+:root:has([style*="--wl-accent"]) {
+  --accent: var(--wl-accent);
+  --chart-1: var(--wl-accent);
+}
+
 /* Print mode */
 @media print {
   .no-print {

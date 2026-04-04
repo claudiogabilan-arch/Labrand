@@ -63,6 +63,14 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
+// Try to use WhiteLabelContext (safe fallback if not available)
+let useWhiteLabel;
+try {
+  useWhiteLabel = require('../contexts/WhiteLabelContext').useWhiteLabel;
+} catch {
+  useWhiteLabel = () => ({ config: null });
+}
+
 // Top-level items (always visible, no section)
 const topItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, featureId: 'dashboard' },
@@ -169,9 +177,19 @@ const sections = [
 
 export const Sidebar = ({ collapsed, setCollapsed }) => {
   const location = useLocation();
-  const { metrics } = useBrand();
+  const { metrics, currentBrand } = useBrand();
   const { isCliente, canAccess, user } = useAuth();
   const { theme } = useTheme();
+  const { config: wlConfig } = useWhiteLabel();
+
+  // White-label styles
+  const wlEnabled = wlConfig?.enabled;
+  const sidebarStyle = wlEnabled && wlConfig.sidebar_color
+    ? { backgroundColor: wlConfig.sidebar_color, color: wlConfig.sidebar_text_color || '#E2E8F0' }
+    : {};
+  const brandLogoUrl = currentBrand?.logo_url
+    ? `${process.env.REACT_APP_BACKEND_URL}${currentBrand.logo_url}`
+    : null;
 
   // Find which section contains the active page
   const getActiveSectionId = () => {
@@ -262,9 +280,10 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
 
   return (
     <aside
-      className={`fixed left-0 top-0 z-40 h-screen bg-background border-r border-border/50 sidebar-transition ${
+      className={`fixed left-0 top-0 z-40 h-screen border-r border-border/50 sidebar-transition ${
         collapsed ? 'w-16' : 'w-64'
-      }`}
+      } ${wlEnabled && wlConfig.sidebar_color ? '' : 'bg-background'}`}
+      style={sidebarStyle}
       data-testid="sidebar"
     >
       <div className="flex flex-col h-full">
@@ -272,20 +291,28 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
         <div className={`flex items-center h-14 px-4 border-b border-border/50 ${collapsed ? 'justify-center' : 'justify-between'}`}>
           {!collapsed && (
             <Link to="/dashboard" className="flex items-center gap-2" data-testid="logo-link">
-              <img 
-                src={theme === 'dark' ? '/logo-white.png' : '/logo-black.png'} 
-                alt="LABrand" 
-                className="h-7 w-auto"
-              />
+              {wlEnabled && brandLogoUrl ? (
+                <img src={brandLogoUrl} alt={currentBrand?.name || 'Brand'} className="h-7 w-auto max-w-[140px] object-contain" />
+              ) : (
+                <img 
+                  src={theme === 'dark' ? '/logo-white.png' : '/logo-black.png'} 
+                  alt="LABrand" 
+                  className="h-7 w-auto"
+                />
+              )}
             </Link>
           )}
           {collapsed && (
             <Link to="/dashboard" data-testid="logo-link">
-              <img 
-                src={theme === 'dark' ? '/icon-skull-white.png' : '/icon-skull-black.png'} 
-                alt="LABrand" 
-                className="h-7 w-7"
-              />
+              {wlEnabled && brandLogoUrl ? (
+                <img src={brandLogoUrl} alt={currentBrand?.name || 'Brand'} className="h-7 w-7 object-contain" />
+              ) : (
+                <img 
+                  src={theme === 'dark' ? '/icon-skull-white.png' : '/icon-skull-black.png'} 
+                  alt="LABrand" 
+                  className="h-7 w-7"
+                />
+              )}
             </Link>
           )}
           {!collapsed && (
