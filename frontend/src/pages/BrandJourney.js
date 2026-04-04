@@ -84,15 +84,18 @@ export default function BrandJourney() {
   const [metrics, setMetrics] = useState(null);
   const [tasks, setTasks] = useState({ total: 0, completed: 0 });
   const [campaigns, setCampaigns] = useState(0);
+  const [extraProgress, setExtraProgress] = useState({});
 
   const fetchData = useCallback(async () => {
     if (!currentBrand?.brand_id || !token) return;
     setLoading(true);
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const [metRes, campRes] = await Promise.all([
+      const [metRes, campRes, bwRes, namingRes] = await Promise.all([
         axios.get(`${API}/brands/${currentBrand.brand_id}/metrics`, { headers }).catch(() => null),
         axios.get(`${API}/brands/${currentBrand.brand_id}/campaigns`, { headers }).catch(() => null),
+        axios.get(`${API}/brands/${currentBrand.brand_id}/brand-way`, { headers }).catch(() => null),
+        axios.get(`${API}/brands/${currentBrand.brand_id}/naming`, { headers }).catch(() => null),
       ]);
 
       if (metRes?.data) {
@@ -102,6 +105,26 @@ export default function BrandJourney() {
       if (campRes?.data) {
         setCampaigns(Array.isArray(campRes.data) ? campRes.data.length : 0);
       }
+
+      const extra = {};
+      // Brand Way: 6 dimensions, check how many have content
+      if (bwRes?.data) {
+        const dims = ['proposito', 'valores', 'personalidade', 'tom_voz', 'comportamentos', 'promessa'];
+        const filled = dims.filter(d => {
+          const dim = bwRes.data[d];
+          if (!dim) return false;
+          return Object.values(dim).some(v =>
+            (typeof v === 'string' && v.trim()) || (Array.isArray(v) && v.length > 0)
+          );
+        }).length;
+        extra.brand_way = Math.round((filled / dims.length) * 100);
+      }
+      // Naming: check if any naming projects exist
+      if (namingRes?.data) {
+        const names = namingRes.data?.projects || (Array.isArray(namingRes.data) ? namingRes.data : []);
+        extra.naming = names.length > 0 ? 100 : 0;
+      }
+      setExtraProgress(extra);
     } catch { /* silent */ }
     finally { setLoading(false); }
   }, [currentBrand?.brand_id, token]);
@@ -110,20 +133,18 @@ export default function BrandJourney() {
 
   // Compute module completion status
   const getModuleStatus = (mod) => {
-    if (mod.pillar && metrics?.pillars) {
-      const val = metrics.pillars[mod.pillar] || 0;
-      if (val >= 100) return 'done';
-      if (val > 0) return 'in_progress';
-      return 'pending';
-    }
-    // Non-pillar modules: check by key
-    if (mod.key === 'planning' && tasks.total > 0) return tasks.completed > 0 ? 'done' : 'in_progress';
-    if (mod.key === 'campaigns' && campaigns > 0) return 'done';
+    const progress = getModuleProgress(mod);
+    if (progress >= 100) return 'done';
+    if (progress > 0) return 'in_progress';
     return 'pending';
   };
 
   const getModuleProgress = (mod) => {
+    // Pillar-based modules
     if (mod.pillar && metrics?.pillars) return metrics.pillars[mod.pillar] || 0;
+    // Modules tracked via extraProgress (brand_way, naming)
+    if (extraProgress[mod.key] !== undefined) return extraProgress[mod.key];
+    // Specific modules
     if (mod.key === 'planning' && tasks.total > 0) return Math.round((tasks.completed / tasks.total) * 100);
     if (mod.key === 'campaigns' && campaigns > 0) return 100;
     return 0;
