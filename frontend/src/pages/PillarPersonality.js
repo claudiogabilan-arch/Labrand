@@ -44,6 +44,11 @@ export const PillarPersonality = () => {
     arquetipo_principal: '',
     arquetipo_secundario: '',
     personalidade_customizada: '',
+    custom_personality_name: '',
+    custom_personality_icon: '',
+    custom_personality_desc: '',
+    custom_value_attrs: [],
+    custom_subversive_attrs: [],
     atributos_desejados: [],
     atributos_indesejados: [],
     narrativa_individual: ''
@@ -51,7 +56,8 @@ export const PillarPersonality = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [newAtributo, setNewAtributo] = useState({ desejado: '', indesejado: '' });
+  const [newAtributo, setNewAtributo] = useState({ desejado: '', indesejado: '', valor: '', subversivo: '' });
+  const [customCreated, setCustomCreated] = useState(false);
   const saveTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -64,6 +70,7 @@ export const PillarPersonality = () => {
       const pillarData = await fetchPillar(currentBrand.brand_id, 'personality');
       if (pillarData && Object.keys(pillarData).length > 0) {
         setData(prev => ({ ...prev, ...pillarData }));
+        if (pillarData.custom_personality_name) setCustomCreated(true);
       }
     } catch (error) {
       console.error('Error loading pillar:', error);
@@ -93,9 +100,15 @@ export const PillarPersonality = () => {
   };
 
   const addAtributo = (type) => {
-    const field = type === 'desejado' ? 'atributos_desejados' : 'atributos_indesejados';
+    const fieldMap = {
+      desejado: 'atributos_desejados',
+      indesejado: 'atributos_indesejados',
+      valor: 'custom_value_attrs',
+      subversivo: 'custom_subversive_attrs',
+    };
+    const field = fieldMap[type];
     const value = newAtributo[type];
-    if (!value.trim()) return;
+    if (!value?.trim()) return;
     const newList = [...(data[field] || []), value.trim()];
     const newData = { ...data, [field]: newList };
     setData(newData);
@@ -161,12 +174,13 @@ export const PillarPersonality = () => {
   const calculateProgress = () => {
     let filled = 0;
     if (data.arquetipo_principal) filled++;
+    if (data.custom_personality_name) filled++;
+    if (data.custom_value_attrs?.length > 0) filled++;
+    if (data.custom_subversive_attrs?.length > 0) filled++;
     if (data.atributos_desejados?.length > 0) filled++;
     if (data.atributos_indesejados?.length > 0) filled++;
     if (data.narrativa_individual) filled++;
-    if (data.narrativa_grupal) filled++;
-    if (data.narrativa_societal) filled++;
-    return Math.round((filled / 6) * 100);
+    return Math.round((filled / 7) * 100);
   };
 
   if (isLoading) {
@@ -313,15 +327,146 @@ export const PillarPersonality = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Crie sua Personalidade</CardTitle>
-              <CardDescription>Descreva a personalidade única da sua marca</CardDescription>
+              <CardDescription>Defina uma personalidade única com nome, ícone e atributos</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Textarea
-                value={data.personalidade_customizada || ''}
-                onChange={(e) => handleFieldChange('personalidade_customizada', e.target.value)}
-                placeholder="Ex: Nossa marca combina a ousadia de um explorador com a sabedoria de um mentor, sempre buscando surpreender com inovação mas mantendo a confiança..."
-                rows={4}
-              />
+            <CardContent className="space-y-5">
+              {customCreated && data.custom_personality_name && (
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20" data-testid="custom-personality-preview">
+                  <div className="text-3xl">{data.custom_personality_icon || '✨'}</div>
+                  <div>
+                    <p className="font-bold text-lg">{data.custom_personality_name}</p>
+                    <p className="text-sm text-muted-foreground">{data.custom_personality_desc}</p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {(data.custom_value_attrs || []).map((a, i) => <Badge key={i} className="bg-emerald-100 text-emerald-700 text-xs">{a}</Badge>)}
+                      {(data.custom_subversive_attrs || []).map((a, i) => <Badge key={i} variant="outline" className="border-amber-300 text-amber-700 text-xs">{a}</Badge>)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Nome da Personalidade *</Label>
+                  <Input
+                    value={data.custom_personality_name || ''}
+                    onChange={(e) => handleFieldChange('custom_personality_name', e.target.value)}
+                    placeholder="Ex: Visionário Audaz"
+                    data-testid="custom-personality-name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Ícone</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {['🔥', '⚡', '🌟', '💎', '🦁', '🚀', '🎯', '🧭', '🌊', '🌿', '🎨', '💡', '🏔️', '🦅', '🐺', '❤️‍🔥'].map(icon => (
+                      <button
+                        key={icon}
+                        type="button"
+                        onClick={() => handleFieldChange('custom_personality_icon', icon)}
+                        className={`w-10 h-10 text-xl rounded-lg border-2 transition-all hover:scale-110 flex items-center justify-center ${
+                          data.custom_personality_icon === icon ? 'border-primary bg-primary/10 scale-110' : 'border-transparent bg-muted/50'
+                        }`}
+                        data-testid={`icon-${icon}`}
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Descrição</Label>
+                <Textarea
+                  value={data.custom_personality_desc || ''}
+                  onChange={(e) => handleFieldChange('custom_personality_desc', e.target.value)}
+                  placeholder="Descreva a essência desta personalidade em poucas frases..."
+                  rows={3}
+                  data-testid="custom-personality-desc"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Atributos de Valor */}
+                <div className="space-y-3">
+                  <Label className="text-emerald-600 font-semibold">Atributos de Valor</Label>
+                  <p className="text-xs text-muted-foreground">Qualidades que definem o melhor dessa personalidade</p>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newAtributo.valor}
+                      onChange={(e) => setNewAtributo(prev => ({ ...prev, valor: e.target.value }))}
+                      placeholder="Ex: Visionário, Resiliente"
+                      onKeyPress={(e) => e.key === 'Enter' && addAtributo('valor')}
+                      data-testid="attr-valor-input"
+                    />
+                    <Button onClick={() => addAtributo('valor')} size="icon" data-testid="add-valor-btn">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 min-h-[32px]">
+                    {(data.custom_value_attrs || []).map((attr, i) => (
+                      <Badge key={i} className="bg-emerald-100 text-emerald-800 gap-1">
+                        {attr}
+                        <X className="h-3 w-3 cursor-pointer" onClick={() => removeAtributo('custom_value_attrs', i)} />
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Atributos Subversivos */}
+                <div className="space-y-3">
+                  <Label className="text-amber-600 font-semibold">Atributos Subversivos</Label>
+                  <p className="text-xs text-muted-foreground">Características inesperadas que tornam a marca única</p>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newAtributo.subversivo}
+                      onChange={(e) => setNewAtributo(prev => ({ ...prev, subversivo: e.target.value }))}
+                      placeholder="Ex: Irreverente, Provocador"
+                      onKeyPress={(e) => e.key === 'Enter' && addAtributo('subversivo')}
+                      data-testid="attr-subversivo-input"
+                    />
+                    <Button onClick={() => addAtributo('subversivo')} size="icon" variant="outline" data-testid="add-subversivo-btn">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 min-h-[32px]">
+                    {(data.custom_subversive_attrs || []).map((attr, i) => (
+                      <Badge key={i} variant="outline" className="border-amber-300 text-amber-700 gap-1">
+                        {attr}
+                        <X className="h-3 w-3 cursor-pointer" onClick={() => removeAtributo('custom_subversive_attrs', i)} />
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Texto livre adicional */}
+              <div className="space-y-2">
+                <Label>Complemento (opcional)</Label>
+                <Textarea
+                  value={data.personalidade_customizada || ''}
+                  onChange={(e) => handleFieldChange('personalidade_customizada', e.target.value)}
+                  placeholder="Qualquer informação adicional sobre a personalidade da marca..."
+                  rows={2}
+                />
+              </div>
+
+              <Button
+                onClick={() => {
+                  if (!data.custom_personality_name?.trim()) {
+                    toast.error('Dê um nome à personalidade');
+                    return;
+                  }
+                  handleSave();
+                  setCustomCreated(true);
+                  toast.success(`Personalidade "${data.custom_personality_name}" criada!`);
+                }}
+                className="w-full"
+                disabled={isSaving}
+                data-testid="create-personality-btn"
+              >
+                {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                {customCreated ? 'Atualizar Personalidade' : 'Criar Personalidade'}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
