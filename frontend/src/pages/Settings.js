@@ -175,6 +175,16 @@ export const Settings = () => {
   const [pendingInvites, setPendingInvites] = useState([]);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('editor');
+
+  const getRoleLabel = (role) => {
+    const labels = {
+      owner: 'Dono', lider_projeto: 'Lider de Projeto', editor: 'Editor',
+      colaborador: 'Colaborador', visualizador: 'Visualizador',
+      cliente_admin: 'Cliente Admin', aprovador: 'Aprovador', convidado: 'Convidado',
+      admin: 'Administrador', super_admin: 'Super Admin',
+    };
+    return labels[role] || role;
+  };
   const [isInviting, setIsInviting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
@@ -1100,12 +1110,20 @@ export const Settings = () => {
                         />
                       </div>
                       <Select value={inviteRole} onValueChange={setInviteRole}>
-                        <SelectTrigger className="w-[140px]">
+                        <SelectTrigger className="w-[180px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="admin">Administrador</SelectItem>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Agencia</div>
+                          <SelectItem value="lider_projeto">Lider de Projeto</SelectItem>
                           <SelectItem value="editor">Editor</SelectItem>
+                          <SelectItem value="colaborador">Colaborador</SelectItem>
+                          <SelectItem value="visualizador">Visualizador</SelectItem>
+                          <Separator className="my-1" />
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Cliente</div>
+                          <SelectItem value="cliente_admin">Cliente Admin</SelectItem>
+                          <SelectItem value="aprovador">Aprovador</SelectItem>
+                          <SelectItem value="convidado">Convidado</SelectItem>
                         </SelectContent>
                       </Select>
                       <Button onClick={handleInviteMember} disabled={isInviting || !inviteEmail} data-testid="send-invite-btn">
@@ -1113,9 +1131,15 @@ export const Settings = () => {
                         Enviar
                       </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Administrador: acesso total | Editor: pode editar, não pode excluir
-                    </p>
+                    <div className="text-xs text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
+                      <span><strong>Lider de Projeto:</strong> edita tudo, gerencia equipe</span>
+                      <span><strong>Cliente Admin:</strong> visualiza, aprova entregas</span>
+                      <span><strong>Editor:</strong> edita pilares, cria tarefas</span>
+                      <span><strong>Aprovador:</strong> aprova/rejeita entregas</span>
+                      <span><strong>Colaborador:</strong> comenta e sugere</span>
+                      <span><strong>Convidado:</strong> visualiza relatorios</span>
+                      <span><strong>Visualizador:</strong> somente leitura</span>
+                    </div>
                   </div>
 
                   {/* Pending Invites */}
@@ -1131,7 +1155,7 @@ export const Settings = () => {
                             <div>
                               <p className="font-medium">{invite.email}</p>
                               <p className="text-xs text-muted-foreground">
-                                Convidado como {invite.role === 'admin' ? 'Administrador' : 'Editor'}
+                                Convidado como {getRoleLabel(invite.role)}
                               </p>
                             </div>
                           </div>
@@ -1189,12 +1213,18 @@ export const Settings = () => {
                             value={member.role} 
                             onValueChange={(value) => handleUpdateMemberRole(member.member_id, value)}
                           >
-                            <SelectTrigger className="w-[130px] h-8">
+                            <SelectTrigger className="w-[170px] h-8">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="admin">Administrador</SelectItem>
+                              <SelectItem value="lider_projeto">Lider de Projeto</SelectItem>
                               <SelectItem value="editor">Editor</SelectItem>
+                              <SelectItem value="colaborador">Colaborador</SelectItem>
+                              <SelectItem value="visualizador">Visualizador</SelectItem>
+                              <Separator className="my-1" />
+                              <SelectItem value="cliente_admin">Cliente Admin</SelectItem>
+                              <SelectItem value="aprovador">Aprovador</SelectItem>
+                              <SelectItem value="convidado">Convidado</SelectItem>
                             </SelectContent>
                           </Select>
                           <Button variant="ghost" size="sm" onClick={() => handleRemoveMember(member.member_id)} className="text-destructive hover:text-destructive">
