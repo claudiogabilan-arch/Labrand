@@ -10,10 +10,17 @@ router = APIRouter(tags=["Campaigns"])
 
 
 @router.get("/brands/{brand_id}/campaigns")
-async def list_campaigns(brand_id: str, user: dict = Depends(get_current_user)):
+async def list_campaigns(
+    brand_id: str,
+    page: int = 1,
+    limit: int = 50,
+    user: dict = Depends(get_current_user),
+):
+    skip = (page - 1) * limit
+    total = await db.campaigns.count_documents({"brand_id": brand_id})
     campaigns = await db.campaigns.find(
         {"brand_id": brand_id}, {"_id": 0}
-    ).sort("start_date", -1).to_list(100)
+    ).sort("start_date", -1).skip(skip).limit(limit).to_list(limit)
     return campaigns
 
 

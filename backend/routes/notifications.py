@@ -69,6 +69,13 @@ async def create_notification(
     }
     await db.notifications.insert_one(doc)
 
+    # Send browser push notification
+    try:
+        from routes.push import send_push_to_user
+        await send_push_to_user(user_id, title, message, url=link, tag=notif_type)
+    except Exception:
+        pass
+
     if send_email:
         user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "email": 1, "name": 1})
         if user and user.get("email"):

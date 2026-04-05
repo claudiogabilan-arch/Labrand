@@ -47,11 +47,12 @@ async def create_brand(brand_data: BrandCreate, user: dict = Depends(get_current
 
 
 @router.get("/brands")
-async def get_brands(user: dict = Depends(get_current_user)):
+async def get_brands(page: int = 1, limit: int = 50, user: dict = Depends(get_current_user)):
     """Get all brands for current user (owned + team member). Admins see ALL brands."""
+    skip = (page - 1) * limit
     # Admins see everything
     if user.get("is_admin") or user.get("role") == "admin":
-        all_brands = await db.brands.find({}, {"_id": 0}).to_list(500)
+        all_brands = await db.brands.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
         return all_brands
 
     # Brands where user is owner

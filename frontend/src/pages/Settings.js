@@ -45,10 +45,12 @@ import {
   UserPlus,
   Crown,
   X,
-  Paintbrush
+  Paintbrush,
+  BellRing
 } from 'lucide-react';
 import axios from 'axios';
 import WhiteLabelSettings from '../components/WhiteLabelSettings';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -175,6 +177,7 @@ export const Settings = () => {
   const [pendingInvites, setPendingInvites] = useState([]);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('editor');
+  const { permission: pushPermission, subscribed: pushSubscribed, loading: pushLoading, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotifications();
 
   const getRoleLabel = (role) => {
     const labels = {
@@ -1506,10 +1509,49 @@ export const Settings = () => {
             </CardContent>
           </Card>
 
+          {/* Push Notifications Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BellRing className="h-5 w-5" />
+                Push Notifications
+              </CardTitle>
+              <CardDescription>Receba notificacoes diretamente no seu navegador, mesmo quando nao estiver na aba</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="font-medium">Notificacoes do Navegador</p>
+                  <p className="text-sm text-muted-foreground">
+                    {pushPermission === 'denied'
+                      ? 'Bloqueado pelo navegador. Habilite nas configuracoes do browser.'
+                      : pushSubscribed
+                        ? 'Ativo - voce recebera alertas push'
+                        : 'Ative para receber alertas mesmo fora do app'}
+                  </p>
+                </div>
+                <Switch
+                  checked={pushSubscribed}
+                  disabled={pushLoading || pushPermission === 'denied' || pushPermission === 'unsupported'}
+                  onCheckedChange={async (checked) => {
+                    if (checked) await pushSubscribe();
+                    else await pushUnsubscribe();
+                  }}
+                  data-testid="push-notification-toggle"
+                />
+              </div>
+              {pushPermission === 'denied' && (
+                <div className="text-xs text-destructive bg-destructive/10 p-3 rounded-lg">
+                  As notificacoes push estao bloqueadas pelo seu navegador. Para habilitar, clique no icone de cadeado na barra de endereco e permita notificacoes.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <div className="flex justify-end">
             <Button onClick={handleSavePersonalization} disabled={isSaving} data-testid="save-personalization-btn">
               {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-              Salvar Preferências
+              Salvar Preferencias
             </Button>
           </div>
         </TabsContent>

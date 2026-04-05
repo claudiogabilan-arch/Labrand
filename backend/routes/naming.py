@@ -22,11 +22,12 @@ class NamingProjectStateUpdate(BaseModel):
 
 
 @router.get("/brands/{brand_id}/naming")
-async def get_naming_projects(brand_id: str, user: dict = Depends(get_current_user)):
+async def get_naming_projects(brand_id: str, page: int = 1, limit: int = 50, user: dict = Depends(get_current_user)):
+    skip = (page - 1) * limit
     projects = await db.naming_projects.find(
         {"brand_id": brand_id},
         {"_id": 0}
-    ).sort("updated_at", -1).to_list(50)
+    ).sort("updated_at", -1).skip(skip).limit(limit).to_list(limit)
     return {"projects": projects}
 
 
