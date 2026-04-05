@@ -6,7 +6,7 @@ Ferramenta interna de gestão de marcas para agência de branding.
 ## Arquitetura
 - **Frontend**: React + Tailwind + Shadcn UI
 - **Backend**: FastAPI + MongoDB
-- **Integrações**: OpenAI GPT-4o (Emergent Key), Google Auth (Emergent), Stripe (AI Credits), Resend (Email), ClickUp (OAuth 2.0), Social Media APIs (Instagram, Facebook, YouTube, LinkedIn, TikTok)
+- **Integrações**: OpenAI GPT-4o (Emergent Key), Google Auth (Emergent), Stripe (AI Credits), Resend (Email), ClickUp (OAuth 2.0), Social Media APIs, Web Push (VAPID)
 
 ---
 
@@ -36,46 +36,47 @@ Ferramenta interna de gestão de marcas para agência de branding.
 ### Fase 9 - RBAC (Concluído - 04/04/2026)
 - [x] Backend: `permissions.py` com 7 roles de equipe + 2 roles de plataforma
 - [x] Frontend: `PermissionContext.js` com `can()`, `canEdit()`, `canFull()`
-- [x] App.js refatorado com `AppPage` wrapper
-- [x] Testado: Backend 18/18, Frontend 100% (iteration_27)
+- [x] Dropdown de convite com 7 roles organizados por grupo (Agência/Cliente)
 
 ### Fase 10 - White-Labeling Fase 1 (Concluído - 04/04/2026)
 - [x] Backend: `white_label.py` com GET/PUT/DELETE endpoints
-- [x] Frontend: `WhiteLabelSettings.js` — paletas, color pickers, preview, logo upload
-- [x] `WhiteLabelContext.js` aplica CSS variables dinamicamente
-- [x] Testado: Backend 9/9, Frontend 100% (iteration_28)
+- [x] Frontend: paletas, color pickers, preview, logo upload
 
 ### Fase 11 - Mapa Mental + Jornada da Marca (Concluído - 04/04/2026)
-- [x] **Mapa Mental reescrito**: Nós clicáveis, painel de detalhes lateral, barra de progresso por pilar, botão "Ir para [pilar]", modo tela cheia, exportar PNG, legenda interativa
-- [x] **Jornada da Marca (nova página)**: 5 fases (Fundação, Diferenciação, Expressão, Gestão, Crescimento), barra de progresso geral, próximo passo recomendado, cards de módulos clicáveis com status e %, timeline visual
-- [x] Sidebar atualizado com "Jornada" (Route icon)
-- [x] Testado: Frontend 100% (iteration_29)
+- [x] Mapa Mental reescrito: nós clicáveis, painel de detalhes, modo tela cheia, exportar PNG
+- [x] Jornada da Marca: 5 fases (Fundação → Crescimento), progresso, próximo passo
+
+### Fase 12 - Push Notifications + Paginação DB (Concluído - 05/04/2026)
+- [x] Backend: `push.py` com VAPID keys, subscribe/unsubscribe, `send_push_to_user()`
+- [x] Frontend: `usePushNotifications.js` hook, `sw-push.js` service worker
+- [x] Settings > Personalização: card Push Notifications com toggle
+- [x] Notificações push disparadas automaticamente ao criar notificação in-app
+- [x] Paginação: `/api/brands`, `/api/brands/{id}/campaigns`, `/api/brands/{id}/naming`
+- [x] Testado: Backend 13/13, Frontend 100% (iteration_30)
 
 ---
 
 ## Backlog Priorizado
 
-### P2 - Média Prioridade
-- [ ] Push Notifications via Browser (Web Push API)
-
 ### P3 - Baixa Prioridade
-- [ ] Otimização de queries DB (paginação brands/pillars)
-- [ ] Refatoração contínua (Settings.js, Touchpoints.js)
+- [ ] Refatoração Settings.js em sub-componentes menores
+- [ ] Refatoração Touchpoints.js em sub-componentes menores
 - [ ] Geração automática de relatórios mensais (PDF consolidado)
 
 ---
 
 ## Arquivos Chave
-- `/app/frontend/src/pages/BrandMindmap.js` - Mapa Mental interativo
-- `/app/frontend/src/pages/BrandJourney.js` - Jornada da Marca
+- `/app/backend/routes/push.py` - Web Push API
 - `/app/backend/routes/white_label.py` - White-Label API
 - `/app/backend/routes/permissions.py` - RBAC
+- `/app/frontend/src/hooks/usePushNotifications.js` - Push hook
+- `/app/frontend/public/sw-push.js` - Service worker
+- `/app/frontend/src/pages/BrandMindmap.js` - Mapa Mental
+- `/app/frontend/src/pages/BrandJourney.js` - Jornada da Marca
 - `/app/frontend/src/components/WhiteLabelSettings.js` - UI White-Label
 - `/app/frontend/src/contexts/WhiteLabelContext.js` - Context White-Label
-- `/app/frontend/src/contexts/PermissionContext.js` - Context RBAC
-- `/app/frontend/src/components/Layout.js` - Sidebar + Header
 - `/app/frontend/src/App.js` - Router com AppPage wrapper
 
-## Credenciais de Teste
+## Credenciais
 - Admin: `admin@labrand.com.br` / `Labrand@2026!`
-- Teste convidado: `sandro@test.com` / `Test@123`
+- Teste: `sandro@test.com` / `Test@123`
