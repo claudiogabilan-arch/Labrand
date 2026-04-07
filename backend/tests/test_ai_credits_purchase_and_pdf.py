@@ -139,7 +139,7 @@ class TestAICreditsStripePurchase:
             f"{BASE_URL}/api/ai-credits/purchase",
             json={
                 "package_id": "starter",
-                "origin_url": "https://labrand-staging-4.preview.emergentagent.com"
+                "origin_url": "https://labrand-preview.preview.emergentagent.com"
             }
         )
         
@@ -172,7 +172,7 @@ class TestAICreditsStripePurchase:
             f"{BASE_URL}/api/ai-credits/purchase",
             json={
                 "package_id": "pro",
-                "origin_url": "https://labrand-staging-4.preview.emergentagent.com"
+                "origin_url": "https://labrand-preview.preview.emergentagent.com"
             }
         )
         
@@ -192,7 +192,7 @@ class TestAICreditsStripePurchase:
             f"{BASE_URL}/api/ai-credits/purchase",
             json={
                 "package_id": "enterprise",
-                "origin_url": "https://labrand-staging-4.preview.emergentagent.com"
+                "origin_url": "https://labrand-preview.preview.emergentagent.com"
             }
         )
         
@@ -212,7 +212,7 @@ class TestAICreditsStripePurchase:
             f"{BASE_URL}/api/ai-credits/purchase",
             json={
                 "package_id": "invalid_package_xyz",
-                "origin_url": "https://labrand-staging-4.preview.emergentagent.com"
+                "origin_url": "https://labrand-preview.preview.emergentagent.com"
             }
         )
         

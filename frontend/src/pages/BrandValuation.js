@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useBrand } from '../contexts/BrandContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
@@ -12,7 +12,7 @@ import { Progress } from '../components/ui/progress';
 import { toast } from 'sonner';
 import {
   Loader2, ChevronRight, ChevronLeft, DollarSign, Heart, Shield, BarChart3,
-  TrendingUp, Download, Save,
+  TrendingUp, Download, Save, Network, Package, Info,
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -78,6 +78,7 @@ export default function BrandValuation() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState(null);
+  const [archData, setArchData] = useState(null);
 
   const [form, setForm] = useState({
     marca: currentBrand?.name || '',
@@ -92,6 +93,52 @@ export default function BrandValuation() {
     bs_clareza: 50, bs_comprom: 50, bs_governa: 50, bs_respons: 50, bs_autent: 50,
     bs_relev: 50, bs_diferenc: 50, bs_consist: 50, bs_presenca: 50, bs_engaj: 50,
   });
+
+  // Fetch architecture data and auto-fill
+  const fetchArchitecture = useCallback(async () => {
+    if (!currentBrand?.brand_id) return;
+    try {
+      const headers = getAuthHeaders();
+      const { data } = await axios.get(
+        `${API}/brands/${currentBrand.brand_id}/architecture`, { headers }
+      );
+      setArchData(data);
+      // Auto-fill sector from brand industry if available
+      const brand = currentBrand;
+      const industryMap = {
+        'tecnologia': 'saas', 'saas': 'saas', 'tech': 'saas', 'software': 'saas',
+        'servicos': 'servicos', 'consultoria': 'servicos', 'agencia': 'servicos',
+        'varejo': 'varejo', 'retail': 'varejo', 'ecommerce': 'varejo',
+        'industria': 'industria', 'manufatura': 'industria',
+        'saude': 'saude', 'health': 'saude', 'farmaceutica': 'saude',
+        'agro': 'agro', 'agronegocio': 'agro', 'agricultura': 'agro',
+        'educacao': 'educacao', 'education': 'educacao',
+      };
+      const industry = (brand.industry || '').toLowerCase().trim();
+      if (industry && industryMap[industry]) {
+        setForm(prev => ({ ...prev, setor: industryMap[industry] }));
+      }
+    } catch { /* silent */ }
+  }, [currentBrand?.brand_id, currentBrand, getAuthHeaders]);
+
+  useEffect(() => { fetchArchitecture(); }, [fetchArchitecture]);
+
+  // Architecture summary
+  const archSummary = useMemo(() => {
+    if (!archData) return null;
+    const products = archData.products || [];
+    const avgTicket = products.length > 0
+      ? products.reduce((s, p) => s + (p.ticket_medio || 0), 0) / products.length
+      : 0;
+    const archLabels = { mono: 'Monolitica', endo: 'Endossada', ind: 'Independente' };
+    return {
+      type: archLabels[archData.arch_type] || null,
+      productCount: products.length,
+      avgTicket,
+      global: archData.global_ops,
+      hq: archData.hq_country,
+    };
+  }, [archData]);
 
   const setField = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
@@ -187,6 +234,38 @@ export default function BrandValuation() {
       {/* Step 0: Financeiro */}
       {step === 0 && (
         <div className="space-y-4">
+          {/* Architecture Integration Banner */}
+          {archSummary && (archSummary.type || archSummary.productCount > 0) && (
+            <Card className="border-primary/20 bg-primary/5" data-testid="arch-integration-card">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <Network className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">Dados da Arquitetura de Marca</span>
+                  <Badge variant="secondary" className="text-[10px]">Auto-importados</Badge>
+                </div>
+                <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                  {archSummary.type && (
+                    <span>Tipo: <strong className="text-foreground">{archSummary.type}</strong></span>
+                  )}
+                  {archSummary.productCount > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Package className="h-3 w-3" />
+                      <strong className="text-foreground">{archSummary.productCount}</strong> produtos
+                    </span>
+                  )}
+                  {archSummary.avgTicket > 0 && (
+                    <span>Ticket medio: <strong className="text-foreground">R$ {archSummary.avgTicket.toFixed(0)}</strong></span>
+                  )}
+                  {archSummary.global && (
+                    <span className="flex items-center gap-1">
+                      <Info className="h-3 w-3" />
+                      Operacoes globais
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardHeader><CardTitle className="text-base">Identificacao</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
