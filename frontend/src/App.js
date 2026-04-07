@@ -65,6 +65,8 @@ import Academy from "./pages/Academy";
 import Collaboration from "./pages/Collaboration";
 import ClickUpCallback from "./pages/ClickUpCallback";
 import BrandJourney from "./pages/BrandJourney";
+import BrandValuation from "./pages/BrandValuation";
+import BrandArchitecture from "./pages/BrandArchitecture";
 import { PermissionProvider } from "./contexts/PermissionContext";
 import { WhiteLabelProvider } from "./contexts/WhiteLabelContext";
 import "./App.css";
@@ -138,7 +140,7 @@ function AppRouter() {
       <Route path="/narratives" element={<AppPage><Narratives /></AppPage>} />
       <Route path="/reports" element={<AppPage><Reports /></AppPage>} />
       <Route path="/settings" element={<AppPage><Settings /></AppPage>} />
-      <Route path="/valuation" element={<AppPage><Valuation /></AppPage>} />
+      <Route path="/valuation" element={<AppPage><BrandValuation /></AppPage>} />
       <Route path="/executive" element={<AppPage><ExecutiveDashboard /></AppPage>} />
       <Route path="/benchmark" element={<AppPage><Benchmark /></AppPage>} />
       <Route path="/simulator" element={<AppPage><Simulator /></AppPage>} />
@@ -169,6 +171,7 @@ function AppRouter() {
       <Route path="/bvs" element={<AppPage><BVS /></AppPage>} />
       <Route path="/mindmap" element={<AppPage><BrandMindmap /></AppPage>} />
       <Route path="/journey" element={<AppPage><BrandJourney /></AppPage>} />
+      <Route path="/brand-architecture" element={<AppPage><BrandArchitecture /></AppPage>} />
       <Route path="/culture" element={<AppPage><Culture /></AppPage>} />
       <Route path="/academy" element={<AppPage><Academy /></AppPage>} />
       <Route path="/collaboration" element={<AppPage><Collaboration /></AppPage>} />

@@ -52,6 +52,8 @@ from routes.campaigns import router as campaigns_router
 from routes.permissions import router as permissions_router
 from routes.white_label import router as white_label_router
 from routes.push import router as push_router
+from routes.valuation import router as valuation_router
+from routes.brand_architecture import router as architecture_router
 
 # Create the main app
 app = FastAPI(title="LaBrand - Brand OS API")
@@ -118,6 +120,8 @@ api_router.include_router(campaigns_router)
 api_router.include_router(permissions_router)
 api_router.include_router(white_label_router)
 api_router.include_router(push_router)
+api_router.include_router(valuation_router)
+api_router.include_router(architecture_router)
 
 # Serve uploaded files (avatars)
 @api_router.get("/uploads/avatars/{filename}")

@@ -60,7 +60,8 @@ import {
   Share2,
   Bell,
   Check,
-  Route
+  Route,
+  Network,
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -80,6 +81,8 @@ const topItems = [
   { name: 'BVS Score', href: '/bvs', icon: Gem, featureId: 'bvs', pro: true },
   { name: 'Executivo', href: '/executive', icon: Briefcase, featureId: 'executive', pro: true },
   { name: 'Diagnostico', href: '/maturity', icon: ClipboardCheck, featureId: 'maturity', pro: true },
+  { name: 'Arquitetura', href: '/brand-architecture', icon: Network, featureId: 'brand_architecture' },
+  { name: 'Valuation', href: '/valuation', icon: TrendingUp, featureId: 'valuation' },
   { name: 'Ferramentas', href: '/brand-tools', icon: Wrench, featureId: 'brand_tools', pro: true },
 ];
 
