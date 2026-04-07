@@ -12,70 +12,52 @@ Ferramenta interna de gestão de marcas para agência de branding.
 
 ## O que foi implementado
 
-### Fase 1-2 - Core + UI/UX Premium (Concluído)
-- [x] Login/Auth, Dashboard, CRUD Marcas, 7 Pilares, BVS Score, Relatórios PDF, Créditos IA
-
-### Fase 3 - Naming Module (Concluído - 21/03/2026)
-- [x] Wizard 7 etapas, geração algorítmica local
-
-### Fase 4 - Notifications + Improvements (Concluído - 22/03/2026)
-- [x] Push Notifications (in-app + email Resend), PillarNavigation
-
-### Fase 5 - ClickUp OAuth 2.0 Integration (Concluído - 29/03/2026)
-- [x] OAuth completo, sync log, dashboard widget
-
-### Fase 6 - Social Media APIs Reais (Concluído - 29/03/2026)
-- [x] Instagram Graph API, Facebook Pages API, YouTube Data API v3, LinkedIn API, TikTok Creator API
-
-### Fase 7 - Campanhas + Social Posts (Concluído - 29/03/2026)
-- [x] Backend CRUD completo, calendário, métricas consolidadas
-
-### Fase 8 - Dashboard Social Consolidado (Concluído - 29/03/2026)
-- [x] Widget no Dashboard: seguidores por rede, engajamento total, top posts
+### Fase 1-8 (Concluído até 29/03/2026)
+- Core, UI/UX, Naming, Notifications, ClickUp, Social APIs, Campanhas, Dashboard Social
 
 ### Fase 9 - RBAC (Concluído - 04/04/2026)
-- [x] Backend: `permissions.py` com 7 roles de equipe + 2 roles de plataforma
-- [x] Frontend: `PermissionContext.js` com `can()`, `canEdit()`, `canFull()`
-- [x] Dropdown de convite com 7 roles organizados por grupo (Agência/Cliente)
+- 7 roles equipe + 2 plataforma, PermissionContext, dropdown com hierarquia completa
 
-### Fase 10 - White-Labeling Fase 1 (Concluído - 04/04/2026)
-- [x] Backend: `white_label.py` com GET/PUT/DELETE endpoints
-- [x] Frontend: paletas, color pickers, preview, logo upload
+### Fase 10 - White-Labeling (Concluído - 04/04/2026)
+- Logo, cores, paletas, preview ao vivo, CSS variables dinâmicas
 
-### Fase 11 - Mapa Mental + Jornada da Marca (Concluído - 04/04/2026)
-- [x] Mapa Mental reescrito: nós clicáveis, painel de detalhes, modo tela cheia, exportar PNG
-- [x] Jornada da Marca: 5 fases (Fundação → Crescimento), progresso, próximo passo
+### Fase 11 - Mapa Mental + Jornada (Concluído - 04/04/2026)
+- Mindmap clicável com painel de detalhes, Jornada 5 fases com progresso
 
-### Fase 12 - Push Notifications + Paginação DB (Concluído - 05/04/2026)
-- [x] Backend: `push.py` com VAPID keys, subscribe/unsubscribe, `send_push_to_user()`
-- [x] Frontend: `usePushNotifications.js` hook, `sw-push.js` service worker
-- [x] Settings > Personalização: card Push Notifications com toggle
-- [x] Notificações push disparadas automaticamente ao criar notificação in-app
-- [x] Paginação: `/api/brands`, `/api/brands/{id}/campaigns`, `/api/brands/{id}/naming`
-- [x] Testado: Backend 13/13, Frontend 100% (iteration_30)
+### Fase 12 - Push Notifications + Paginação (Concluído - 05/04/2026)
+- Web Push VAPID, service worker, toggle settings, paginação brands/campaigns/naming
+
+### Fase 13 - Brand Valuation + Arquitetura de Marca (Concluído - 07/04/2026)
+- [x] **Brand Valuation**: Wizard 4 etapas (Financeiro → Brand Contribution RBI → Brand Strength BS → Resultado)
+  - Setores: serviços, SaaS, varejo, indústria, saúde, agro, educação, outro
+  - Cálculo: múltiplos EBITDA ajustados por margem, crescimento, recorrência, dívida
+  - RBI: 5 perguntas (decisão compra, prêmio preço, lealdade, talentos, extensibilidade)
+  - BS: 10 fatores Interbrand (clareza, compromisso, governança, responsividade, autenticidade, relevância, diferenciação, consistência, presença, engajamento)
+  - Brand Value = EV × RBI% × BS_multiplier
+  - Testado: Backend 17/17, Frontend 100% (iteration_31)
+- [x] **Arquitetura de Marca**: Tipo (Monolítica/Endossada/Independente), presença global, portfolio de produtos
+  - CRUD produtos com tipo, relação, ticket médio, canal
+  - Testado: Backend 17/17 (iteration_31)
 
 ---
 
 ## Backlog Priorizado
 
 ### P3 - Baixa Prioridade
-- [ ] Refatoração Settings.js em sub-componentes menores
-- [ ] Refatoração Touchpoints.js em sub-componentes menores
+- [ ] Refatoração Settings.js e Touchpoints.js em sub-componentes
 - [ ] Geração automática de relatórios mensais (PDF consolidado)
+- [ ] Gamificação na Jornada (badges por fase)
 
 ---
 
 ## Arquivos Chave
-- `/app/backend/routes/push.py` - Web Push API
-- `/app/backend/routes/white_label.py` - White-Label API
+- `/app/backend/routes/valuation.py` - Brand Valuation API + compute_valuation()
+- `/app/backend/routes/brand_architecture.py` - Arquitetura + portfolio
+- `/app/frontend/src/pages/BrandValuation.js` - Wizard 4 etapas
+- `/app/frontend/src/pages/BrandArchitecture.js` - UI Arquitetura
+- `/app/backend/routes/push.py` - Web Push
 - `/app/backend/routes/permissions.py` - RBAC
-- `/app/frontend/src/hooks/usePushNotifications.js` - Push hook
-- `/app/frontend/public/sw-push.js` - Service worker
-- `/app/frontend/src/pages/BrandMindmap.js` - Mapa Mental
-- `/app/frontend/src/pages/BrandJourney.js` - Jornada da Marca
-- `/app/frontend/src/components/WhiteLabelSettings.js` - UI White-Label
-- `/app/frontend/src/contexts/WhiteLabelContext.js` - Context White-Label
-- `/app/frontend/src/App.js` - Router com AppPage wrapper
+- `/app/frontend/src/App.js` - Router
 
 ## Credenciais
 - Admin: `admin@labrand.com.br` / `Labrand@2026!`
