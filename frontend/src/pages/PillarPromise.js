@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useBrand } from '../contexts/BrandContext';
 import { PillarNavigation } from '../components/PillarNavigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -11,6 +11,8 @@ import { Progress } from '../components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { toast } from 'sonner';
 import { Star, Plus, X, Loader2, Save, Handshake, Gift, Smile, Trophy, Target, Sparkle } from 'lucide-react';
+import { useAutoSave } from '../hooks/useAutoSave';
+import { AutoSaveIndicator } from '../components/AutoSaveIndicator';
 
 export const PillarPromise = () => {
   const { currentBrand, fetchPillar, updatePillar } = useBrand();
@@ -25,10 +27,8 @@ export const PillarPromise = () => {
     parcerias: []
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [newAtributo, setNewAtributo] = useState({ nome: '', descricao: '' });
   const [newParceria, setNewParceria] = useState({ nome: '', tipo: '', descricao: '' });
-  const saveTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (currentBrand?.brand_id) loadData();
@@ -48,24 +48,30 @@ export const PillarPromise = () => {
     }
   };
 
-  const autoSave = useCallback(async (newData) => {
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(async () => {
-      setIsSaving(true);
-      try {
-        await updatePillar(currentBrand.brand_id, 'promise', newData);
-      } catch (error) {
-        console.error('Autosave error:', error);
-      } finally {
-        setIsSaving(false);
+  const { status: saveStatus, lastSavedAt, save: forceSave } = useAutoSave({
+    data,
+    enabled: !isLoading && !!currentBrand?.brand_id,
+    onSave: useCallback(async (currentData, signal) => {
+      if (!currentBrand?.brand_id) return;
+      await updatePillar(currentBrand.brand_id, 'promise', currentData, { signal });
+    }, [currentBrand?.brand_id, updatePillar])
+  });
+
+  // Ctrl+S manual save (fallback)
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        forceSave();
       }
-    }, 1500);
-  }, [currentBrand?.brand_id, updatePillar]);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [forceSave]);
 
   const handleFieldChange = (field, value) => {
     const newData = { ...data, [field]: value };
     setData(newData);
-    autoSave(newData);
   };
 
   const addAtributo = () => {
@@ -74,14 +80,12 @@ export const PillarPromise = () => {
     const newData = { ...data, atributos_experiencia: newList };
     setData(newData);
     setNewAtributo({ nome: '', descricao: '' });
-    autoSave(newData);
   };
 
   const removeAtributo = (index) => {
     const newList = data.atributos_experiencia.filter((_, i) => i !== index);
     const newData = { ...data, atributos_experiencia: newList };
     setData(newData);
-    autoSave(newData);
   };
 
   const addParceria = () => {
@@ -90,27 +94,15 @@ export const PillarPromise = () => {
     const newData = { ...data, parcerias: newList };
     setData(newData);
     setNewParceria({ nome: '', tipo: '', descricao: '' });
-    autoSave(newData);
   };
 
   const removeParceria = (index) => {
     const newList = data.parcerias.filter((_, i) => i !== index);
     const newData = { ...data, parcerias: newList };
     setData(newData);
-    autoSave(newData);
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await updatePillar(currentBrand.brand_id, 'promise', data);
-      toast.success('Salvo com sucesso!');
-    } catch (error) {
-      toast.error('Erro ao salvar');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const handleSave = forceSave;
 
   const calculateProgress = () => {
     const fields = ['identificacao', 'qualidade', 'entrega_funcional', 'entrega_simbolica', 'entrega_aspiracional', 'entrega_emocional'];
@@ -148,7 +140,10 @@ export const PillarPromise = () => {
             <Star className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="font-heading text-2xl font-bold">Pilar Promessa</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="font-heading text-2xl font-bold">Pilar Promessa</h1>
+              <AutoSaveIndicator status={saveStatus} lastSavedAt={lastSavedAt} onRetry={forceSave} />
+            </div>
             <p className="text-muted-foreground">Defina a promessa da marca aos clientes</p>
           </div>
         </div>
@@ -157,8 +152,7 @@ export const PillarPromise = () => {
             <Progress value={calculateProgress()} className="w-24 h-2" />
             <span className="text-sm text-muted-foreground">{calculateProgress()}%</span>
           </div>
-          {isSaving && <Badge variant="outline" className="gap-1"><Loader2 className="h-3 w-3 animate-spin" />Salvando...</Badge>}
-          <Button onClick={handleSave} disabled={isSaving} data-testid="save-btn"><Save className="h-4 w-4 mr-2" />Salvar</Button>
+          <Button onClick={handleSave} variant="ghost" size="sm" disabled={saveStatus === 'saving'} data-testid="save-btn" title="Salvar agora (Ctrl+S)"><Save className="h-4 w-4" /></Button>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useBrand } from '../contexts/BrandContext';
 import { PillarNavigation } from '../components/PillarNavigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -11,6 +11,8 @@ import { Progress } from '../components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { toast } from 'sonner';
 import { Users, Plus, X, Loader2, Save, Sparkles, Check, Lightbulb } from 'lucide-react';
+import { useAutoSave } from '../hooks/useAutoSave';
+import { AutoSaveIndicator } from '../components/AutoSaveIndicator';
 
 // 12 Arquétipos de Jung
 const jungArchetypes = [
@@ -54,11 +56,9 @@ export const PillarPersonality = () => {
     narrativa_individual: ''
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [newAtributo, setNewAtributo] = useState({ desejado: '', indesejado: '', valor: '', subversivo: '' });
   const [customCreated, setCustomCreated] = useState(false);
-  const saveTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (currentBrand?.brand_id) loadData();
@@ -79,24 +79,30 @@ export const PillarPersonality = () => {
     }
   };
 
-  const autoSave = useCallback(async (newData) => {
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(async () => {
-      setIsSaving(true);
-      try {
-        await updatePillar(currentBrand.brand_id, 'personality', newData);
-      } catch (error) {
-        console.error('Autosave error:', error);
-      } finally {
-        setIsSaving(false);
+  const { status: saveStatus, lastSavedAt, save: forceSave } = useAutoSave({
+    data,
+    enabled: !isLoading && !!currentBrand?.brand_id,
+    onSave: useCallback(async (currentData, signal) => {
+      if (!currentBrand?.brand_id) return;
+      await updatePillar(currentBrand.brand_id, 'personality', currentData, { signal });
+    }, [currentBrand?.brand_id, updatePillar])
+  });
+
+  // Ctrl+S manual save (fallback)
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        forceSave();
       }
-    }, 1500);
-  }, [currentBrand?.brand_id, updatePillar]);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [forceSave]);
 
   const handleFieldChange = (field, value) => {
     const newData = { ...data, [field]: value };
     setData(newData);
-    autoSave(newData);
   };
 
   const addAtributo = (type) => {
@@ -113,27 +119,23 @@ export const PillarPersonality = () => {
     const newData = { ...data, [field]: newList };
     setData(newData);
     setNewAtributo(prev => ({ ...prev, [type]: '' }));
-    autoSave(newData);
   };
 
   const removeAtributo = (field, index) => {
     const newList = data[field].filter((_, i) => i !== index);
     const newData = { ...data, [field]: newList };
     setData(newData);
-    autoSave(newData);
   };
 
   const selectArchetype = (archetypeId, isPrimary) => {
     const field = isPrimary ? 'arquetipo_principal' : 'arquetipo_secundario';
     const newData = { ...data, [field]: data[field] === archetypeId ? '' : archetypeId };
     setData(newData);
-    autoSave(newData);
   };
 
   const applyCombination = (combo) => {
     const newData = { ...data, arquetipo_principal: combo.primary, arquetipo_secundario: combo.secondary };
     setData(newData);
-    autoSave(newData);
     toast.success(`Combinação "${combo.name}" aplicada!`);
   };
 
@@ -159,17 +161,7 @@ export const PillarPersonality = () => {
     }
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await updatePillar(currentBrand.brand_id, 'personality', data);
-      toast.success('Salvo com sucesso!');
-    } catch (error) {
-      toast.error('Erro ao salvar');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const handleSave = forceSave;
 
   const calculateProgress = () => {
     let filled = 0;
@@ -201,7 +193,10 @@ export const PillarPersonality = () => {
             <Users className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="font-heading text-2xl font-bold">Pilar Personalidade</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="font-heading text-2xl font-bold">Pilar Personalidade</h1>
+              <AutoSaveIndicator status={saveStatus} lastSavedAt={lastSavedAt} onRetry={forceSave} />
+            </div>
             <p className="text-muted-foreground">Defina os arquétipos e atributos da marca</p>
           </div>
         </div>
@@ -210,8 +205,7 @@ export const PillarPersonality = () => {
             <Progress value={calculateProgress()} className="w-24 h-2" />
             <span className="text-sm text-muted-foreground">{calculateProgress()}%</span>
           </div>
-          {isSaving && <Badge variant="outline" className="gap-1"><Loader2 className="h-3 w-3 animate-spin" />Salvando...</Badge>}
-          <Button onClick={handleSave} disabled={isSaving} data-testid="save-btn"><Save className="h-4 w-4 mr-2" />Salvar</Button>
+          <Button onClick={handleSave} variant="ghost" size="sm" disabled={saveStatus === 'saving'} data-testid="save-btn" title="Salvar agora (Ctrl+S)"><Save className="h-4 w-4" /></Button>
         </div>
       </div>
 
@@ -461,10 +455,10 @@ export const PillarPersonality = () => {
                   toast.success(`Personalidade "${data.custom_personality_name}" criada!`);
                 }}
                 className="w-full"
-                disabled={isSaving}
+                disabled={saveStatus === 'saving'}
                 data-testid="create-personality-btn"
               >
-                {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                {saveStatus === 'saving' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
                 {customCreated ? 'Atualizar Personalidade' : 'Criar Personalidade'}
               </Button>
             </CardContent>

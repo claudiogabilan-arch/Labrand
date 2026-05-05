@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useBrand } from '../contexts/BrandContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -34,6 +34,8 @@ import {
   MapPin
 } from 'lucide-react';
 import { SkeletonCard } from '../components/ui/skeleton-patterns';
+import { useAutoSave } from '../hooks/useAutoSave';
+import { AutoSaveIndicator } from '../components/AutoSaveIndicator';
 
 import { PillarNavigation } from '../components/PillarNavigation';
 
@@ -179,7 +181,6 @@ export const PillarStart = () => {
     cenarios: { C1: '', C2: '', C3: '', C4: '' }
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('finalidade');
   const [newItems, setNewItems] = useState({
@@ -189,7 +190,27 @@ export const PillarStart = () => {
     publicos_interesse: '',
     incertezas: ''
   });
-  const saveTimeoutRef = useRef(null);
+
+  const { status: saveStatus, lastSavedAt, save: forceSave } = useAutoSave({
+    data,
+    enabled: !isLoading && !!currentBrand?.brand_id,
+    onSave: useCallback(async (currentData, signal) => {
+      if (!currentBrand?.brand_id) return;
+      await updatePillar(currentBrand.brand_id, 'start', currentData, { signal });
+    }, [currentBrand?.brand_id, updatePillar])
+  });
+
+  // Ctrl+S manual save (fallback)
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        forceSave();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [forceSave]);
 
   useEffect(() => {
     if (currentBrand?.brand_id) {
@@ -226,57 +247,28 @@ export const PillarStart = () => {
     }
   };
 
-  const autoSave = useCallback(async (newData) => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    saveTimeoutRef.current = setTimeout(async () => {
-      setIsSaving(true);
-      try {
-        await updatePillar(currentBrand.brand_id, 'start', newData);
-      } catch (error) {
-        console.error('Autosave error:', error);
-      } finally {
-        setIsSaving(false);
-      }
-    }, 1500);
-  }, [currentBrand?.brand_id, updatePillar]);
-
   const handleFieldChange = (field, value) => {
-    const newData = { ...data, [field]: value };
-    setData(newData);
-    autoSave(newData);
+    setData(prev => ({ ...prev, [field]: value }));
   };
 
   const handlePurposeSelect = (purposeId) => {
-    const newData = { ...data, finalidade_marca: purposeId };
-    setData(newData);
-    autoSave(newData);
+    setData(prev => ({ ...prev, finalidade_marca: purposeId }));
     toast.success('Finalidade selecionada! Veja seu roadmap personalizado.');
     setActiveTab('roadmap');
   };
 
   const handleCenarioChange = (key, value) => {
-    const newCenarios = { ...data.cenarios, [key]: value };
-    const newData = { ...data, cenarios: newCenarios };
-    setData(newData);
-    autoSave(newData);
+    setData(prev => ({ ...prev, cenarios: { ...prev.cenarios, [key]: value } }));
   };
 
   const addListItem = (field) => {
     if (!newItems[field].trim()) return;
-    const newList = [...(data[field] || []), newItems[field].trim()];
-    const newData = { ...data, [field]: newList };
-    setData(newData);
+    setData(prev => ({ ...prev, [field]: [...(prev[field] || []), newItems[field].trim()] }));
     setNewItems(prev => ({ ...prev, [field]: '' }));
-    autoSave(newData);
   };
 
   const removeListItem = (field, index) => {
-    const newList = data[field].filter((_, i) => i !== index);
-    const newData = { ...data, [field]: newList };
-    setData(newData);
-    autoSave(newData);
+    setData(prev => ({ ...prev, [field]: prev[field].filter((_, i) => i !== index) }));
   };
 
   const handleGenerateInsight = async () => {
@@ -303,17 +295,7 @@ export const PillarStart = () => {
     }
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await updatePillar(currentBrand.brand_id, 'start', data);
-      toast.success('Salvo com sucesso!');
-    } catch (error) {
-      toast.error('Erro ao salvar');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const handleSave = forceSave;
 
   const calculateProgress = () => {
     const fields = ['finalidade_marca', 'desafio', 'background', 'urgencia', 'cenario_competitivo'];
@@ -372,7 +354,10 @@ export const PillarStart = () => {
             <Target className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="font-heading text-2xl font-bold">Pilar Start</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="font-heading text-2xl font-bold">Pilar Start</h1>
+              <AutoSaveIndicator status={saveStatus} lastSavedAt={lastSavedAt} onRetry={forceSave} />
+            </div>
             <p className="text-muted-foreground">Diagnóstico inicial e definição de trilha</p>
           </div>
         </div>
@@ -381,15 +366,8 @@ export const PillarStart = () => {
             <Progress value={calculateProgress()} className="w-24 h-2" />
             <span className="text-sm text-muted-foreground">{calculateProgress()}%</span>
           </div>
-          {isSaving && (
-            <Badge variant="outline" className="gap-1">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Salvando...
-            </Badge>
-          )}
-          <Button onClick={handleSave} disabled={isSaving} data-testid="save-btn">
-            <Save className="h-4 w-4 mr-2" />
-            Salvar
+          <Button onClick={handleSave} variant="ghost" size="sm" disabled={saveStatus === 'saving'} data-testid="save-btn" title="Salvar agora (Ctrl+S)">
+            <Save className="h-4 w-4" />
           </Button>
         </div>
       </div>

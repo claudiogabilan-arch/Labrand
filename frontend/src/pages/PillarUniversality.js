@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useBrand } from '../contexts/BrandContext';
 import { PillarNavigation } from '../components/PillarNavigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -13,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Slider } from '../components/ui/slider';
 import { toast } from 'sonner';
 import { Globe, Plus, X, Loader2, Save, Eye, Users, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { useAutoSave } from '../hooks/useAutoSave';
+import { AutoSaveIndicator } from '../components/AutoSaveIndicator';
 
 const accessibilityItems = [
   { id: 'contraste', label: 'Alto contraste de cores', category: 'Visual' },
@@ -45,9 +47,7 @@ export const PillarUniversality = () => {
     viabilidade_longo: 50
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [newCrise, setNewCrise] = useState({ tipo: '', descricao: '', acao: '' });
-  const saveTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (currentBrand?.brand_id) loadData();
@@ -67,19 +67,26 @@ export const PillarUniversality = () => {
     }
   };
 
-  const autoSave = useCallback(async (newData) => {
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(async () => {
-      setIsSaving(true);
-      try {
-        await updatePillar(currentBrand.brand_id, 'universality', newData);
-      } catch (error) {
-        console.error('Autosave error:', error);
-      } finally {
-        setIsSaving(false);
+  const { status: saveStatus, lastSavedAt, save: forceSave } = useAutoSave({
+    data,
+    enabled: !isLoading && !!currentBrand?.brand_id,
+    onSave: useCallback(async (currentData, signal) => {
+      if (!currentBrand?.brand_id) return;
+      await updatePillar(currentBrand.brand_id, 'universality', currentData, { signal });
+    }, [currentBrand?.brand_id, updatePillar])
+  });
+
+  // Ctrl+S manual save (fallback)
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        forceSave();
       }
-    }, 1500);
-  }, [currentBrand?.brand_id, updatePillar]);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [forceSave]);
 
   const toggleChecklistItem = (type, itemId) => {
     const field = type === 'acessibilidade' ? 'checklist_acessibilidade' : 'checklist_inclusao';
@@ -97,7 +104,6 @@ export const PillarUniversality = () => {
     
     const newData = { ...data, [field]: newList };
     setData(newData);
-    autoSave(newData);
   };
 
   const isItemChecked = (type, itemId) => {
@@ -109,7 +115,6 @@ export const PillarUniversality = () => {
   const handleViabilidadeChange = (field, value) => {
     const newData = { ...data, [field]: value[0] };
     setData(newData);
-    autoSave(newData);
   };
 
   const addCrise = () => {
@@ -118,27 +123,15 @@ export const PillarUniversality = () => {
     const newData = { ...data, plano_crises: newList };
     setData(newData);
     setNewCrise({ tipo: '', descricao: '', acao: '' });
-    autoSave(newData);
   };
 
   const removeCrise = (index) => {
     const newList = data.plano_crises.filter((_, i) => i !== index);
     const newData = { ...data, plano_crises: newList };
     setData(newData);
-    autoSave(newData);
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await updatePillar(currentBrand.brand_id, 'universality', data);
-      toast.success('Salvo com sucesso!');
-    } catch (error) {
-      toast.error('Erro ao salvar');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const handleSave = forceSave;
 
   const calculateProgress = () => {
     const accessChecked = (data.checklist_acessibilidade || []).filter(i => i.checked).length;
@@ -168,7 +161,10 @@ export const PillarUniversality = () => {
             <Globe className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="font-heading text-2xl font-bold">Pilar Universalidade</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="font-heading text-2xl font-bold">Pilar Universalidade</h1>
+              <AutoSaveIndicator status={saveStatus} lastSavedAt={lastSavedAt} onRetry={forceSave} />
+            </div>
             <p className="text-muted-foreground">Acessibilidade, inclusão e gestão de crises</p>
           </div>
         </div>
@@ -177,8 +173,7 @@ export const PillarUniversality = () => {
             <Progress value={calculateProgress()} className="w-24 h-2" />
             <span className="text-sm text-muted-foreground">{calculateProgress()}%</span>
           </div>
-          {isSaving && <Badge variant="outline" className="gap-1"><Loader2 className="h-3 w-3 animate-spin" />Salvando...</Badge>}
-          <Button onClick={handleSave} disabled={isSaving} data-testid="save-btn"><Save className="h-4 w-4 mr-2" />Salvar</Button>
+          <Button onClick={handleSave} variant="ghost" size="sm" disabled={saveStatus === 'saving'} data-testid="save-btn" title="Salvar agora (Ctrl+S)"><Save className="h-4 w-4" /></Button>
         </div>
       </div>
 

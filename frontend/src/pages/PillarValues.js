@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useBrand } from '../contexts/BrandContext';
 import { PillarNavigation } from '../components/PillarNavigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -19,6 +19,8 @@ import {
   ArrowRight,
   Lightbulb
 } from 'lucide-react';
+import { useAutoSave } from '../hooks/useAutoSave';
+import { AutoSaveIndicator } from '../components/AutoSaveIndicator';
 
 export const PillarValues = () => {
   const { currentBrand, fetchPillar, updatePillar, generateInsight } = useBrand();
@@ -29,11 +31,9 @@ export const PillarValues = () => {
     insights_ia: []
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [newValor, setNewValor] = useState({ nome: '', descricao: '', prioridade: 'media' });
   const [newNecessidade, setNewNecessidade] = useState({ nome: '', publico: '', descricao: '' });
-  const saveTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (currentBrand?.brand_id) {
@@ -55,19 +55,26 @@ export const PillarValues = () => {
     }
   };
 
-  const autoSave = useCallback(async (newData) => {
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(async () => {
-      setIsSaving(true);
-      try {
-        await updatePillar(currentBrand.brand_id, 'values', newData);
-      } catch (error) {
-        console.error('Autosave error:', error);
-      } finally {
-        setIsSaving(false);
+  const { status: saveStatus, lastSavedAt, save: forceSave } = useAutoSave({
+    data,
+    enabled: !isLoading && !!currentBrand?.brand_id,
+    onSave: useCallback(async (currentData, signal) => {
+      if (!currentBrand?.brand_id) return;
+      await updatePillar(currentBrand.brand_id, 'values', currentData, { signal });
+    }, [currentBrand?.brand_id, updatePillar])
+  });
+
+  // Ctrl+S manual save (fallback)
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        forceSave();
       }
-    }, 1500);
-  }, [currentBrand?.brand_id, updatePillar]);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [forceSave]);
 
   const addValor = () => {
     if (!newValor.nome.trim()) return;
@@ -75,14 +82,12 @@ export const PillarValues = () => {
     const newData = { ...data, valores: newValores };
     setData(newData);
     setNewValor({ nome: '', descricao: '', prioridade: 'media' });
-    autoSave(newData);
   };
 
   const removeValor = (index) => {
     const newValores = data.valores.filter((_, i) => i !== index);
     const newData = { ...data, valores: newValores };
     setData(newData);
-    autoSave(newData);
   };
 
   const addNecessidade = () => {
@@ -91,14 +96,12 @@ export const PillarValues = () => {
     const newData = { ...data, necessidades: newNecessidades };
     setData(newData);
     setNewNecessidade({ nome: '', publico: '', descricao: '' });
-    autoSave(newData);
   };
 
   const removeNecessidade = (index) => {
     const newNecessidades = data.necessidades.filter((_, i) => i !== index);
     const newData = { ...data, necessidades: newNecessidades };
     setData(newData);
-    autoSave(newData);
   };
 
   const createCruzamento = (valorIndex, necessidadeIndex) => {
@@ -118,7 +121,6 @@ export const PillarValues = () => {
     }];
     const newData = { ...data, cruzamento: newCruzamento };
     setData(newData);
-    autoSave(newData);
     toast.success('Cruzamento criado!');
   };
 
@@ -127,14 +129,12 @@ export const PillarValues = () => {
     newCruzamento[index] = { ...newCruzamento[index], insight };
     const newData = { ...data, cruzamento: newCruzamento };
     setData(newData);
-    autoSave(newData);
   };
 
   const removeCruzamento = (index) => {
     const newCruzamento = data.cruzamento.filter((_, i) => i !== index);
     const newData = { ...data, cruzamento: newCruzamento };
     setData(newData);
-    autoSave(newData);
   };
 
   const handleGenerateInsights = async () => {
@@ -149,7 +149,6 @@ export const PillarValues = () => {
       const newInsights = [...data.insights_ia, result.insight];
       const newData = { ...data, insights_ia: newInsights };
       setData(newData);
-      autoSave(newData);
       toast.success('Insights gerados com sucesso!');
     } catch (error) {
       toast.error('Erro ao gerar insights');
@@ -158,17 +157,7 @@ export const PillarValues = () => {
     }
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await updatePillar(currentBrand.brand_id, 'values', data);
-      toast.success('Salvo com sucesso!');
-    } catch (error) {
-      toast.error('Erro ao salvar');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const handleSave = forceSave;
 
   const calculateProgress = () => {
     let score = 0;
@@ -203,7 +192,10 @@ export const PillarValues = () => {
             <Heart className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="font-heading text-2xl font-bold">Pilar Valores</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="font-heading text-2xl font-bold">Pilar Valores</h1>
+              <AutoSaveIndicator status={saveStatus} lastSavedAt={lastSavedAt} onRetry={forceSave} />
+            </div>
             <p className="text-muted-foreground">Valores da marca e necessidades dos públicos</p>
           </div>
         </div>
@@ -212,15 +204,8 @@ export const PillarValues = () => {
             <Progress value={calculateProgress()} className="w-24 h-2" />
             <span className="text-sm text-muted-foreground">{calculateProgress()}%</span>
           </div>
-          {isSaving && (
-            <Badge variant="outline" className="gap-1">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Salvando...
-            </Badge>
-          )}
-          <Button onClick={handleSave} disabled={isSaving} data-testid="save-btn">
-            <Save className="h-4 w-4 mr-2" />
-            Salvar
+          <Button onClick={handleSave} variant="ghost" size="sm" disabled={saveStatus === 'saving'} data-testid="save-btn" title="Salvar agora (Ctrl+S)">
+            <Save className="h-4 w-4" />
           </Button>
         </div>
       </div>

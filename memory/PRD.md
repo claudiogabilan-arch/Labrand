@@ -61,6 +61,21 @@ Ferramenta interna de gestao de marcas para agencia de branding.
 - [x] Item "Historico" adicionado na secao SISTEMA do sidebar
 - Testado: Backend via curl (total:9, has_more, filtros validos), Frontend smoke screenshot OK
 
+### Fase 16 - Skeleton Screens (Concluido - 05/05/2026)
+- [x] `components/ui/skeleton-patterns.js` com SkeletonHero/Card/List/Table/Chart
+- [x] Substitucao do Loader2 de primeiro carregamento em Dashboard, Touchpoints, Valuation, PillarStart, Reports
+- [x] Loader2 de acoes em-andamento (botoes) preservados
+- Testado: 0 spinners no main, lint OK
+
+### Fase 17 - Auto-save com Debounce 2s (Concluido - 05/05/2026)
+- [x] `hooks/useAutoSave.js` — hook reutilizavel (status idle/saving/saved/error, debounce 2s, AbortController, contador de requests para evitar respostas stale, flush no unmount, force-save manual via Ctrl+S)
+- [x] `components/AutoSaveIndicator.js` — indicador inline (sutil) com tempo relativo "Salvo ha Xs" (tick 10s) e botao "Tentar novamente" no estado erro
+- [x] Aplicado em 7 PillarX.js + BrandWay.js (substituido o autoSave ad-hoc com useRef/setTimeout)
+- [x] Botao "Salvar" virou ghost icon (fallback Ctrl+S)
+- [x] Removido `.autosave-*` CSS antigo do index.css (canto bottom-right)
+- [x] Narratives.js: nao integrado (fluxo CRUD com saves imediatos via dialog, nao se aplica debounce)
+- Testado: PillarStart e BrandWay via Playwright (digitacao -> 2s -> "Salvo agora" verde + persistencia confirmada)
+
 ---
 
 ## Backlog Priorizado

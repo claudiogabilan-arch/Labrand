@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useBrand } from '../contexts/BrandContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -15,6 +15,8 @@ import {
   Users, Shield, Save, Plus, X, Lightbulb, CheckCircle2
 } from 'lucide-react';
 import axios from 'axios';
+import { useAutoSave } from '../hooks/useAutoSave';
+import { AutoSaveIndicator } from '../components/AutoSaveIndicator';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -31,7 +33,6 @@ export default function BrandWay() {
   const { token } = useAuth();
   const { currentBrand } = useBrand();
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('proposito');
   
@@ -69,21 +70,32 @@ export default function BrandWay() {
     }
   };
 
-  const saveData = async () => {
-    setSaving(true);
-    try {
-      await axios.put(
-        `${API}/brands/${currentBrand.brand_id}/brand-way`,
-        data,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success('Dados salvos com sucesso!');
-    } catch (error) {
-      toast.error('Erro ao salvar');
-    } finally {
-      setSaving(false);
-    }
-  };
+  const saveData = useCallback(async (currentData, signal) => {
+    if (!currentBrand?.brand_id) return;
+    await axios.put(
+      `${API}/brands/${currentBrand.brand_id}/brand-way`,
+      currentData,
+      { headers: { Authorization: `Bearer ${token}` }, signal }
+    );
+  }, [currentBrand?.brand_id, token]);
+
+  const { status: saveStatus, lastSavedAt, save: forceSave } = useAutoSave({
+    data,
+    enabled: !loading && !!currentBrand?.brand_id,
+    onSave: saveData,
+  });
+
+  // Ctrl+S manual save
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        forceSave();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [forceSave]);
 
   const generateAISuggestions = async (dimension) => {
     setGenerating(true);
@@ -171,7 +183,10 @@ export default function BrandWay() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Jeito de Ser da Marca</h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl font-bold">Jeito de Ser da Marca</h1>
+            <AutoSaveIndicator status={saveStatus} lastSavedAt={lastSavedAt} onRetry={forceSave} />
+          </div>
           <p className="text-muted-foreground">
             Defina a identidade e DNA da sua marca em 6 dimensões
           </p>
@@ -181,9 +196,8 @@ export default function BrandWay() {
             Progresso: {calculateProgress()}%
           </div>
           <Progress value={calculateProgress()} className="w-32 h-2" />
-          <Button onClick={saveData} disabled={saving} data-testid="save-brand-way">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-            Salvar
+          <Button onClick={forceSave} variant="ghost" size="sm" disabled={saveStatus === 'saving'} data-testid="save-brand-way" title="Salvar agora (Ctrl+S)">
+            <Save className="h-4 w-4" />
           </Button>
         </div>
       </div>
