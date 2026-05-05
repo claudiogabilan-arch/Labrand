@@ -74,7 +74,7 @@ class BrandBase(BaseModel):
 
 
 class BrandCreate(BrandBase):
-    pass
+    template_applied: Optional[str] = None
 
 
 class Brand(BrandBase):

@@ -35,6 +35,7 @@ async def create_brand(brand_data: BrandCreate, user: dict = Depends(get_current
         "logo_url": brand_data.logo_url,
         "brand_type": brand_data.brand_type,
         "parent_brand_id": brand_data.parent_brand_id,
+        "template_applied": brand_data.template_applied,
         "team_members": [user["user_id"]],
         "onboarding_complete": False,
         "created_at": now,
