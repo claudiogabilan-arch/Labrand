@@ -12,7 +12,7 @@ import { Progress } from '../components/ui/progress';
 import { toast } from 'sonner';
 import {
   Loader2, ChevronRight, ChevronLeft, DollarSign, Heart, Shield, BarChart3,
-  TrendingUp, Download, Save, Network, Package, Info,
+  TrendingUp, Download, Save, Network, Package, Info, Presentation,
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -509,20 +509,23 @@ export default function BrandValuation() {
           </div>
 
           {/* Actions */}
-          <div className="flex justify-between">
+          <div className="flex flex-wrap justify-between gap-3">
             <Button variant="outline" onClick={() => setStep(0)}>
               <ChevronLeft className="h-4 w-4 mr-1" /> Refazer
             </Button>
-            <Button variant="outline" onClick={() => {
-              const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `valuation-${currentBrand.name}-${new Date().toISOString().split('T')[0]}.json`;
-              a.click();
-            }} data-testid="val-export-btn">
-              <Download className="h-4 w-4 mr-1" /> Exportar JSON
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => {
+                const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `valuation-${currentBrand.name}-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+              }} data-testid="val-export-btn">
+                <Download className="h-4 w-4 mr-1" /> Exportar JSON
+              </Button>
+              <PitchDeckButton brandId={currentBrand.brand_id} />
+            </div>
           </div>
         </div>
       )}
@@ -566,5 +569,42 @@ function ValBox({ label, value, color = '', large = false }) {
       <div className="text-xs text-muted-foreground uppercase mb-1">{label}</div>
       <div className={`font-bold ${large ? 'text-2xl' : 'text-lg'} ${color}`}>{fmt(value)}</div>
     </div>
+  );
+}
+
+function PitchDeckButton({ brandId }) {
+  const { user, token } = useAuth();
+  const [generating, setGenerating] = useState(false);
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const response = await axios.post(
+        `${API}/brands/${brandId}/reports/valuation-deck`,
+        { prepared_by_name: user?.name || 'Usuário', prepared_by_email: user?.email || '' },
+        { headers: { Authorization: `Bearer ${token}` }, responseType: 'blob' }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = response.headers['content-disposition']?.split('filename=')[1] || `PitchDeck_${new Date().toISOString().split('T')[0]}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success('Pitch Deck gerado com sucesso!');
+    } catch (error) {
+      const msg = error.response?.status === 400
+        ? 'Complete a avaliação de marca antes de gerar o pitch deck'
+        : 'Erro ao gerar Pitch Deck';
+      toast.error(msg);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <Button onClick={handleGenerate} disabled={generating} data-testid="generate-pitch-deck-btn">
+      {generating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Presentation className="h-4 w-4 mr-1" />}
+      Gerar Pitch Deck
+    </Button>
   );
 }

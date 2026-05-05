@@ -16,7 +16,7 @@ import os
 import logging
 
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm, mm
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
@@ -793,3 +793,463 @@ async def download_report(brand_id: str, report_id: str, user: dict = Depends(ge
         report_title=report.get("report_title", "Relatório Executivo")
     )
     return await generate_executive_pdf(brand_id, req, user)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# VALUATION PITCH DECK — Landscape A4, slide-style
+# ═══════════════════════════════════════════════════════════════════════
+
+class ValuationDeckRequest(BaseModel):
+    prepared_by_name: str
+    prepared_by_email: str
+    version: str = "1.0"
+
+
+DECK_W, DECK_H = landscape(A4)
+
+
+def _fmt_brl(value: float) -> str:
+    """Format value as R$ with appropriate suffix"""
+    if value >= 1_000_000_000:
+        return f"R$ {value / 1_000_000_000:.1f}B"
+    if value >= 1_000_000:
+        return f"R$ {value / 1_000_000:.1f}M"
+    if value >= 1_000:
+        return f"R$ {value / 1_000:.0f}K"
+    return f"R$ {value:,.0f}"
+
+
+def _deck_slide_bg(canvas, color):
+    """Draw full-page background color"""
+    canvas.setFillColor(color)
+    canvas.rect(0, 0, DECK_W, DECK_H, fill=True, stroke=False)
+
+
+def _deck_draw_logo(canvas, brand, brand_logo_path):
+    """Draw brand logo or name at top center"""
+    if brand_logo_path and os.path.exists(brand_logo_path):
+        try:
+            canvas.drawImage(brand_logo_path, DECK_W / 2 - 2 * cm, DECK_H - 3.5 * cm,
+                             width=4 * cm, height=2 * cm, preserveAspectRatio=True, mask='auto')
+        except Exception:
+            canvas.setFont("Helvetica-Bold", 20)
+            canvas.setFillColor(WHITE)
+            canvas.drawCentredString(DECK_W / 2, DECK_H - 3 * cm, brand.get("name", ""))
+    else:
+        canvas.setFont("Helvetica-Bold", 20)
+        canvas.setFillColor(WHITE)
+        canvas.drawCentredString(DECK_W / 2, DECK_H - 3 * cm, brand.get("name", ""))
+
+
+@router.post("/brands/{brand_id}/reports/valuation-deck")
+async def generate_valuation_deck(brand_id: str, request: ValuationDeckRequest, user: dict = Depends(get_current_user)):
+    """Generate Landscape Pitch Deck PDF for Brand Valuation"""
+    brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
+    if not brand:
+        raise HTTPException(status_code=404, detail="Marca não encontrada")
+
+    # Fetch latest valuation
+    valuation = await db.brand_valuations.find_one(
+        {"brand_id": brand_id}, {"_id": 0},
+        sort=[("created_at", -1)]
+    )
+    if not valuation:
+        raise HTTPException(status_code=400, detail="Complete a avaliação de marca antes de gerar o pitch deck")
+
+    # Fetch white-label
+    wl = await db.white_label.find_one({"brand_id": brand_id}, {"_id": 0})
+    primary_color = BRAND_DARK
+    if wl and wl.get("enabled") and wl.get("primary_color"):
+        try:
+            primary_color = colors.HexColor(wl["primary_color"])
+        except Exception:
+            pass
+
+    # Fetch brand logo path
+    brand_logo_path = None
+    if brand.get("logo_url"):
+        potential_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), brand["logo_url"].lstrip("/"))
+        if os.path.exists(potential_path):
+            brand_logo_path = potential_path
+
+    # Fetch pillar data for purpose and scores
+    pillars_data = await _fetch_all_pillar_data(brand_id)
+    purpose_text = ""
+    if "purpose" in pillars_data:
+        purpose_text = pillars_data["purpose"].get("proposito", "") or pillars_data["purpose"].get("missao", "")
+
+    # Pillar scores for brand strength drivers
+    pillar_scores = {}
+    bs_fields = ["clareza", "comprom", "governa", "respons", "autent", "relev", "diferenc", "consist", "presenca", "engaj"]
+    for field in bs_fields:
+        pillar_scores[field] = valuation.get(f"bs_{field}", 50)
+
+    # Disaster check / risks
+    disaster = await db.disaster_check.find_one({"brand_id": brand_id}, {"_id": 0})
+
+    brand_name = brand.get("name", "Marca")
+    now = datetime.now(timezone.utc)
+
+    # ── BUILD PDF ──
+    buffer = BytesIO()
+
+    from reportlab.lib.pagesizes import landscape as ls_fn
+    from reportlab.pdfgen import canvas as pdf_canvas
+
+    c = pdf_canvas.Canvas(buffer, pagesize=landscape(A4))
+    c.setTitle(f"Pitch Deck Valuation - {brand_name}")
+
+    # ════════ SLIDE 1 — CAPA ════════
+    _deck_slide_bg(c, primary_color)
+    _deck_draw_logo(c, brand, brand_logo_path)
+
+    c.setFont("Times-Bold", 48)
+    c.setFillColor(WHITE)
+    c.drawCentredString(DECK_W / 2, DECK_H / 2 + 0.5 * cm, "Avaliação de Marca")
+
+    c.setFont("Times-Italic", 24)
+    c.drawCentredString(DECK_W / 2, DECK_H / 2 - 1.5 * cm, brand_name)
+
+    c.setFont("Helvetica", 11)
+    c.setFillColor(colors.HexColor("#d4d4d8"))
+    footer_y = 2 * cm
+    c.drawCentredString(DECK_W / 2, footer_y + 0.5 * cm,
+                        f"{_date_pt(now)}  •  Versão {request.version}")
+    c.setFont("Helvetica", 8)
+    c.drawCentredString(DECK_W / 2, footer_y - 0.3 * cm, "powered by LaBrand")
+    c.showPage()
+
+    # ════════ SLIDE 2 — SUMÁRIO EXECUTIVO ════════
+    c.setFillColor(WHITE)
+    c.rect(0, 0, DECK_W, DECK_H, fill=True, stroke=False)
+
+    c.setFont("Times-Bold", 36)
+    c.setFillColor(BRAND_DARK)
+    c.drawString(3 * cm, DECK_H - 3 * cm, "Resumo")
+
+    # 3 big numbers
+    col_w = (DECK_W - 6 * cm) / 3
+    metrics_data = [
+        (_fmt_brl(valuation.get("brand_mid", 0)), "Brand Value"),
+        (str(valuation.get("bs_score", 0)), "Força da Marca / 100"),
+        (f"{valuation.get('rbi_score', 0)}%", "% atribuído à marca"),
+    ]
+    y_metric = DECK_H / 2 + 1 * cm
+    for i, (value, label) in enumerate(metrics_data):
+        x = 3 * cm + i * col_w + col_w / 2
+        c.setFont("Helvetica-Bold", 60)
+        c.setFillColor(primary_color)
+        c.drawCentredString(x, y_metric, value)
+        c.setFont("Helvetica", 13)
+        c.setFillColor(BRAND_GRAY)
+        c.drawCentredString(x, y_metric - 1.2 * cm, label)
+
+    # Decorative line
+    c.setStrokeColor(colors.HexColor("#e5e7eb"))
+    c.setLineWidth(1)
+    c.line(3 * cm, DECK_H / 2 - 1.5 * cm, DECK_W - 3 * cm, DECK_H / 2 - 1.5 * cm)
+
+    # Purpose quote
+    if purpose_text:
+        c.setFont("Times-Italic", 18)
+        c.setFillColor(BRAND_GRAY)
+        # Truncate if too long
+        display_purpose = purpose_text[:120] + ("..." if len(purpose_text) > 120 else "")
+        c.drawCentredString(DECK_W / 2, 3.5 * cm, f'"{display_purpose}"')
+
+    c.showPage()
+
+    # ════════ SLIDE 3 — METODOLOGIA ════════
+    c.setFillColor(WHITE)
+    c.rect(0, 0, DECK_W, DECK_H, fill=True, stroke=False)
+
+    c.setFont("Times-Bold", 36)
+    c.setFillColor(BRAND_DARK)
+    c.drawString(3 * cm, DECK_H - 3 * cm, "Como chegamos a esse número")
+
+    # 4 quadrants (2x2)
+    quadrants = [
+        ("1. Análise Financeira", f"Receita: {_fmt_brl(valuation.get('receita', 0))}",
+         f"EBITDA: {_fmt_brl(valuation.get('ebitda', 0))} • Múltiplo: {valuation.get('multiplo_final', 0)}x"),
+        ("2. RBI — Role of Brand", f"Score: {valuation.get('rbi_score', 0)}/100",
+         "% do valor do negócio atribuído à marca"),
+        ("3. Brand Strength", f"Score: {valuation.get('bs_score', 0)}/100",
+         "Consolidação de 10 fatores Interbrand"),
+        ("4. Resultado", _fmt_brl(valuation.get("brand_mid", 0)),
+         f"{valuation.get('brand_share_pct', 0)}% do Enterprise Value"),
+    ]
+
+    q_w = (DECK_W - 7 * cm) / 2
+    q_h = (DECK_H - 7 * cm) / 2
+    start_x = 3 * cm
+    start_y = DECK_H - 5 * cm
+
+    for i, (title, metric, desc) in enumerate(quadrants):
+        col = i % 2
+        row = i // 2
+        qx = start_x + col * (q_w + 1 * cm)
+        qy = start_y - row * (q_h + 0.5 * cm)
+
+        # Border
+        c.setStrokeColor(colors.HexColor("#d1d5db"))
+        c.setLineWidth(0.5)
+        c.roundRect(qx, qy - q_h, q_w, q_h, 6, fill=False, stroke=True)
+
+        # Title
+        c.setFont("Helvetica-Bold", 14)
+        c.setFillColor(BRAND_DARK)
+        c.drawString(qx + 0.8 * cm, qy - 1.2 * cm, title)
+
+        # Metric
+        c.setFont("Helvetica-Bold", 22)
+        c.setFillColor(primary_color)
+        c.drawString(qx + 0.8 * cm, qy - 2.5 * cm, metric)
+
+        # Desc
+        c.setFont("Helvetica", 10)
+        c.setFillColor(BRAND_GRAY)
+        c.drawString(qx + 0.8 * cm, qy - 3.5 * cm, desc[:55])
+
+    c.showPage()
+
+    # ════════ SLIDE 4 — DRIVERS DE VALOR ════════
+    c.setFillColor(WHITE)
+    c.rect(0, 0, DECK_W, DECK_H, fill=True, stroke=False)
+
+    c.setFont("Times-Bold", 36)
+    c.setFillColor(BRAND_DARK)
+    c.drawString(3 * cm, DECK_H - 3 * cm, "O que constrói o valor")
+
+    # Horizontal bar chart for BS factors
+    bs_labels_map = {
+        "clareza": "Clareza", "comprom": "Compromisso", "governa": "Governança",
+        "respons": "Responsividade", "autent": "Autenticidade", "relev": "Relevância",
+        "diferenc": "Diferenciação", "consist": "Consistência", "presenca": "Presença",
+        "engaj": "Engajamento"
+    }
+    sorted_factors = sorted(pillar_scores.items(), key=lambda x: x[1], reverse=True)
+
+    bar_start_y = DECK_H - 4.5 * cm
+    bar_max_w = 12 * cm
+    bar_h = 0.7 * cm
+    gap = 0.35 * cm
+
+    for i, (key, score) in enumerate(sorted_factors):
+        y = bar_start_y - i * (bar_h + gap)
+        if y < 2 * cm:
+            break
+        # Label
+        c.setFont("Helvetica", 10)
+        c.setFillColor(BRAND_DARK)
+        c.drawRightString(6 * cm, y + 0.15 * cm, bs_labels_map.get(key, key))
+        # Bar background
+        c.setFillColor(colors.HexColor("#f3f4f6"))
+        c.rect(6.5 * cm, y, bar_max_w, bar_h, fill=True, stroke=False)
+        # Bar fill
+        fill_w = bar_max_w * score / 100
+        c.setFillColor(primary_color)
+        c.rect(6.5 * cm, y, fill_w, bar_h, fill=True, stroke=False)
+        # Score value
+        c.setFont("Helvetica-Bold", 9)
+        c.setFillColor(BRAND_DARK)
+        c.drawString(6.5 * cm + fill_w + 0.3 * cm, y + 0.15 * cm, str(score))
+
+    # Top 3 strengths on right side
+    c.setFont("Helvetica-Bold", 12)
+    c.setFillColor(BRAND_DARK)
+    c.drawString(DECK_W - 8 * cm, DECK_H - 4.5 * cm, "Pontos Fortes")
+    c.setFont("Helvetica", 10)
+    c.setFillColor(BRAND_GRAY)
+    for i, (key, score) in enumerate(sorted_factors[:3]):
+        c.drawString(DECK_W - 8 * cm, DECK_H - 5.5 * cm - i * 1.2 * cm,
+                     f"• {bs_labels_map.get(key, key)} ({score}/100)")
+
+    c.showPage()
+
+    # ════════ SLIDE 5 — RISCOS E ATENÇÃO ════════
+    c.setFillColor(WHITE)
+    c.rect(0, 0, DECK_W, DECK_H, fill=True, stroke=False)
+
+    c.setFont("Times-Bold", 36)
+    c.setFillColor(BRAND_DARK)
+    c.drawString(3 * cm, DECK_H - 3 * cm, "Onde precisamos cuidar")
+
+    # Find weakest 3 BS factors as risks
+    weakest = sorted_factors[-3:] if len(sorted_factors) >= 3 else sorted_factors
+
+    has_risk_data = disaster and disaster.get("risks")
+    if has_risk_data:
+        risks = disaster["risks"][:3]
+    else:
+        # Generate risk cards from weakest factors
+        risks = [
+            {"category": bs_labels_map.get(k, k), "severity": "Atenção" if v >= 30 else "Crítico",
+             "mitigation": f"Fortalecer {bs_labels_map.get(k, k).lower()} para elevar Brand Strength"}
+            for k, v in weakest
+        ]
+
+    if not risks:
+        c.setFont("Helvetica", 16)
+        c.setFillColor(BRAND_GRAY)
+        c.drawCentredString(DECK_W / 2, DECK_H / 2,
+                            "Análise de riscos pendente — recomendamos completar o módulo Disaster Check")
+    else:
+        card_w = (DECK_W - 8 * cm) / 3
+        for i, risk in enumerate(risks):
+            rx = 3 * cm + i * (card_w + 1 * cm)
+            ry = DECK_H / 2 + 1 * cm
+
+            # Card border
+            c.setStrokeColor(colors.HexColor("#fecaca") if risk.get("severity") == "Crítico" else colors.HexColor("#fed7aa"))
+            c.setLineWidth(1)
+            c.roundRect(rx, ry - 4 * cm, card_w, 4 * cm, 6, fill=False, stroke=True)
+
+            # Category
+            c.setFont("Helvetica-Bold", 13)
+            c.setFillColor(BRAND_DARK)
+            c.drawString(rx + 0.6 * cm, ry - 1 * cm, str(risk.get("category", ""))[:25])
+
+            # Severity badge
+            sev = risk.get("severity", "Atenção")
+            badge_color = BRAND_RED if sev == "Crítico" else BRAND_YELLOW
+            c.setFillColor(badge_color)
+            c.roundRect(rx + 0.6 * cm, ry - 1.8 * cm, 3 * cm, 0.6 * cm, 3, fill=True, stroke=False)
+            c.setFont("Helvetica-Bold", 8)
+            c.setFillColor(WHITE)
+            c.drawString(rx + 0.9 * cm, ry - 1.65 * cm, sev)
+
+            # Mitigation
+            c.setFont("Helvetica", 9)
+            c.setFillColor(BRAND_GRAY)
+            mit = str(risk.get("mitigation", risk.get("acao_sugerida", "")))[:60]
+            c.drawString(rx + 0.6 * cm, ry - 2.8 * cm, mit[:35])
+            if len(mit) > 35:
+                c.drawString(rx + 0.6 * cm, ry - 3.2 * cm, mit[35:])
+
+    c.showPage()
+
+    # ════════ SLIDE 6 — PROJEÇÃO ════════
+    c.setFillColor(WHITE)
+    c.rect(0, 0, DECK_W, DECK_H, fill=True, stroke=False)
+
+    c.setFont("Times-Bold", 36)
+    c.setFillColor(BRAND_DARK)
+    c.drawString(3 * cm, DECK_H - 3 * cm, "Cenários")
+
+    brand_mid = valuation.get("brand_mid", 0)
+    scenarios = [
+        ("Conservador", brand_mid * 0.85, colors.HexColor("#6b7280")),
+        ("Base", brand_mid, primary_color),
+        ("Otimista", brand_mid * 1.15, BRAND_GREEN),
+    ]
+    scenario_w = (DECK_W - 8 * cm) / 3
+    for i, (label, val, clr) in enumerate(scenarios):
+        sx = 3 * cm + i * (scenario_w + 1 * cm)
+        sy = DECK_H / 2
+
+        c.setFont("Helvetica-Bold", 16)
+        c.setFillColor(BRAND_DARK)
+        c.drawCentredString(sx + scenario_w / 2, sy + 2 * cm, label)
+
+        c.setFont("Helvetica-Bold", 40)
+        c.setFillColor(clr)
+        c.drawCentredString(sx + scenario_w / 2, sy - 0.5 * cm, _fmt_brl(val))
+
+        c.setFont("Helvetica", 11)
+        c.setFillColor(BRAND_GRAY)
+        c.drawCentredString(sx + scenario_w / 2, sy - 1.8 * cm, "projeção 3 anos")
+
+    c.showPage()
+
+    # ════════ SLIDE 7 — RECOMENDAÇÕES ════════
+    c.setFillColor(WHITE)
+    c.rect(0, 0, DECK_W, DECK_H, fill=True, stroke=False)
+
+    c.setFont("Times-Bold", 36)
+    c.setFillColor(BRAND_DARK)
+    c.drawString(3 * cm, DECK_H - 3 * cm, "Próximos passos")
+
+    # Generate recommendations from weakest factors
+    recommendations = []
+    for key, score in sorted_factors[-5:]:
+        label = bs_labels_map.get(key, key)
+        recommendations.append((label, f"Investir em {label.lower()} para elevar de {score} para {min(100, score + 20)}"))
+
+    rec_y = DECK_H - 5 * cm
+    for i, (title, desc) in enumerate(recommendations[:5]):
+        if rec_y < 2 * cm:
+            break
+        # Number circle
+        cx = 4 * cm
+        c.setFillColor(primary_color)
+        c.circle(cx, rec_y + 0.2 * cm, 0.5 * cm, fill=True, stroke=False)
+        c.setFont("Helvetica-Bold", 14)
+        c.setFillColor(WHITE)
+        c.drawCentredString(cx, rec_y - 0.05 * cm, str(i + 1))
+
+        # Title
+        c.setFont("Helvetica-Bold", 14)
+        c.setFillColor(BRAND_DARK)
+        c.drawString(5.5 * cm, rec_y + 0.1 * cm, title)
+
+        # Description
+        c.setFont("Helvetica", 11)
+        c.setFillColor(BRAND_GRAY)
+        c.drawString(5.5 * cm, rec_y - 0.7 * cm, desc[:80])
+
+        rec_y -= 2.2 * cm
+
+    c.showPage()
+
+    # ════════ SLIDE 8 — CONTRACAPA ════════
+    _deck_slide_bg(c, primary_color)
+
+    c.setFont("Helvetica", 14)
+    c.setFillColor(colors.HexColor("#a1a1aa"))
+    c.drawCentredString(DECK_W / 2, DECK_H / 2 + 3 * cm, "Preparado por")
+
+    c.setFont("Helvetica-Bold", 24)
+    c.setFillColor(WHITE)
+    c.drawCentredString(DECK_W / 2, DECK_H / 2 + 1.5 * cm, request.prepared_by_name)
+
+    c.setFont("Helvetica", 14)
+    c.setFillColor(colors.HexColor("#d4d4d8"))
+    c.drawCentredString(DECK_W / 2, DECK_H / 2 + 0.3 * cm, request.prepared_by_email)
+
+    c.setFont("Helvetica", 12)
+    c.drawCentredString(DECK_W / 2, DECK_H / 2 - 1 * cm, f"{_date_pt(now)}  •  Versão {request.version}")
+
+    c.setFont("Helvetica-Oblique", 10)
+    c.setFillColor(colors.HexColor("#a1a1aa"))
+    c.drawCentredString(DECK_W / 2, 3.5 * cm,
+                        f"Documento confidencial — uso restrito a {brand_name}")
+
+    # LaBrand logo footer
+    c.setFont("Helvetica", 8)
+    c.setFillColor(colors.HexColor("#71717a"))
+    c.drawCentredString(DECK_W / 2, 2 * cm, "powered by LaBrand · Brand OS")
+
+    c.showPage()
+    c.save()
+
+    # Persist to reports collection
+    report_id = f"rpt_{uuid.uuid4().hex[:12]}"
+    await db.executive_reports.insert_one({
+        "report_id": report_id,
+        "brand_id": brand_id,
+        "type": "valuation_deck",
+        "report_title": f"Pitch Deck Valuation - {brand_name}",
+        "generated_by": user["user_id"],
+        "generated_by_name": request.prepared_by_name,
+        "generated_at": now.isoformat(),
+        "version": request.version,
+    })
+
+    buffer.seek(0)
+    date_str = now.strftime("%Y%m%d")
+    filename = f"PitchDeck_{brand_name.replace(' ', '_')}_{date_str}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
