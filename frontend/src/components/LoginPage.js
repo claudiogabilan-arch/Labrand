@@ -147,7 +147,7 @@ export const LoginPage = () => {
                           placeholder="seu@email.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900/10 h-11 bg-white"
+                          className="pl-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900/10 h-11 bg-white text-zinc-900 placeholder:text-zinc-400"
                           required
                           data-testid="login-email-input"
                         />
@@ -163,7 +163,7 @@ export const LoginPage = () => {
                           placeholder="••••••••"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900/10 h-11 bg-white"
+                          className="pl-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900/10 h-11 bg-white text-zinc-900 placeholder:text-zinc-400"
                           required
                           data-testid="login-password-input"
                         />
@@ -209,7 +209,7 @@ export const LoginPage = () => {
                           placeholder="Seu nome"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          className="pl-10"
+                          className="pl-10 bg-white text-zinc-900 placeholder:text-zinc-400 border-zinc-200 h-11"
                           required
                           data-testid="register-name-input"
                         />
@@ -225,7 +225,7 @@ export const LoginPage = () => {
                           placeholder="seu@email.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10"
+                          className="pl-10 bg-white text-zinc-900 placeholder:text-zinc-400 border-zinc-200 h-11"
                           required
                           data-testid="register-email-input"
                         />
@@ -241,7 +241,7 @@ export const LoginPage = () => {
                           placeholder="••••••••"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10"
+                          className="pl-10 bg-white text-zinc-900 placeholder:text-zinc-400 border-zinc-200 h-11"
                           required
                           minLength={6}
                           data-testid="register-password-input"
@@ -340,6 +340,7 @@ export const LoginPage = () => {
                 placeholder="seu@email.com"
                 value={resetEmail}
                 onChange={(e) => setResetEmail(e.target.value)}
+                className="bg-white text-zinc-900 placeholder:text-zinc-400 border-zinc-200"
                 data-testid="reset-email-input"
               />
             </div>
