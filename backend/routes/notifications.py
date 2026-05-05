@@ -99,14 +99,81 @@ async def create_notification(
 
 # ── ENDPOINTS ──
 
+# Map raw notif_type → high-level category used for grouping in the UI.
+TYPE_CATEGORY = {
+    "comment":           {"category": "comment", "label": "Comentários"},
+    "approval_request":  {"category": "change",  "label": "Mudanças e aprovações"},
+    "approval_action":   {"category": "change",  "label": "Mudanças e aprovações"},
+    "change":            {"category": "change",  "label": "Mudanças e aprovações"},
+    "ai":                {"category": "ai",      "label": "Insights de IA"},
+    "ai_insight":        {"category": "ai",      "label": "Insights de IA"},
+    "system":            {"category": "system",  "label": "Sistema"},
+}
+
+
+def _resolve_category(notif_type: str) -> dict:
+    return TYPE_CATEGORY.get(notif_type, {"category": "system", "label": "Sistema"})
+
+
 @router.get("/notifications")
-async def get_notifications(limit: int = 30, unread_only: bool = False, user: dict = Depends(get_current_user)):
+async def get_notifications(
+    limit: int = 30,
+    unread_only: bool = False,
+    grouped: bool = False,
+    user: dict = Depends(get_current_user),
+):
     query = {"user_id": user["user_id"]}
     if unread_only:
         query["read"] = False
     notifs = await db.notifications.find(query, {"_id": 0}).sort("created_at", -1).to_list(limit)
     unread = await db.notifications.count_documents({"user_id": user["user_id"], "read": False})
-    return {"notifications": notifs, "unread_count": unread}
+
+    if not grouped:
+        return {"notifications": notifs, "unread_count": unread}
+
+    # Resolve brand names in one query (avoids N+1)
+    brand_ids = list({n.get("brand_id") for n in notifs if n.get("brand_id")})
+    brands_map = {}
+    if brand_ids:
+        async for b in db.brands.find({"brand_id": {"$in": brand_ids}}, {"_id": 0, "brand_id": 1, "name": 1}):
+            brands_map[b["brand_id"]] = b.get("name", "Marca")
+
+    # Group by category
+    by_cat = {}
+    for n in notifs:
+        cat_meta = _resolve_category(n.get("type", ""))
+        key = cat_meta["category"]
+        if key not in by_cat:
+            by_cat[key] = {"type": key, "label": cat_meta["label"], "count": 0, "items": []}
+        by_cat[key]["items"].append(n)
+        if not n.get("read"):
+            by_cat[key]["count"] += 1
+
+    # Group by brand
+    by_brand = {}
+    for n in notifs:
+        bid = n.get("brand_id") or "_none"
+        if bid not in by_brand:
+            by_brand[bid] = {
+                "brand_id": bid if bid != "_none" else None,
+                "brand_name": brands_map.get(bid, "Geral") if bid != "_none" else "Geral",
+                "count": 0,
+                "items": [],
+            }
+        by_brand[bid]["items"].append(n)
+        if not n.get("read"):
+            by_brand[bid]["count"] += 1
+
+    # Stable order: groups sorted by category convention; brands by unread count desc
+    cat_order = ["comment", "change", "ai", "system"]
+    groups = [by_cat[c] for c in cat_order if c in by_cat]
+    brands = sorted(by_brand.values(), key=lambda b: (-b["count"], b["brand_name"]))
+
+    return {
+        "unread_count": unread,
+        "groups": groups,
+        "by_brand": brands,
+    }
 
 
 @router.post("/notifications/{notif_id}/read")
@@ -137,16 +204,28 @@ async def delete_notification(notif_id: str, user: dict = Depends(get_current_us
 
 class NotifPrefs(BaseModel):
     email_enabled: bool = True
-    types: dict = {}  # {"approval_request": true, "approval_action": true, "comment": true}
+    types: dict = {}  # legacy per-type email opt-in (kept for back-compat)
+    email_digest: str = "off"      # 'off' | 'daily' | 'weekly'
+    mute_types: List[str] = []     # categories: comment | change | ai | system
+    mute_brands: List[str] = []    # brand_ids the user wants silenced
 
 
 @router.get("/notifications/preferences")
 async def get_prefs(user: dict = Depends(get_current_user)):
     prefs = await db.notification_prefs.find_one({"user_id": user["user_id"]}, {"_id": 0})
     if not prefs:
-        prefs = {"user_id": user["user_id"], "email_enabled": True, "types": {
-            "approval_request": True, "approval_action": True, "comment": True
-        }}
+        prefs = {
+            "user_id": user["user_id"],
+            "email_enabled": True,
+            "types": {"approval_request": True, "approval_action": True, "comment": True},
+            "email_digest": "off",
+            "mute_types": [],
+            "mute_brands": [],
+        }
+    # Always normalise missing fields so the frontend can rely on shape
+    prefs.setdefault("email_digest", "off")
+    prefs.setdefault("mute_types", [])
+    prefs.setdefault("mute_brands", [])
     return prefs
 
 
@@ -154,7 +233,31 @@ async def get_prefs(user: dict = Depends(get_current_user)):
 async def update_prefs(data: NotifPrefs, user: dict = Depends(get_current_user)):
     await db.notification_prefs.update_one(
         {"user_id": user["user_id"]},
-        {"$set": {"email_enabled": data.email_enabled, "types": data.types, "updated_at": datetime.now(timezone.utc).isoformat()}},
+        {"$set": {
+            "email_enabled": data.email_enabled,
+            "types": data.types,
+            "email_digest": data.email_digest,
+            "mute_types": data.mute_types,
+            "mute_brands": data.mute_brands,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
         upsert=True
     )
     return {"success": True}
+
+
+# ── DIGEST ──
+# Endpoint kept here as a thin wrapper; heavy lifting lives in jobs/notification_digest.py.
+
+@router.post("/notifications/send-digests")
+async def send_digests(frequency: Optional[str] = None, user: dict = Depends(get_current_user)):
+    """Manually trigger digest send (admin/cron). `frequency` filters which prefs to target.
+
+    If `frequency` is None, both daily and weekly users will be processed (each within their
+    respective lookback window).
+    """
+    if not (user.get("is_admin") or user.get("role") == "admin"):
+        raise HTTPException(status_code=403, detail="Admin only")
+    from jobs.notification_digest import run_digest
+    result = await run_digest(frequency=frequency, send_email_fn=_send_email)
+    return result

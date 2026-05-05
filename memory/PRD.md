@@ -90,6 +90,14 @@ Ferramenta interna de gestao de marcas para agencia de branding.
 - [x] Touchpoints/Campaigns/Planning/Scorecard: listener `shortcut:create` abre modal de criacao
 - Testado: Playwright validou Cmd+K abre palette, Esc fecha, g d navega, ? abre cheatsheet, c em Touchpoints abre dialog
 
+### Fase 20 - Painel de Notificacoes Agrupado + Digest (Concluido - 05/05/2026)
+- [x] Backend: `routes/notifications.py` — endpoint GET `/notifications?grouped=true` retorna `{unread_count, groups, by_brand}` com mapeamento type→category (comment/change/ai/system); `NotifPrefs` extendido com `email_digest`, `mute_types`, `mute_brands`; novo POST `/notifications/send-digests` (admin)
+- [x] Backend: `jobs/notification_digest.py` — `run_digest(frequency, send_email_fn)` agrupa nao lidas dos ultimos N dias, filtra por mute_types/mute_brands, envia HTML agrupado via Resend, marca `digested_at` para idempotencia
+- [x] Frontend Layout: painel reformulado com toggle "Por tipo" / "Por marca", grupos colapsaveis com count badge, footer "Configurar notificacoes →" link para /settings?tab=notifications
+- [x] Frontend: `components/settings/SettingsNotifications.js` + nova aba em Settings (8 colunas, com query param `?tab=notifications` deep-link)
+- [x] Frequencia (off/daily/weekly), silenciar tipos (4 checkboxes), silenciar marcas (lista de brands)
+- Testado: Curl validou todos endpoints (grouped, prefs GET/PUT, send-digests); Playwright validou painel agrupado, toggle de view, navegacao para settings, persistencia (`weekly_persisted: 1`)
+
 ---
 
 ## Backlog Priorizado

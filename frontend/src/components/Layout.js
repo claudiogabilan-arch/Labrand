@@ -412,9 +412,12 @@ export const Header = ({ collapsed }) => {
   const { user, logout, isEstrategista, token } = useAuth();
   const { currentBrand, brands, setCurrentBrand } = useBrand();
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState([]);
+  const [notifGroups, setNotifGroups] = useState([]);
+  const [notifByBrand, setNotifByBrand] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [notifViewMode, setNotifViewMode] = useState('type'); // 'type' | 'brand'
+  const [collapsedGroups, setCollapsedGroups] = useState({});
   const notifRef = useRef(null);
   const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -426,8 +429,9 @@ export const Header = ({ collapsed }) => {
   const fetchNotifications = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await axios.get(`${API}/notifications?limit=15`, { headers: { Authorization: `Bearer ${token}` } });
-      setNotifications(res.data.notifications || []);
+      const res = await axios.get(`${API}/notifications?grouped=true&limit=50`, { headers: { Authorization: `Bearer ${token}` } });
+      setNotifGroups(res.data.groups || []);
+      setNotifByBrand(res.data.by_brand || []);
       setUnreadCount(res.data.unread_count || 0);
     } catch { /* silent */ }
   }, [token, API]);
@@ -449,7 +453,10 @@ export const Header = ({ collapsed }) => {
   const markRead = async (notifId) => {
     try {
       await axios.post(`${API}/notifications/${notifId}/read`, {}, { headers: { Authorization: `Bearer ${token}` } });
-      setNotifications(prev => prev.map(n => n.notif_id === notifId ? { ...n, read: true } : n));
+      const updateNotif = (n) => n.notif_id === notifId ? { ...n, read: true } : n;
+      const updateGroup = (g) => ({ ...g, items: g.items.map(updateNotif), count: g.items.filter(n => !n.read && n.notif_id !== notifId).length });
+      setNotifGroups(prev => prev.map(updateGroup));
+      setNotifByBrand(prev => prev.map(updateGroup));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch { /* silent */ }
   };
@@ -457,9 +464,15 @@ export const Header = ({ collapsed }) => {
   const markAllRead = async () => {
     try {
       await axios.post(`${API}/notifications/read-all`, {}, { headers: { Authorization: `Bearer ${token}` } });
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      const clearAll = (g) => ({ ...g, items: g.items.map(n => ({ ...n, read: true })), count: 0 });
+      setNotifGroups(prev => prev.map(clearAll));
+      setNotifByBrand(prev => prev.map(clearAll));
       setUnreadCount(0);
     } catch { /* silent */ }
+  };
+
+  const toggleGroupCollapse = (key) => {
+    setCollapsedGroups(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handleNotifClick = (notif) => {
@@ -560,41 +573,105 @@ export const Header = ({ collapsed }) => {
             </Button>
 
             {notifOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-background border rounded-xl shadow-xl z-50 overflow-hidden" data-testid="notification-dropdown">
+              <div className="absolute right-0 top-full mt-2 w-96 bg-background border rounded-xl shadow-xl z-50 overflow-hidden" data-testid="notification-dropdown">
+                {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b">
-                  <h3 className="text-sm font-semibold">Notificacoes</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold">Notificações</h3>
+                    {unreadCount > 0 && (
+                      <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-secondary text-[11px] font-bold text-white" data-testid="notif-total-badge">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </div>
                   {unreadCount > 0 && (
                     <button onClick={markAllRead} className="text-xs text-secondary hover:underline flex items-center gap-1" data-testid="mark-all-read">
                       <Check className="h-3 w-3" /> Marcar todas como lidas
                     </button>
                   )}
                 </div>
-                <div className="max-h-[360px] overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="py-10 text-center">
-                      <Bell className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
-                      <p className="text-sm text-muted-foreground">Nenhuma notificacao</p>
-                    </div>
-                  ) : (
-                    notifications.map(n => (
-                      <button
-                        key={n.notif_id}
-                        onClick={() => handleNotifClick(n)}
-                        data-testid={`notif-${n.notif_id}`}
-                        className={`w-full text-left px-4 py-3 border-b border-border/50 hover:bg-muted/50 transition-colors ${!n.read ? 'bg-secondary/5' : ''}`}
-                      >
-                        <div className="flex items-start gap-3">
-                          {!n.read && <span className="mt-1.5 h-2 w-2 rounded-full bg-secondary flex-shrink-0" />}
-                          <div className={`flex-1 min-w-0 ${n.read ? 'ml-5' : ''}`}>
-                            <p className="text-sm font-medium leading-tight truncate">{n.title}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
-                            <p className="text-[10px] text-muted-foreground/60 mt-1">{timeAgo(n.created_at)}</p>
-                          </div>
-                        </div>
-                      </button>
-                    ))
-                  )}
+
+                {/* View toggle */}
+                <div className="flex border-b bg-muted/20" data-testid="notif-view-toggle">
+                  {[
+                    { id: 'type',  label: 'Por tipo' },
+                    { id: 'brand', label: 'Por marca' },
+                  ].map(v => (
+                    <button
+                      key={v.id}
+                      onClick={() => setNotifViewMode(v.id)}
+                      data-testid={`notif-view-${v.id}`}
+                      className={`flex-1 text-xs font-medium py-2 transition-colors ${notifViewMode === v.id ? 'text-foreground border-b-2 border-secondary -mb-px' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
                 </div>
+
+                {/* Body */}
+                <div className="max-h-[420px] overflow-y-auto">
+                  {(() => {
+                    const collection = notifViewMode === 'type' ? notifGroups : notifByBrand;
+                    if (!collection.length) {
+                      return (
+                        <div className="py-10 text-center" data-testid="notif-empty">
+                          <Bell className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
+                          <p className="text-sm text-muted-foreground">Nenhuma notificação</p>
+                        </div>
+                      );
+                    }
+                    return collection.map(group => {
+                      const key = notifViewMode === 'type' ? group.type : (group.brand_id || '_none');
+                      const heading = notifViewMode === 'type' ? group.label : group.brand_name;
+                      const isCollapsed = !!collapsedGroups[`${notifViewMode}:${key}`];
+                      return (
+                        <div key={`${notifViewMode}-${key}`} data-testid={`notif-group-${key}`}>
+                          <button
+                            onClick={() => toggleGroupCollapse(`${notifViewMode}:${key}`)}
+                            className="w-full flex items-center justify-between px-4 py-2 bg-muted/10 hover:bg-muted/30 transition-colors border-b border-border/40"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{heading}</span>
+                              {group.count > 0 && (
+                                <span className="inline-flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-secondary/15 text-[10px] font-bold text-secondary">
+                                  {group.count}
+                                </span>
+                              )}
+                              <span className="text-[10px] text-muted-foreground/60">· {group.items.length}</span>
+                            </div>
+                            <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
+                          </button>
+                          {!isCollapsed && group.items.map(n => (
+                            <button
+                              key={n.notif_id}
+                              onClick={() => handleNotifClick(n)}
+                              data-testid={`notif-${n.notif_id}`}
+                              className={`w-full text-left px-4 py-3 border-b border-border/50 hover:bg-muted/50 transition-colors ${!n.read ? 'bg-secondary/5' : ''}`}
+                            >
+                              <div className="flex items-start gap-3">
+                                {!n.read && <span className="mt-1.5 h-2 w-2 rounded-full bg-secondary flex-shrink-0" />}
+                                <div className={`flex-1 min-w-0 ${n.read ? 'ml-5' : ''}`}>
+                                  <p className="text-sm font-medium leading-tight truncate">{n.title}</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
+                                  <p className="text-[10px] text-muted-foreground/60 mt-1">{timeAgo(n.created_at)}</p>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+
+                {/* Footer */}
+                <button
+                  onClick={() => { setNotifOpen(false); navigate('/settings?tab=notifications'); }}
+                  className="w-full text-center px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 border-t transition-colors"
+                  data-testid="notif-config-link"
+                >
+                  Configurar notificações →
+                </button>
               </div>
             )}
           </div>

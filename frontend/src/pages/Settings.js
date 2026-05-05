@@ -1,16 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { User, Shield, Building2, Users, Paintbrush, Link2, Palette, Settings as SettingsIcon } from 'lucide-react';
+import { User, Shield, Building2, Users, Paintbrush, Link2, Palette, Bell, Settings as SettingsIcon } from 'lucide-react';
 import SettingsProfile from '../components/settings/SettingsProfile';
 import SettingsSecurity from '../components/settings/SettingsSecurity';
 import SettingsBrands from '../components/settings/SettingsBrands';
 import SettingsTeam from '../components/settings/SettingsTeam';
 import SettingsIntegrations from '../components/settings/SettingsIntegrations';
 import SettingsPersonalization from '../components/settings/SettingsPersonalization';
+import SettingsNotifications from '../components/settings/SettingsNotifications';
 import WhiteLabelSettings from '../components/WhiteLabelSettings';
 
 export const Settings = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('profile');
+
+  // Honour ?tab=notifications etc. when arriving from a deep link
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const t = params.get('tab');
+    if (t) setActiveTab(t);
+  }, [location.search]);
 
   return (
     <div className="space-y-6" data-testid="settings-page">
@@ -26,7 +36,7 @@ export const Settings = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:inline-grid">
           <TabsTrigger value="profile" className="gap-2" data-testid="tab-profile">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Perfil</span>
@@ -54,6 +64,10 @@ export const Settings = () => {
           <TabsTrigger value="personalization" className="gap-2" data-testid="tab-personalization">
             <Palette className="h-4 w-4" />
             <span className="hidden sm:inline">Personalizacao</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-2" data-testid="tab-notifications">
+            <Bell className="h-4 w-4" />
+            <span className="hidden sm:inline">Notificações</span>
           </TabsTrigger>
         </TabsList>
 
@@ -83,6 +97,10 @@ export const Settings = () => {
 
         <TabsContent value="personalization" className="space-y-6">
           <SettingsPersonalization />
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-6">
+          <SettingsNotifications />
         </TabsContent>
       </Tabs>
     </div>
