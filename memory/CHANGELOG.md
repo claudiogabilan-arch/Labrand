@@ -1,3 +1,24 @@
+## 2026-05-05 — Módulo "De Dentro Pra Fora" (Endomarketing) — Frontend finalizado
+
+- ✅ Rota `/endomarketing` plugada em `App.js` (lazy-loaded)
+- ✅ Item "De Dentro Pra Fora" adicionado ao sidebar em `Layout.js`
+  (seção Diagnóstico, ícone Flame, badge "Novo")
+- ✅ Entry adicionada ao CommandPalette (⌘K)
+- ✅ Nova tab **Painel** (5ª tab) — dashboard visual escuro com:
+  - 4 stat cards (score, nível, ponto forte, maior oportunidade)
+  - RadarChart + BarChart horizontal com gaps
+  - Análise de Gaps agrupada (score + potencial) + Diagnóstico Executivo
+  - 5 cards da Temporada Gamificada (competição, palco, comunidade,
+    pessoas, game) + Timeline do cronograma
+  - Todos os dados vêm de `GET /api/endomarketing/diagnosis/{brand_id}`
+- ✅ Cancelamento (AbortController) estendido para `Reports.js`,
+  `BrandHistory.js`, `Touchpoints.js`, `Campaigns.js`
+- ✅ Warning a11y do `CommandDialog` (DialogTitle) corrigido com
+  `VisuallyHidden`
+- ✅ Testing agent (iteration_33): 26/26 testes passaram (100% backend
+  + frontend)
+
+
 # LaBrand - Changelog
 
 ## 2026-03-21 - AI Credits Fix + PDF Reports Enhanced

@@ -10,10 +10,12 @@ import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import {
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell, LabelList, Legend,
 } from 'recharts';
 import {
   Flame, Zap, Award, TrendingUp, Target, DollarSign, Heart, Sparkles,
   Trophy, Star, Users, UserCheck, Gamepad2, Loader2, FileDown, RefreshCw,
+  AlertTriangle, Construction, Rocket,
 } from 'lucide-react';
 import { SkeletonCard } from '../components/ui/skeleton-patterns';
 
@@ -469,6 +471,593 @@ function TemporadaTab({ diagnosis, onGenerate, generating, onExportPdf, exportin
   );
 }
 
+// ── Tab 5 — Painel (visual dashboard) ─────────────────────────────────────
+const MATURITY_COLOR = {
+  'Marca em Risco':      '#EF4444',
+  'Marca em Construção': '#F59E0B',
+  'Marca em Movimento':  '#3B82F6',
+  'Marca Viva':          '#10B981',
+};
+const MATURITY_ICON = {
+  'Marca em Risco':      AlertTriangle,
+  'Marca em Construção': Construction,
+  'Marca em Movimento':  Zap,
+  'Marca Viva':          Flame,
+};
+
+function scoreBandColor(v) {
+  if (v < 40) return '#EF4444';
+  if (v < 60) return '#F59E0B';
+  if (v < 80) return '#3B82F6';
+  return '#10B981';
+}
+function maturityBandColor(v) {
+  if (v <= 25) return '#EF4444';
+  if (v <= 50) return '#F59E0B';
+  if (v <= 75) return '#3B82F6';
+  return '#10B981';
+}
+function formatDate(iso) {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  } catch { return '—'; }
+}
+
+// Dark panel card wrapper (inline styles to guarantee dark theme regardless of app theme)
+const PanelCard = ({ className = '', style = {}, children, testId }) => (
+  <div
+    data-testid={testId}
+    className={`rounded-[14px] p-5 md:p-6 ${className}`}
+    style={{
+      background: '#161719',
+      border: '1px solid #1F2124',
+      color: '#F0F0F0',
+      ...style,
+    }}
+  >
+    {children}
+  </div>
+);
+
+const PanelLabel = ({ children }) => (
+  <p className="text-[11px] uppercase tracking-[0.08em]" style={{ color: '#6B7280' }}>{children}</p>
+);
+
+// Dark tooltip for Recharts
+const DarkTooltip = ({ active, payload, label, renderExtra }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div
+      className="rounded-lg px-3 py-2 text-xs shadow-xl"
+      style={{ background: '#0D0E10', border: '1px solid #2A2D31', color: '#F0F0F0' }}
+    >
+      {label && <p className="font-semibold mb-1">{label}</p>}
+      {payload.map((p, i) => (
+        <p key={i} style={{ color: p.color || '#F0F0F0' }}>
+          {p.name}: <span className="font-bold tabular-nums">{p.value}</span>
+        </p>
+      ))}
+      {renderExtra ? renderExtra(payload) : null}
+    </div>
+  );
+};
+
+function PainelTab({ diagnosis, onExportPdf, exporting, onGoDiagnostico, onGenerate, generating }) {
+  if (!diagnosis) {
+    return (
+      <PanelCard testId="painel-empty" className="text-center py-16">
+        <Flame className="h-12 w-12 mx-auto mb-4" style={{ color: '#FF5C00' }} />
+        <h3 className="font-heading text-xl font-bold mb-2">Painel indisponível</h3>
+        <p className="text-sm mb-6" style={{ color: '#6B7280' }}>
+          Salve um diagnóstico para liberar o Painel visual.
+        </p>
+        <Button onClick={onGoDiagnostico} data-testid="painel-cta-diagnostic">
+          Iniciar Diagnóstico
+        </Button>
+      </PanelCard>
+    );
+  }
+
+  const s = diagnosis.scores || {};
+  const plano = diagnosis.plano_endomarketing;
+  const tg = diagnosis.temporada_gamificada;
+  const geral = Math.round(s.geral || 0);
+  const nivel = s.nivel_maturidade || 'Marca em Construção';
+  const NivelIcon = MATURITY_ICON[nivel] || Zap;
+  const nivelColor = MATURITY_COLOR[nivel] || '#F59E0B';
+
+  // Pillar ranking (strongest + weakest)
+  const pilarData = PILLARS.map(p => ({
+    key: p.key,
+    label: p.label,
+    shortLabel: p.label.length > 10 ? p.label.slice(0, 9) + '.' : p.label,
+    icon: p.icon,
+    score: Math.round(s[p.key] || 0),
+    gap: 100 - Math.round(s[p.key] || 0),
+  }));
+  const strongest = [...pilarData].sort((a, b) => b.score - a.score)[0];
+  const weakest = [...pilarData].sort((a, b) => a.score - b.score)[0];
+
+  const StrongIcon = strongest.icon;
+  const WeakIcon = weakest.icon;
+
+  return (
+    <div
+      className="space-y-4"
+      style={{ background: '#0D0E10', padding: '20px', borderRadius: 14 }}
+      data-testid="painel-tab"
+    >
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4" data-testid="painel-header">
+        <div className="space-y-2">
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium"
+            style={{ background: '#1F2124', color: '#FF5C00', border: '1px solid #FF5C0033' }}
+          >
+            <Flame className="h-3 w-3" />
+            Metodologia Sandro Serzedello · Cofundador LaBrand
+          </span>
+          <h2 className="font-heading text-[22px] font-bold" style={{ color: '#F0F0F0' }}>
+            Painel de Endomarketing
+          </h2>
+          <p className="text-xs" style={{ color: '#6B7280' }}>
+            Última análise em {formatDate(diagnosis.updated_at || diagnosis.created_at)}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            onClick={onGoDiagnostico}
+            data-testid="painel-redo-btn"
+            className="gap-2"
+            style={{ color: '#F0F0F0', background: '#161719', border: '1px solid #1F2124' }}
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refazer Diagnóstico
+          </Button>
+          <Button onClick={onExportPdf} disabled={exporting} data-testid="painel-export-pdf" className="gap-2">
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+            Exportar PDF
+          </Button>
+        </div>
+      </div>
+
+      {/* LINHA 1 — 4 STAT CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="painel-stats">
+        {/* Card 1 - Score */}
+        <PanelCard testId="stat-score">
+          <PanelLabel>Score de Maturidade</PanelLabel>
+          <p className="font-heading font-bold leading-none mt-2" style={{ color: '#FFFFFF', fontSize: 52 }}>
+            {geral}
+          </p>
+          <div className="mt-4 h-1 rounded-full overflow-hidden" style={{ background: '#1F2124' }}>
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${geral}%`, background: maturityBandColor(geral) }}
+            />
+          </div>
+        </PanelCard>
+
+        {/* Card 2 - Nivel */}
+        <PanelCard testId="stat-nivel">
+          <PanelLabel>Nível Atual</PanelLabel>
+          <p className="font-heading text-[22px] font-bold mt-2" style={{ color: nivelColor }}>
+            {nivel}
+          </p>
+          <div className="mt-2">
+            <NivelIcon className="h-6 w-6" style={{ color: nivelColor }} />
+          </div>
+        </PanelCard>
+
+        {/* Card 3 - Strongest */}
+        <PanelCard testId="stat-strongest">
+          <PanelLabel>Ponto Forte</PanelLabel>
+          <div className="flex items-center gap-2 mt-2">
+            <StrongIcon className="h-5 w-5" style={{ color: '#10B981' }} />
+            <span className="font-heading text-lg font-bold" style={{ color: '#10B981' }}>
+              {strongest.label}
+            </span>
+          </div>
+          <p className="font-heading font-bold leading-none mt-1" style={{ color: '#10B981', fontSize: 36 }}>
+            {strongest.score}
+          </p>
+          <p className="text-[11px] mt-2" style={{ color: '#6B7280' }}>Aproveite para liderar</p>
+        </PanelCard>
+
+        {/* Card 4 - Weakest */}
+        <PanelCard testId="stat-weakest">
+          <PanelLabel>Maior Oportunidade</PanelLabel>
+          <div className="flex items-center gap-2 mt-2">
+            <WeakIcon className="h-5 w-5" style={{ color: '#FF5C00' }} />
+            <span className="font-heading text-lg font-bold" style={{ color: '#FF5C00' }}>
+              {weakest.label}
+            </span>
+          </div>
+          <p className="font-heading font-bold leading-none mt-1" style={{ color: '#FF5C00', fontSize: 36 }}>
+            {weakest.score}
+          </p>
+          <p className="text-[11px] mt-2" style={{ color: '#6B7280' }}>Priorize este pilar</p>
+        </PanelCard>
+      </div>
+
+      {/* LINHA 2 — RADAR + BARRAS HORIZONTAIS */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Radar */}
+        <PanelCard testId="painel-radar" className="lg:col-span-5">
+          <div className="flex items-center justify-between mb-2">
+            <PanelLabel>Mapa dos 6 Pilares</PanelLabel>
+          </div>
+          <div style={{ width: '100%', height: 320 }}>
+            <ResponsiveContainer>
+              <RadarChart data={pilarData} outerRadius="75%">
+                <PolarGrid stroke="#1F2124" />
+                <PolarAngleAxis
+                  dataKey="label"
+                  tick={{ fill: '#6B7280', fontSize: 11 }}
+                />
+                <PolarRadiusAxis
+                  angle={90}
+                  domain={[0, 100]}
+                  tick={false}
+                  stroke="transparent"
+                />
+                {/* Reference ring at 100 */}
+                <Radar
+                  name="Referência"
+                  dataKey={() => 100}
+                  stroke="#2A2D31"
+                  strokeDasharray="3 3"
+                  fill="#1F2124"
+                  fillOpacity={0.4}
+                />
+                <Radar
+                  name="Score"
+                  dataKey="score"
+                  stroke="#FF5C00"
+                  strokeWidth={2}
+                  fill="#FF5C00"
+                  fillOpacity={0.15}
+                />
+                <Tooltip content={<DarkTooltip />} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </PanelCard>
+
+        {/* Horizontal bars */}
+        <PanelCard testId="painel-bars" className="lg:col-span-7">
+          <PanelLabel>Score por Pilar</PanelLabel>
+          <div style={{ width: '100%', height: 320 }} className="mt-2">
+            <ResponsiveContainer>
+              <BarChart
+                data={pilarData}
+                layout="vertical"
+                margin={{ top: 8, right: 48, left: 8, bottom: 8 }}
+                barCategoryGap={10}
+              >
+                <XAxis type="number" domain={[0, 100]} hide />
+                <YAxis
+                  type="category"
+                  dataKey="label"
+                  width={110}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#6B7280', fontSize: 12 }}
+                />
+                <Tooltip
+                  cursor={{ fill: 'rgba(255,92,0,0.05)' }}
+                  content={(props) => (
+                    <DarkTooltip
+                      {...props}
+                      renderExtra={(payload) => {
+                        const row = payload[0]?.payload;
+                        if (!row) return null;
+                        return <p className="mt-1" style={{ color: '#EF4444' }}>Gap: {row.gap} pts</p>;
+                      }}
+                    />
+                  )}
+                />
+                <Bar
+                  dataKey="score"
+                  background={{ fill: '#1F2124', radius: 4 }}
+                  radius={[4, 4, 4, 4]}
+                >
+                  {pilarData.map((entry, i) => (
+                    <Cell key={i} fill={scoreBandColor(entry.score)} />
+                  ))}
+                  <LabelList
+                    dataKey="score"
+                    position="right"
+                    offset={8}
+                    style={{ fill: '#F0F0F0', fontSize: 12, fontWeight: 700 }}
+                    formatter={(v) => `${v}%`}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-wrap gap-3 mt-2 text-[11px]" style={{ color: '#6B7280' }}>
+            {pilarData.map(p => (
+              <span key={p.key} className="inline-flex items-center gap-1">
+                <span style={{ color: '#EF4444' }}>•</span>
+                {p.shortLabel}: <span className="font-semibold" style={{ color: '#EF4444' }}>gap {p.gap}</span>
+              </span>
+            ))}
+          </div>
+        </PanelCard>
+      </div>
+
+      {/* LINHA 3 — GAP GRAGH + EXECUTIVE */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <PanelCard testId="painel-gap" className="lg:col-span-6">
+          <PanelLabel>Análise de Gaps por Pilar</PanelLabel>
+          <div style={{ width: '100%', height: 300 }} className="mt-2">
+            <ResponsiveContainer>
+              <BarChart
+                data={pilarData}
+                margin={{ top: 8, right: 8, left: -8, bottom: 8 }}
+                barCategoryGap={18}
+              >
+                <CartesianGrid stroke="#1F2124" vertical={false} />
+                <XAxis
+                  dataKey="shortLabel"
+                  axisLine={{ stroke: '#1F2124' }}
+                  tickLine={false}
+                  tick={{ fill: '#6B7280', fontSize: 11 }}
+                />
+                <YAxis
+                  domain={[0, 100]}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#6B7280', fontSize: 11 }}
+                />
+                <Tooltip
+                  cursor={{ fill: 'rgba(255,92,0,0.05)' }}
+                  content={(props) => (
+                    <DarkTooltip
+                      {...props}
+                      renderExtra={(payload) => {
+                        const row = payload[0]?.payload;
+                        if (!row) return null;
+                        return (
+                          <p className="mt-1" style={{ color: '#FF5C00' }}>
+                            +{row.gap} pts disponíveis em {row.label}
+                          </p>
+                        );
+                      }}
+                    />
+                  )}
+                />
+                <Legend
+                  wrapperStyle={{ color: '#6B7280', fontSize: 11 }}
+                  iconType="circle"
+                />
+                <Bar dataKey="score" name="Score Atual" fill="#FF5C00" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="gap"
+                  name="Potencial de Ganho"
+                  fill="#1F2124"
+                  stroke="#2A2D31"
+                  strokeDasharray="3 3"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </PanelCard>
+
+        <PanelCard
+          testId="painel-executive"
+          className="lg:col-span-6"
+          style={{ borderLeft: '3px solid #FF5C00' }}
+        >
+          <PanelLabel>Diagnóstico</PanelLabel>
+          {plano?.diagnostico_executivo ? (
+            <div className="space-y-4 mt-3" style={{ color: '#D1D5DB', fontSize: 14, lineHeight: 1.7 }}>
+              {(plano.diagnostico_executivo || '').split('\n\n').slice(0, 3).map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+            </div>
+          ) : (
+            <div className="py-10 text-center" data-testid="painel-executive-empty">
+              <Sparkles className="h-10 w-10 mx-auto mb-3" style={{ color: '#FF5C00' }} />
+              <p className="text-sm mb-4" style={{ color: '#6B7280' }}>
+                Plano ainda não gerado.
+              </p>
+              <Button onClick={onGenerate} disabled={generating} data-testid="painel-generate-plan">
+                {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                Gerar análise com IA
+              </Button>
+            </div>
+          )}
+        </PanelCard>
+      </div>
+
+      {/* LINHA 4 — TEMPORADA */}
+      {tg ? (
+        <div className="space-y-4" data-testid="painel-temporada">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div className="space-y-1">
+              <PanelLabel>Temporada Gamificada</PanelLabel>
+              <h3 className="font-heading text-xl font-bold" style={{ color: '#FFFFFF' }}>
+                {tg.nome_da_temporada || 'Temporada'}
+              </h3>
+            </div>
+            <span
+              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
+              style={{ background: '#FF5C0020', color: '#FF5C00' }}
+            >
+              {tg.duracao_dias || 90} dias
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Competição */}
+            <PanelCard testId="t-competicao" style={{ borderTop: '2px solid #FF5C00' }}>
+              <div className="flex items-center gap-2 mb-3">
+                <Trophy className="h-4 w-4" style={{ color: '#FF5C00' }} />
+                <span className="font-semibold text-sm" style={{ color: '#F0F0F0' }}>Competição</span>
+              </div>
+              <span
+                className="inline-block px-2 py-0.5 rounded-md text-[11px] font-medium mb-2"
+                style={{ background: '#FF5C0020', color: '#FF5C00' }}
+              >
+                {tg.competicao?.ciclo || 'Ciclo'}
+              </span>
+              <p className="text-xs line-clamp-2 mb-1" style={{ color: '#D1D5DB' }}>
+                {tg.competicao?.criterio || '—'}
+              </p>
+              <p className="text-[11px]" style={{ color: '#6B7280' }}>
+                {tg.competicao?.estrutura_ranking || ''}
+              </p>
+            </PanelCard>
+
+            {/* Palco */}
+            <PanelCard testId="t-palco" style={{ borderTop: '2px solid #F59E0B' }}>
+              <div className="flex items-center gap-2 mb-3">
+                <Star className="h-4 w-4" style={{ color: '#F59E0B' }} />
+                <span className="font-semibold text-sm" style={{ color: '#F0F0F0' }}>Palco</span>
+              </div>
+              <p className="text-xs mb-2" style={{ color: '#D1D5DB' }}>
+                {tg.palco?.ritual_semanal || '—'}
+              </p>
+              {tg.palco?.premio_principal && (
+                <span
+                  className="inline-block px-2 py-0.5 rounded-md text-[11px] font-medium"
+                  style={{ background: '#F59E0B20', color: '#F59E0B' }}
+                >
+                  {tg.palco.premio_principal}
+                </span>
+              )}
+            </PanelCard>
+
+            {/* Comunidade */}
+            <PanelCard testId="t-comunidade" style={{ borderTop: '2px solid #10B981' }}>
+              <div className="flex items-center gap-2 mb-3">
+                <Users className="h-4 w-4" style={{ color: '#10B981' }} />
+                <span className="font-semibold text-sm" style={{ color: '#F0F0F0' }}>Comunidade</span>
+              </div>
+              <p className="font-heading text-base font-bold mb-1" style={{ color: '#10B981' }}>
+                {tg.comunidade?.nome_do_time || '—'}
+              </p>
+              <p className="text-xs" style={{ color: '#D1D5DB' }}>
+                {tg.comunidade?.ritual_de_pertencimento || ''}
+              </p>
+            </PanelCard>
+
+            {/* Pessoas */}
+            <PanelCard testId="t-pessoas" style={{ borderTop: '2px solid #3B82F6' }}>
+              <div className="flex items-center gap-2 mb-3">
+                <UserCheck className="h-4 w-4" style={{ color: '#3B82F6' }} />
+                <span className="font-semibold text-sm" style={{ color: '#F0F0F0' }}>Pessoas</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {(tg.trilhas_de_vitoria || []).slice(0, 3).map((t, i) => {
+                  const palette = ['#3B82F6', '#10B981', '#FF5C00'];
+                  const c = palette[i % palette.length];
+                  return (
+                    <span
+                      key={i}
+                      title={t.trilha}
+                      className="inline-block px-2 py-0.5 rounded-md text-[11px] font-medium cursor-help truncate max-w-full"
+                      style={{ background: `${c}20`, color: c }}
+                    >
+                      {(t.perfil || '').replace(/^(Vendedor|Técnico) /, '')}
+                    </span>
+                  );
+                })}
+              </div>
+            </PanelCard>
+
+            {/* O Game */}
+            <PanelCard testId="t-game" style={{ borderTop: '2px solid #8B5CF6' }}>
+              <div className="flex items-center gap-2 mb-3">
+                <Gamepad2 className="h-4 w-4" style={{ color: '#8B5CF6' }} />
+                <span className="font-semibold text-sm" style={{ color: '#F0F0F0' }}>O Game</span>
+              </div>
+              <div className="flex gap-1 flex-wrap mb-2">
+                {(tg.mecanica_do_game?.niveis || []).slice(0, 4).map((lvl, i) => (
+                  <span
+                    key={i}
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                    style={{
+                      background: `rgba(139, 92, 246, ${0.1 + i * 0.15})`,
+                      color: '#8B5CF6',
+                    }}
+                  >
+                    {lvl.length > 12 ? lvl.slice(0, 11) + '…' : lvl}
+                  </span>
+                ))}
+              </div>
+              <p className="text-xs" style={{ color: '#D1D5DB' }}>
+                {(tg.mecanica_do_game?.missoes_semanais || []).length} missões semanais
+              </p>
+            </PanelCard>
+          </div>
+
+          {/* LINHA 5 — TIMELINE */}
+          <PanelCard testId="painel-timeline">
+            <PanelLabel>Cronograma da Temporada</PanelLabel>
+            <div className="mt-6 relative">
+              {/* connecting line */}
+              <div
+                className="hidden md:block absolute left-[10%] right-[10%] h-[2px]"
+                style={{
+                  top: 24,
+                  background: 'linear-gradient(90deg, #FF5C00 0%, #FF5C0080 50%, #161719 100%)',
+                }}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+                {[
+                  { icon: Rocket,    title: 'Abertura',     desc: tg.cronograma?.abertura     },
+                  { icon: RefreshCw, title: 'Checkpoints',  desc: tg.cronograma?.checkpoints  },
+                  { icon: Trophy,    title: 'Encerramento', desc: tg.cronograma?.encerramento },
+                ].map((m, i) => {
+                  const Icon = m.icon;
+                  return (
+                    <div key={i} className="flex flex-col items-center text-center px-2" data-testid={`timeline-${i}`}>
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center mb-3 relative z-10"
+                        style={{
+                          background: '#161719',
+                          border: '2px solid #FF5C00',
+                          boxShadow: '0 0 18px #FF5C0040',
+                        }}
+                      >
+                        <Icon className="h-5 w-5" style={{ color: '#FF5C00' }} />
+                      </div>
+                      <p className="font-heading text-[13px] font-bold" style={{ color: '#F0F0F0' }}>
+                        {m.title}
+                      </p>
+                      <p className="text-xs mt-1 line-clamp-2 max-w-[260px]" style={{ color: '#6B7280' }}>
+                        {m.desc || '—'}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </PanelCard>
+        </div>
+      ) : (
+        <PanelCard testId="painel-temporada-empty" className="text-center py-10">
+          <Trophy className="h-10 w-10 mx-auto mb-3" style={{ color: '#FF5C00' }} />
+          <p className="text-sm mb-4" style={{ color: '#6B7280' }}>
+            Temporada gamificada ainda não gerada.
+          </p>
+          <Button onClick={onGenerate} disabled={generating} data-testid="painel-generate-temporada">
+            {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+            Gerar Temporada com IA
+          </Button>
+        </PanelCard>
+      )}
+    </div>
+  );
+}
+
+
+
 // ── Page ─────────────────────────────────────────────────────────────────
 export default function Endomarketing() {
   const { currentBrand } = useBrand();
@@ -588,6 +1177,7 @@ export default function Endomarketing() {
           <TabsTrigger value="score" data-testid="tab-score" disabled={!diagnosis}>Score</TabsTrigger>
           <TabsTrigger value="plano" data-testid="tab-plano" disabled={!diagnosis}>Plano</TabsTrigger>
           <TabsTrigger value="temporada" data-testid="tab-temporada" disabled={!diagnosis}>Temporada</TabsTrigger>
+          <TabsTrigger value="painel" data-testid="tab-painel" disabled={!diagnosis}>Painel</TabsTrigger>
         </TabsList>
 
         <TabsContent value="diagnostico">
@@ -614,6 +1204,19 @@ export default function Endomarketing() {
 
         <TabsContent value="temporada">
           {loading ? <SkeletonCard lines={4} /> : <TemporadaTab diagnosis={diagnosis} onGenerate={handleGenerate} generating={generating} onExportPdf={handleExportPdf} exporting={exporting} />}
+        </TabsContent>
+
+        <TabsContent value="painel">
+          {loading ? <SkeletonCard lines={4} /> : (
+            <PainelTab
+              diagnosis={diagnosis}
+              onExportPdf={handleExportPdf}
+              exporting={exporting}
+              onGoDiagnostico={() => setActiveTab('diagnostico')}
+              onGenerate={handleGenerate}
+              generating={generating}
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>
