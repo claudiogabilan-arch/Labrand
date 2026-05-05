@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { toast } from 'sonner';
 import { ClipboardCheck, Plus, X, Loader2, CheckCircle2, XCircle, Clock, Target, Lightbulb, BarChart3 } from 'lucide-react';
+import { EmptyState } from '../components/EmptyState';
 
 const statusConfig = {
   pending: { label: 'Pendente', color: 'bg-amber-100 text-amber-700', icon: Clock },
@@ -398,16 +399,17 @@ export const Scorecard = () => {
         })}
 
         {decisions.length === 0 && (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <ClipboardCheck className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Nenhuma decisão registrada ainda</p>
-              <Button variant="outline" className="mt-4" onClick={() => setDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Registrar primeira decisão
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={ClipboardCheck}
+            title="Documente decisões estratégicas"
+            description="Registre hipóteses, evidências e impacto. Toda decisão de marca vira aprendizado para a próxima."
+            primaryAction={{
+              label: 'Registrar primeira decisão',
+              icon: Plus,
+              onClick: () => setDialogOpen(true),
+            }}
+            testId="scorecard-empty"
+          />
         )}
       </div>
     </div>

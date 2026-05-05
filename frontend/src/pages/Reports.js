@@ -17,6 +17,7 @@ import {
   Loader2, Target
 } from 'lucide-react';
 import { SkeletonList } from '../components/ui/skeleton-patterns';
+import { EmptyState } from '../components/EmptyState';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -451,9 +452,18 @@ export const Reports = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhum relatório gerado ainda. Vá até a aba "Gerar Relatório" para criar o primeiro.
-                </p>
+                <EmptyState
+                  icon={FileText}
+                  title="Nenhum relatório gerado ainda"
+                  description="Vá até a aba 'Gerar Relatório' para criar o primeiro PDF executivo."
+                  primaryAction={{
+                    label: 'Gerar relatório',
+                    icon: FileText,
+                    onClick: () => setActiveTab('generate'),
+                  }}
+                  testId="reports-empty"
+                  bordered={false}
+                />
               )}
             </CardContent>
           </Card>

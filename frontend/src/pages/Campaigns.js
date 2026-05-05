@@ -15,8 +15,9 @@ import {
   Calendar as CalendarIcon, Plus, DollarSign, Target, Clock, Edit,
   Trash2, ChevronLeft, ChevronRight, Loader2, Save, X, Link2,
   Heart, MessageCircle, Eye, Share2, ExternalLink, Unlink, Instagram,
-  Facebook, Linkedin, Youtube, Music
+  Facebook, Linkedin, Youtube, Music, Megaphone
 } from 'lucide-react';
+import { EmptyState } from '../components/EmptyState';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -351,7 +352,18 @@ export const Campaigns = () => {
               {isLoading ? (
                 <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
               ) : campaigns.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">Nenhuma campanha cadastrada.</p>
+                <EmptyState
+                  icon={Megaphone}
+                  title="Gerencie suas campanhas em um só lugar"
+                  description="Conecte campanhas aos pilares da marca e meça consistência ao longo do tempo."
+                  primaryAction={{
+                    label: 'Criar primeira campanha',
+                    icon: Plus,
+                    onClick: () => { setShowForm(true); setEditingCampaign(null); },
+                  }}
+                  testId="campaigns-empty"
+                  bordered={false}
+                />
               ) : (
                 <div className="space-y-3">
                   {campaigns.map(campaign => {

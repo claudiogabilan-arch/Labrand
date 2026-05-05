@@ -16,6 +16,7 @@ import {
   ExternalLink, RefreshCw
 } from 'lucide-react';
 import axios from 'axios';
+import { EmptyState } from '../components/EmptyState';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -644,12 +645,27 @@ export const Planning = () => {
       )}
 
       {/* Gantt View */}
-      {viewMode === 'gantt' && (
+      {viewMode === 'gantt' && tasks.length > 0 && (
         <GanttChart tasks={tasks} onStatusChange={handleStatusChange} />
       )}
 
+      {/* Empty State (above kanban/gantt when no tasks) */}
+      {tasks.length === 0 && (
+        <EmptyState
+          icon={ListTodo}
+          title="Organize o trabalho da marca"
+          description="Tarefas e roadmap conectados aos pilares. Nada de planilha solta."
+          primaryAction={{
+            label: 'Criar primeira tarefa',
+            icon: Plus,
+            onClick: () => setDialogOpen(true),
+          }}
+          testId="planning-empty"
+        />
+      )}
+
       {/* Kanban Board */}
-      {viewMode === 'kanban' && (
+      {viewMode === 'kanban' && tasks.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {Object.entries(statusConfig).map(([status, config]) => {
             const StatusIcon = config.icon;

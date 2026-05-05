@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { toast } from 'sonner';
 import { BookOpen, Plus, X, Loader2, Clock, FileText, Scroll, Heart, Eye, Target, Calendar } from 'lucide-react';
+import { EmptyState } from '../components/EmptyState';
 
 export const Narratives = () => {
   const { currentBrand, fetchNarratives, createNarrative, updateNarrative } = useBrand();
@@ -295,6 +296,21 @@ export const Narratives = () => {
           <TabsTrigger value="contos">Contos & Histórias</TabsTrigger>
         </TabsList>
 
+        {narratives.length === 0 && (
+          <EmptyState
+            icon={BookOpen}
+            title="Construa narrativas que conectam"
+            description="Manifestos, missão, visão. A história da marca em um só lugar, pronta para virar comunicação."
+            primaryAction={{
+              label: 'Criar primeira narrativa',
+              icon: Plus,
+              onClick: () => setDialogOpen(true),
+            }}
+            testId="narratives-empty"
+          />
+        )}
+
+        {narratives.length > 0 && (<>
         <TabsContent value="manifesto" className="space-y-6">
           {manifesto ? (
             <Card className="border-2 border-primary/20">
@@ -434,6 +450,7 @@ export const Narratives = () => {
             </Card>
           )}
         </TabsContent>
+        </>)}
       </Tabs>
     </div>
   );

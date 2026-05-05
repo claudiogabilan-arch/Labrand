@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { MapPin, Plus, Users, Edit2, Clock } from 'lucide-react';
 import axios from 'axios';
 import { SkeletonCard, SkeletonList } from '../components/ui/skeleton-patterns';
+import { EmptyState } from '../components/EmptyState';
 
 import GuidanceAlert from '../components/touchpoints/GuidanceAlert';
 import TouchpointForm from '../components/touchpoints/TouchpointForm';
@@ -320,20 +321,21 @@ export default function Touchpoints() {
 
       {/* Empty State */}
       {touchpoints.length === 0 && (
-        <Card className="border-dashed">
-          <CardContent className="py-12">
-            <div className="text-center space-y-4">
-              <MapPin className="h-12 w-12 mx-auto text-muted-foreground" />
-              <div>
-                <h3 className="font-semibold text-lg">Nenhum touchpoint cadastrado</h3>
-                <p className="text-muted-foreground">Comece mapeando os pontos de contato da sua marca com os clientes</p>
-              </div>
-              <Button onClick={() => setDialogOpen(true)} data-testid="create-first-tp-btn">
-                <Plus className="h-4 w-4 mr-2" /> Criar Primeiro Touchpoint
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={MapPin}
+          title="Mapeie a jornada do seu cliente"
+          description="Touchpoints são todos os pontos de contato entre a marca e o público. Mapeá-los revela atritos e oportunidades invisíveis."
+          primaryAction={{
+            label: 'Adicionar primeiro touchpoint',
+            icon: Plus,
+            onClick: () => setDialogOpen(true),
+          }}
+          secondaryAction={{
+            label: 'Ver exemplo',
+            href: '/academy?topic=touchpoints',
+          }}
+          testId="touchpoints-empty"
+        />
       )}
     </div>
   );

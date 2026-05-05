@@ -76,6 +76,12 @@ Ferramenta interna de gestao de marcas para agencia de branding.
 - [x] Narratives.js: nao integrado (fluxo CRUD com saves imediatos via dialog, nao se aplica debounce)
 - Testado: PillarStart e BrandWay via Playwright (digitacao -> 2s -> "Salvo agora" verde + persistencia confirmada)
 
+### Fase 18 - Empty States (Concluido - 05/05/2026)
+- [x] `components/EmptyState.js` — componente reutilizavel (icone em circulo tinted secondary, h-xl heading, descricao max-w-md, primary + secondary CTA, modo bordered/borderless)
+- [x] Aplicado em 6 telas: Touchpoints, Campaigns, Planning, Scorecard, Narratives, Reports (historico)
+- [x] Substituidos placeholders genericos "Nenhum X cadastrado" por copy de valor + CTA primario que abre modal/troca tab
+- Testado: 4/6 empty states visiveis em smoke test (admin tem campaigns/reports; gating gating verificado via API)
+
 ---
 
 ## Backlog Priorizado
