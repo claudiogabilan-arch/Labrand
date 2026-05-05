@@ -505,19 +505,68 @@ function formatDate(iso) {
 }
 
 // Dark panel card wrapper (inline styles to guarantee dark theme regardless of app theme)
+const CARD_BASE_STYLE = {
+  background: '#1C1F26',
+  border: '1px solid rgba(255,255,255,0.07)',
+  borderRadius: 16,
+  boxShadow: '0 4px 24px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.12)',
+  color: '#F0F0F0',
+};
+
 const PanelCard = ({ className = '', style = {}, children, testId }) => (
   <div
     data-testid={testId}
-    className={`rounded-[14px] p-5 md:p-6 ${className}`}
+    className={`p-5 md:p-6 ${className}`}
+    style={{ ...CARD_BASE_STYLE, ...style }}
+  >
+    {children}
+  </div>
+);
+
+const StatCard = ({ testId, borderTopColor, children, style = {} }) => (
+  <div
+    data-testid={testId}
+    className="p-5 md:p-6"
     style={{
-      background: '#161719',
-      border: '1px solid #1F2124',
+      background: 'linear-gradient(135deg, #1C1F26 0%, #22252E 100%)',
+      border: '1px solid rgba(255,255,255,0.07)',
+      borderTop: `2px solid ${borderTopColor}`,
+      borderRadius: 16,
+      boxShadow: '0 4px 24px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.12)',
       color: '#F0F0F0',
       ...style,
     }}
   >
     {children}
   </div>
+);
+
+const ChartCard = ({ testId, className = '', style = {}, children }) => (
+  <div
+    data-testid={testId}
+    className={`p-5 md:p-6 ${className}`}
+    style={{
+      background: 'linear-gradient(145deg, #1C1F26 0%, #1F2330 100%)',
+      border: '1px solid rgba(255,255,255,0.07)',
+      borderRadius: 16,
+      boxShadow: '0 4px 24px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.12)',
+      color: '#F0F0F0',
+      ...style,
+    }}
+  >
+    {children}
+  </div>
+);
+
+// Section label between rows (uses platform muted tone over light bg)
+const SectionLabel = ({ children, testId }) => (
+  <p
+    data-testid={testId}
+    className="text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground"
+    style={{ margin: '24px 0 12px 4px' }}
+  >
+    {children}
+  </p>
 );
 
 const PanelLabel = ({ children }) => (
@@ -583,11 +632,7 @@ function PainelTab({ diagnosis, onExportPdf, exporting, onGoDiagnostico, onGener
   const WeakIcon = weakest.icon;
 
   return (
-    <div
-      className="space-y-4"
-      style={{ background: '#0D0E10', padding: '20px', borderRadius: 14 }}
-      data-testid="painel-tab"
-    >
+    <div className="space-y-4" data-testid="painel-tab">
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4" data-testid="painel-header">
         <div className="space-y-2">
@@ -598,10 +643,10 @@ function PainelTab({ diagnosis, onExportPdf, exporting, onGoDiagnostico, onGener
             <Flame className="h-3 w-3" />
             Metodologia Sandro Serzedello · Cofundador LaBrand
           </span>
-          <h2 className="font-heading text-[22px] font-bold" style={{ color: '#F0F0F0' }}>
+          <h2 className="font-heading text-[22px] font-bold text-foreground">
             Painel de Endomarketing
           </h2>
-          <p className="text-xs" style={{ color: '#6B7280' }}>
+          <p className="text-xs text-muted-foreground">
             Última análise em {formatDate(diagnosis.updated_at || diagnosis.created_at)}
           </p>
         </div>
@@ -611,7 +656,6 @@ function PainelTab({ diagnosis, onExportPdf, exporting, onGoDiagnostico, onGener
             onClick={onGoDiagnostico}
             data-testid="painel-redo-btn"
             className="gap-2"
-            style={{ color: '#F0F0F0', background: '#161719', border: '1px solid #1F2124' }}
           >
             <RefreshCw className="h-4 w-4" />
             Refazer Diagnóstico
@@ -624,9 +668,10 @@ function PainelTab({ diagnosis, onExportPdf, exporting, onGoDiagnostico, onGener
       </div>
 
       {/* LINHA 1 — 4 STAT CARDS */}
+      <SectionLabel testId="section-overview">Visão Geral</SectionLabel>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="painel-stats">
         {/* Card 1 - Score */}
-        <PanelCard testId="stat-score">
+        <StatCard testId="stat-score" borderTopColor="#FF5C00">
           <PanelLabel>Score de Maturidade</PanelLabel>
           <p className="font-heading font-bold leading-none mt-2" style={{ color: '#FFFFFF', fontSize: 52 }}>
             {geral}
@@ -637,10 +682,10 @@ function PainelTab({ diagnosis, onExportPdf, exporting, onGoDiagnostico, onGener
               style={{ width: `${geral}%`, background: maturityBandColor(geral) }}
             />
           </div>
-        </PanelCard>
+        </StatCard>
 
         {/* Card 2 - Nivel */}
-        <PanelCard testId="stat-nivel">
+        <StatCard testId="stat-nivel" borderTopColor={nivelColor}>
           <PanelLabel>Nível Atual</PanelLabel>
           <p className="font-heading text-[22px] font-bold mt-2" style={{ color: nivelColor }}>
             {nivel}
@@ -648,10 +693,10 @@ function PainelTab({ diagnosis, onExportPdf, exporting, onGoDiagnostico, onGener
           <div className="mt-2">
             <NivelIcon className="h-6 w-6" style={{ color: nivelColor }} />
           </div>
-        </PanelCard>
+        </StatCard>
 
         {/* Card 3 - Strongest */}
-        <PanelCard testId="stat-strongest">
+        <StatCard testId="stat-strongest" borderTopColor="#10B981">
           <PanelLabel>Ponto Forte</PanelLabel>
           <div className="flex items-center gap-2 mt-2">
             <StrongIcon className="h-5 w-5" style={{ color: '#10B981' }} />
@@ -663,10 +708,10 @@ function PainelTab({ diagnosis, onExportPdf, exporting, onGoDiagnostico, onGener
             {strongest.score}
           </p>
           <p className="text-[11px] mt-2" style={{ color: '#6B7280' }}>Aproveite para liderar</p>
-        </PanelCard>
+        </StatCard>
 
         {/* Card 4 - Weakest */}
-        <PanelCard testId="stat-weakest">
+        <StatCard testId="stat-weakest" borderTopColor="#FF5C00">
           <PanelLabel>Maior Oportunidade</PanelLabel>
           <div className="flex items-center gap-2 mt-2">
             <WeakIcon className="h-5 w-5" style={{ color: '#FF5C00' }} />
@@ -678,13 +723,14 @@ function PainelTab({ diagnosis, onExportPdf, exporting, onGoDiagnostico, onGener
             {weakest.score}
           </p>
           <p className="text-[11px] mt-2" style={{ color: '#6B7280' }}>Priorize este pilar</p>
-        </PanelCard>
+        </StatCard>
       </div>
 
       {/* LINHA 2 — RADAR + BARRAS HORIZONTAIS */}
+      <SectionLabel testId="section-mapa">Mapa dos Pilares</SectionLabel>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Radar */}
-        <PanelCard testId="painel-radar" className="lg:col-span-5">
+        <ChartCard testId="painel-radar" className="lg:col-span-5">
           <div className="flex items-center justify-between mb-2">
             <PanelLabel>Mapa dos 6 Pilares</PanelLabel>
           </div>
@@ -723,10 +769,10 @@ function PainelTab({ diagnosis, onExportPdf, exporting, onGoDiagnostico, onGener
               </RadarChart>
             </ResponsiveContainer>
           </div>
-        </PanelCard>
+        </ChartCard>
 
         {/* Horizontal bars */}
-        <PanelCard testId="painel-bars" className="lg:col-span-7">
+        <ChartCard testId="painel-bars" className="lg:col-span-7">
           <PanelLabel>Score por Pilar</PanelLabel>
           <div style={{ width: '100%', height: 320 }} className="mt-2">
             <ResponsiveContainer>
@@ -785,12 +831,13 @@ function PainelTab({ diagnosis, onExportPdf, exporting, onGoDiagnostico, onGener
               </span>
             ))}
           </div>
-        </PanelCard>
+        </ChartCard>
       </div>
 
       {/* LINHA 3 — GAP GRAGH + EXECUTIVE */}
+      <SectionLabel testId="section-gaps">Análise de Gaps</SectionLabel>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <PanelCard testId="painel-gap" className="lg:col-span-6">
+        <ChartCard testId="painel-gap" className="lg:col-span-6">
           <PanelLabel>Análise de Gaps por Pilar</PanelLabel>
           <div style={{ width: '100%', height: 300 }} className="mt-2">
             <ResponsiveContainer>
@@ -845,7 +892,7 @@ function PainelTab({ diagnosis, onExportPdf, exporting, onGoDiagnostico, onGener
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </PanelCard>
+        </ChartCard>
 
         <PanelCard
           testId="painel-executive"
@@ -875,12 +922,13 @@ function PainelTab({ diagnosis, onExportPdf, exporting, onGoDiagnostico, onGener
       </div>
 
       {/* LINHA 4 — TEMPORADA */}
+      <SectionLabel testId="section-temporada">Temporada</SectionLabel>
       {tg ? (
         <div className="space-y-4" data-testid="painel-temporada">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <div className="space-y-1">
               <PanelLabel>Temporada Gamificada</PanelLabel>
-              <h3 className="font-heading text-xl font-bold" style={{ color: '#FFFFFF' }}>
+              <h3 className="font-heading text-xl font-bold text-foreground">
                 {tg.nome_da_temporada || 'Temporada'}
               </h3>
             </div>
