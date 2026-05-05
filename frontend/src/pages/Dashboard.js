@@ -55,13 +55,13 @@ function timeAgo(dateStr) {
 }
 
 const pillarInfo = [
-  { key: 'start', name: 'Start', icon: Target, color: 'bg-blue-500', href: '/pillars/start', description: 'Diagnóstico inicial e cenários' },
-  { key: 'values', name: 'Valores', icon: Heart, color: 'bg-rose-500', href: '/pillars/values', description: 'Valores e necessidades' },
-  { key: 'purpose', name: 'Propósito', icon: Compass, color: 'bg-amber-500', href: '/pillars/purpose', description: 'Declaração de propósito' },
-  { key: 'promise', name: 'Promessa', icon: Star, color: 'bg-purple-500', href: '/pillars/promise', description: 'Promessa da marca' },
-  { key: 'positioning', name: 'Posicionamento', icon: Crosshair, color: 'bg-emerald-500', href: '/pillars/positioning', description: 'Posição no mercado' },
-  { key: 'personality', name: 'Personalidade', icon: Users, color: 'bg-orange-500', href: '/pillars/personality', description: 'Arquétipos e atributos' },
-  { key: 'universality', name: 'Universal', icon: Globe, color: 'bg-cyan-500', href: '/pillars/universality', description: 'Acessibilidade e inclusão' },
+  { key: 'start', name: 'Start', icon: Target, color: 'bg-[hsl(var(--chart-1))]', href: '/pillars/start', description: 'Diagnóstico inicial e cenários' },
+  { key: 'values', name: 'Valores', icon: Heart, color: 'bg-[hsl(var(--chart-2))]', href: '/pillars/values', description: 'Valores e necessidades' },
+  { key: 'purpose', name: 'Propósito', icon: Compass, color: 'bg-[hsl(var(--chart-3))]', href: '/pillars/purpose', description: 'Declaração de propósito' },
+  { key: 'promise', name: 'Promessa', icon: Star, color: 'bg-[hsl(var(--chart-4))]', href: '/pillars/promise', description: 'Promessa da marca' },
+  { key: 'positioning', name: 'Posicionamento', icon: Crosshair, color: 'bg-[hsl(var(--chart-5))]', href: '/pillars/positioning', description: 'Posição no mercado' },
+  { key: 'personality', name: 'Personalidade', icon: Users, color: 'bg-[hsl(var(--secondary))]', href: '/pillars/personality', description: 'Arquétipos e atributos' },
+  { key: 'universality', name: 'Universal', icon: Globe, color: 'bg-[hsl(var(--muted-foreground))]', href: '/pillars/universality', description: 'Acessibilidade e inclusão' },
 ];
 
 export const Dashboard = () => {
