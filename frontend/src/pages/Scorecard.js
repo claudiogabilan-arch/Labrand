@@ -43,6 +43,13 @@ export const Scorecard = () => {
     }
   }, [currentBrand?.brand_id]);
 
+  // Open create dialog on `c` shortcut or palette quick-action
+  useEffect(() => {
+    const handler = () => setDialogOpen(true);
+    window.addEventListener('shortcut:create', handler);
+    return () => window.removeEventListener('shortcut:create', handler);
+  }, []);
+
   const loadDecisions = async () => {
     setIsLoading(true);
     try {

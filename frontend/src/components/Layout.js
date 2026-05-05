@@ -72,6 +72,9 @@ import {
   Clock,
 } from 'lucide-react';
 import axios from 'axios';
+import { CommandPalette } from './CommandPalette';
+import { ShortcutsCheatsheet } from './ShortcutsCheatsheet';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
 // Try to use WhiteLabelContext (safe fallback if not available)
 let useWhiteLabel;
@@ -415,6 +418,11 @@ export const Header = ({ collapsed }) => {
   const notifRef = useRef(null);
   const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+  // Allow MainLayout to register an opener for the palette
+  const openPalette = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('palette:open'));
+  }, []);
+
   const fetchNotifications = useCallback(async () => {
     if (!token) return;
     try {
@@ -519,6 +527,21 @@ export const Header = ({ collapsed }) => {
 
         {/* Notifications + User Menu */}
         <div className="flex items-center gap-2">
+          {/* ⌘K palette trigger */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden md:inline-flex h-9 px-2.5 gap-2 text-muted-foreground hover:text-foreground"
+            onClick={openPalette}
+            data-testid="palette-trigger"
+            title="Abrir palette (⌘K)"
+          >
+            <span className="text-xs">Buscar…</span>
+            <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-border bg-muted text-[10px] font-mono text-muted-foreground">
+              ⌘K
+            </kbd>
+          </Button>
+
           {/* Notification Bell */}
           <div className="relative" ref={notifRef}>
             <Button
@@ -619,14 +642,31 @@ export const Header = ({ collapsed }) => {
 
 export const MainLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
   const { currentBrand, brands, setCurrentBrand, fetchMetrics } = useBrand();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (currentBrand?.brand_id) {
       fetchMetrics(currentBrand.brand_id);
     }
   }, [currentBrand?.brand_id, fetchMetrics]);
+
+  // Listen for header button click (it dispatches a custom event so the
+  // Header component does not need to lift state through prop drilling)
+  useEffect(() => {
+    const opener = () => setPaletteOpen(o => !o);
+    window.addEventListener('palette:open', opener);
+    return () => window.removeEventListener('palette:open', opener);
+  }, []);
+
+  useKeyboardShortcuts({
+    onPaletteOpen: () => setPaletteOpen(o => !o),
+    onShortcutsOpen: () => setCheatsheetOpen(true),
+    navigate,
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -643,6 +683,8 @@ export const MainLayout = ({ children }) => {
           {children}
         </div>
       </main>
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <ShortcutsCheatsheet open={cheatsheetOpen} onOpenChange={setCheatsheetOpen} />
     </div>
   );
 };

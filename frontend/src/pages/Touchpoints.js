@@ -59,6 +59,13 @@ export default function Touchpoints() {
   useEffect(() => { if (currentBrand) loadData(); }, [currentBrand, selectedPersona]);
   useEffect(() => { loadOfflineTypes(); }, []);
 
+  // Open create modal on `c` shortcut or palette quick-action
+  useEffect(() => {
+    const handler = () => setDialogOpen(true);
+    window.addEventListener('shortcut:create', handler);
+    return () => window.removeEventListener('shortcut:create', handler);
+  }, []);
+
   const loadOfflineTypes = async () => {
     try {
       const res = await axios.get(`${API}/touchpoints/offline-types`, { headers: { Authorization: `Bearer ${token}` } });

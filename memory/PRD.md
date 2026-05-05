@@ -82,6 +82,14 @@ Ferramenta interna de gestao de marcas para agencia de branding.
 - [x] Substituidos placeholders genericos "Nenhum X cadastrado" por copy de valor + CTA primario que abre modal/troca tab
 - Testado: 4/6 empty states visiveis em smoke test (admin tem campaigns/reports; gating gating verificado via API)
 
+### Fase 19 - Command Palette + Atalhos Globais (Concluido - 05/05/2026)
+- [x] `components/CommandPalette.js` — CommandDialog (cmdk) com 3 grupos: Trocar de marca, Ir para pagina (agrupado por secao do sidebar com 40+ paginas), Acoes rapidas (criar marca/tarefa/decisao/touchpoint/campanha, gerar relatorio, ver historico, configuracoes)
+- [x] `hooks/useKeyboardShortcuts.js` — Cmd+K toggle palette, Shift+? cheatsheet, combos vim-style "g d/m/s/p/r/t" (timeout 1s), tecla 'c' contextual via window event 'shortcut:create'. Skipa entrada em input/textarea/contentEditable (excecao Cmd+K)
+- [x] `components/ShortcutsCheatsheet.js` — Dialog com 3 secoes (Navegacao/Acoes/Edicao), grid 2 colunas, kbd tags estilizadas, conectores "depois" para combos
+- [x] Layout.js: monta palette + cheatsheet + listener global; botao "Buscar... ⌘K" no header (md:inline-flex)
+- [x] Touchpoints/Campaigns/Planning/Scorecard: listener `shortcut:create` abre modal de criacao
+- Testado: Playwright validou Cmd+K abre palette, Esc fecha, g d navega, ? abre cheatsheet, c em Touchpoints abre dialog
+
 ---
 
 ## Backlog Priorizado

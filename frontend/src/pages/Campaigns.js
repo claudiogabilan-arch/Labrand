@@ -75,6 +75,13 @@ export const Campaigns = () => {
 
   useEffect(() => { loadCampaigns(); }, [loadCampaigns]);
 
+  // Open create form on `c` shortcut or palette quick-action
+  useEffect(() => {
+    const handler = () => { setShowForm(true); setEditingCampaign(null); };
+    window.addEventListener('shortcut:create', handler);
+    return () => window.removeEventListener('shortcut:create', handler);
+  }, []);
+
   const handleSubmit = async () => {
     if (!formData.title || !formData.start_date || !formData.end_date) {
       toast.error('Preencha os campos obrigatórios');
