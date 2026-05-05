@@ -68,6 +68,7 @@ import BrandJourney from "./pages/BrandJourney";
 import BrandValuation from "./pages/BrandValuation";
 import BrandArchitecture from "./pages/BrandArchitecture";
 import BrandHistory from "./pages/BrandHistory";
+import BrandCompare from "./pages/BrandCompare";
 import { PermissionProvider } from "./contexts/PermissionContext";
 import { WhiteLabelProvider } from "./contexts/WhiteLabelContext";
 import "./App.css";
@@ -177,6 +178,7 @@ function AppRouter() {
       <Route path="/academy" element={<AppPage><Academy /></AppPage>} />
       <Route path="/collaboration" element={<AppPage><Collaboration /></AppPage>} />
       <Route path="/history" element={<AppPage><BrandHistory /></AppPage>} />
+      <Route path="/compare" element={<AppPage><BrandCompare /></AppPage>} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

@@ -98,6 +98,15 @@ Ferramenta interna de gestao de marcas para agencia de branding.
 - [x] Frequencia (off/daily/weekly), silenciar tipos (4 checkboxes), silenciar marcas (lista de brands)
 - Testado: Curl validou todos endpoints (grouped, prefs GET/PUT, send-digests); Playwright validou painel agrupado, toggle de view, navegacao para settings, persistencia (`weekly_persisted: 1`)
 
+### Fase 21 - Comparar Marcas Lado a Lado (Concluido - 05/05/2026)
+- [x] Backend: `GET /api/brands/{id}/compare-snapshot` — retorno plano com brand identity, metrics (overall_completion, brand_strength, bvs_score, valuation), pillars (label/progress/summary com fallback iso-aware), counts (touchpoints/campaigns/decisions), last_updated
+- [x] Frontend: `pages/BrandCompare.js` — header, 2 BrandPickers (com auto-disable da marca selecionada do outro lado), empty state, IdentityCard, ScoreCard com trend ▲/▼, PillarsTable em grid 7 linhas, MetricsRow operacional, PurposeDiff em Times Italic com border-l-2 secondary
+- [x] Deep-link `?a=brand_id&b=brand_id` para pre-selecao via Cmd+K
+- [x] Layout: item "Comparar Marcas" (icon GitCompareArrows) na secao INTELIGÊNCIA
+- [x] CommandPalette: novo grupo "Comparar marcas" + entrada "/compare" no registry de paginas
+- [x] Mobile responsivo (md:grid-cols-2 → empilha em <md)
+- Testado: Curl validou snapshot retornando 7 pillars com summary; Playwright validou empty state, deep-link com 2 cards/scores/7 pillar rows/purpose diff, sidebar ativo, Cmd+K mostra opcao "Comparar com Sandro Serzedello"
+
 ---
 
 ## Backlog Priorizado

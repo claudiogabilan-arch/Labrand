@@ -12,7 +12,7 @@ import {
   BarChart3, Volume2, Bell, Crosshair, Filter, MapPin, Route, Calendar,
   ClipboardList, Check, TrendingUp, FlaskConical, DollarSign, FileText,
   Briefcase, Crown, UserCheck, Globe, Megaphone, Plug, HeartHandshake,
-  GraduationCap, MessageSquare, Wrench, Star, Settings, Plus, Clock,
+  GraduationCap, MessageSquare, Wrench, Star, Settings, Plus, Clock, GitCompareArrows,
 } from 'lucide-react';
 
 /**
@@ -58,6 +58,7 @@ const PAGES = [
   // Inteligência
   { group: 'Inteligência', name: 'Dashboard Executivo', href: '/executive',   icon: Briefcase },
   { group: 'Inteligência', name: 'Dashboard Intel',  href: '/intelligence',   icon: Crown },
+  { group: 'Inteligência', name: 'Comparar Marcas',  href: '/compare',        icon: GitCompareArrows },
   { group: 'Inteligência', name: 'Audiência',        href: '/audience',       icon: UserCheck },
   { group: 'Inteligência', name: 'Google Analytics', href: '/google-integration', icon: Globe },
   { group: 'Inteligência', name: 'Ads',              href: '/ads',            icon: Megaphone },
@@ -165,6 +166,23 @@ export function CommandPalette({ open, onOpenChange }) {
         ))}
 
         <CommandSeparator />
+
+        {/* Compare quick-actions: "Comparar [Marca atual] com [outra]" */}
+        {currentBrand && brands && brands.length > 1 && (
+          <CommandGroup heading="Comparar marcas">
+            {brands.filter(b => b.brand_id !== currentBrand.brand_id).map(other => (
+              <CommandItem
+                key={`cmp-${other.brand_id}`}
+                value={`comparar ${other.name}`}
+                onSelect={handleSelect(() => navigate(`/compare?a=${currentBrand.brand_id}&b=${other.brand_id}`))}
+                data-testid={`palette-compare-${other.brand_id}`}
+              >
+                <GitCompareArrows className="text-muted-foreground" />
+                <span>Comparar com {other.name}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
 
         <CommandGroup heading="Ações rápidas">
           {QUICK_ACTIONS.map(action => {

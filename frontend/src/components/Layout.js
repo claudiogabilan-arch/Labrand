@@ -70,6 +70,7 @@ import {
   MessageSquare,
   ShieldCheck,
   Clock,
+  GitCompareArrows,
 } from 'lucide-react';
 import axios from 'axios';
 import { CommandPalette } from './CommandPalette';
@@ -154,6 +155,7 @@ const sections = [
     items: [
       { name: 'Dashboard Executivo', href: '/executive', icon: Briefcase, featureId: 'executive', pro: true },
       { name: 'Dashboard Intel', href: '/intelligence', icon: Crown, featureId: 'intelligence' },
+      { name: 'Comparar Marcas', href: '/compare', icon: GitCompareArrows, featureId: 'compare' },
       { name: 'Audiência', href: '/audience', icon: UserCheck, featureId: 'audience' },
       { name: 'Google Analytics', href: '/google-integration', icon: Globe, featureId: 'google_integration', pro: true },
       { name: 'Ads — Meta + Google', href: '/ads', icon: Megaphone, featureId: 'ads', pro: true },

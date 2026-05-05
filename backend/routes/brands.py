@@ -470,3 +470,133 @@ async def get_pillars_summary(brand_id: str, user: dict = Depends(get_current_us
         **pillars_data,
         "completion": round((filled / len(pillar_types)) * 100)
     }
+
+
+
+PILLAR_TYPES = ["start", "values", "purpose", "promise", "positioning", "personality", "universality"]
+PILLAR_LABELS = {
+    "start":         "Start",
+    "values":        "Valores",
+    "purpose":       "Propósito",
+    "promise":       "Promessa",
+    "positioning":   "Posicionamento",
+    "personality":   "Personalidade",
+    "universality":  "Universalidade",
+}
+
+
+def _pillar_summary(answers: dict) -> str:
+    """Pull a one-line representative quote from a pillar's answers (best effort)."""
+    if not answers:
+        return ""
+    # Prefer common single-text fields used by the pillar pages
+    candidates = (
+        "purpose_statement", "proposito", "manifesto", "tagline",
+        "promise_statement", "promessa", "positioning_statement", "posicionamento",
+        "summary", "descricao",
+    )
+    for key in candidates:
+        v = answers.get(key)
+        if isinstance(v, str) and v.strip() and not _looks_like_iso(v):
+            return v.strip()[:240]
+    # Fallback: first non-empty meaningful string field
+    for k, v in answers.items():
+        if k in ("brand_id", "pillar_id", "updated_at", "created_at", "_id"):
+            continue
+        if isinstance(v, str) and v.strip() and not _looks_like_iso(v):
+            return v.strip()[:240]
+    return ""
+
+
+def _looks_like_iso(s: str) -> bool:
+    s = s.strip()
+    return len(s) >= 10 and s[4] == "-" and s[7] == "-" and ("T" in s or s.count("-") >= 2 and s[:4].isdigit())
+
+
+@router.get("/brands/{brand_id}/compare-snapshot")
+async def get_compare_snapshot(brand_id: str, user: dict = Depends(get_current_user)):
+    """Lightweight, flat snapshot used by the /compare page (two-brand side-by-side view)."""
+    brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
+    if not brand:
+        raise HTTPException(status_code=404, detail="Marca não encontrada")
+
+    # ── Pillars: progress + summary text per pillar ──
+    pillars_data = {}
+    progress = {}
+    filled_count = 0
+
+    new_pillars = await db.pillars.find({"brand_id": brand_id}, {"_id": 0}).to_list(20)
+    for p in new_pillars:
+        pt = p.get("pillar_type")
+        if pt and pt in PILLAR_TYPES:
+            pillars_data[pt] = p.get("answers", {}) or {}
+
+    for pt in PILLAR_TYPES:
+        if pt not in pillars_data:
+            legacy = await db[f"pillar_{pt}"].find_one({"brand_id": brand_id}, {"_id": 0})
+            if legacy:
+                pillars_data[pt] = {
+                    k: v for k, v in legacy.items()
+                    if k not in ("brand_id", "pillar_id", "_id", "updated_at", "created_at")
+                }
+            else:
+                pillars_data[pt] = {}
+
+    pillars_out = {}
+    for pt in PILLAR_TYPES:
+        ans = pillars_data.get(pt) or {}
+        meaningful = any(
+            (isinstance(v, list) and len(v) > 0) or
+            (isinstance(v, dict) and any(v.values())) or
+            (isinstance(v, str) and v.strip()) or
+            (isinstance(v, (int, float, bool)) and v)
+            for v in ans.values()
+        )
+        prog = 100 if meaningful else 0
+        if meaningful:
+            filled_count += 1
+        progress[pt] = prog
+        pillars_out[pt] = {
+            "label": PILLAR_LABELS[pt],
+            "progress": prog,
+            "summary": _pillar_summary(ans),
+        }
+
+    overall_completion = round(sum(progress.values()) / len(PILLAR_TYPES))
+    brand_strength = round(filled_count / len(PILLAR_TYPES) * 100)
+
+    # ── Operational metrics ──
+    touchpoints_count = await db.touchpoints.count_documents({"brand_id": brand_id})
+    campaigns_count = await db.campaigns.count_documents({"brand_id": brand_id})
+    decisions_count = await db.decisions.count_documents({"brand_id": brand_id})
+
+    # ── BVS / valuation (best effort, optional) ──
+    bvs_score = None
+    bvs_doc = await db.bvs_scores.find_one({"brand_id": brand_id}, {"_id": 0}, sort=[("created_at", -1)])
+    if bvs_doc:
+        bvs_score = bvs_doc.get("score") or bvs_doc.get("total_score")
+
+    valuation_value = None
+    val_doc = await db.valuation_results.find_one({"brand_id": brand_id}, {"_id": 0}, sort=[("created_at", -1)])
+    if val_doc:
+        valuation_value = val_doc.get("brand_value") or val_doc.get("valuation")
+
+    return {
+        "brand": {
+            "id": brand.get("brand_id"),
+            "name": brand.get("name"),
+            "logo_url": brand.get("logo_url"),
+            "sector": brand.get("sector"),
+        },
+        "metrics": {
+            "overall_completion": overall_completion,
+            "brand_strength": brand_strength,
+            "bvs_score": bvs_score,
+            "valuation": valuation_value,
+        },
+        "pillars": pillars_out,
+        "touchpoints_count": touchpoints_count,
+        "campaigns_count": campaigns_count,
+        "decisions_count": decisions_count,
+        "last_updated": brand.get("updated_at") or brand.get("created_at"),
+    }
