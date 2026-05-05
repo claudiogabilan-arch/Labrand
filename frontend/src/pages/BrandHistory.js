@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Clock, Calendar as CalendarIcon, Loader2, User, Filter } from 'lucide-react';
 import axios from 'axios';
+import { useApiCall } from '../hooks/useApiCall';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const ALL = '__all__';
@@ -49,6 +50,7 @@ function groupByDate(activities) {
 export default function BrandHistory() {
   const { currentBrand } = useBrand();
   const { token } = useAuth();
+  const { call: callActivities, isMounted } = useApiCall();
   const [activities, setActivities] = useState([]);
   const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(false);
@@ -88,18 +90,22 @@ export default function BrandHistory() {
       if (dateRange.from) params.set('date_from', dateRange.from.toISOString());
       if (dateRange.to) params.set('date_to', dateRange.to.toISOString());
 
-      const res = await axios.get(
-        `${API}/brands/${currentBrand.brand_id}/activity?${params.toString()}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const newActivities = res.data.activities || [];
+      const data = await callActivities({
+        method: 'get',
+        url: `${API}/brands/${currentBrand.brand_id}/activity?${params.toString()}`,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!data || !isMounted()) return; // cancelled
+      const newActivities = data.activities || [];
       setActivities(prev => reset ? newActivities : [...prev, ...newActivities]);
-      setTotal(res.data.total || 0);
-      setHasMore(res.data.has_more || false);
+      setTotal(data.total || 0);
+      setHasMore(data.has_more || false);
       setSkip(currentSkip + 20);
     } catch { /* silent */ }
-    finally { reset ? setLoading(false) : setLoadingMore(false); }
-  }, [currentBrand?.brand_id, filterUser, filterModule, dateRange, token]);
+    finally {
+      if (isMounted()) { reset ? setLoading(false) : setLoadingMore(false); }
+    }
+  }, [currentBrand?.brand_id, filterUser, filterModule, dateRange, token, callActivities, isMounted]);
 
   useEffect(() => {
     if (currentBrand?.brand_id) {

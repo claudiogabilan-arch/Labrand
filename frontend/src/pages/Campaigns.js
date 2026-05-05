@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useBrand } from '../contexts/BrandContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -41,6 +41,12 @@ const formatNum = (n) => n >= 1000000 ? `${(n / 1000000).toFixed(1)}M` : n >= 10
 export const Campaigns = () => {
   const { currentBrand } = useBrand();
   const { getAuthHeaders } = useAuth();
+  const abortRef = useRef(null);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; if (abortRef.current) abortRef.current.abort(); };
+  }, []);
   const [campaigns, setCampaigns] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -60,16 +66,22 @@ export const Campaigns = () => {
 
   const loadCampaigns = useCallback(async () => {
     if (!currentBrand?.brand_id) return;
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setIsLoading(true);
     try {
       const response = await axios.get(`${API}/brands/${currentBrand.brand_id}/campaigns`, {
         headers: getAuthHeaders(),
+        signal: controller.signal,
       });
+      if (!mountedRef.current || controller.signal.aborted) return;
       setCampaigns(response.data || []);
-    } catch {
-      setCampaigns([]);
+    } catch (e) {
+      if (axios.isCancel(e) || e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED') return;
+      if (mountedRef.current) setCampaigns([]);
     } finally {
-      setIsLoading(false);
+      if (mountedRef.current && !controller.signal.aborted) setIsLoading(false);
     }
   }, [currentBrand?.brand_id, getAuthHeaders]);
 

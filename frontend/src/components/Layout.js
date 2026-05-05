@@ -71,6 +71,7 @@ import {
   ShieldCheck,
   Clock,
   GitCompareArrows,
+  Flame,
 } from 'lucide-react';
 import axios from 'axios';
 import { CommandPalette } from './CommandPalette';
@@ -112,6 +113,7 @@ const sections = [
     label: 'Diagnóstico',
     icon: ClipboardCheck,
     items: [
+      { name: 'De Dentro Pra Fora', href: '/endomarketing', icon: Flame, featureId: 'endomarketing', pro: true, isNew: true },
       { name: 'Maturidade', href: '/maturity', icon: Activity, featureId: 'maturity', pro: true },
       { name: 'Saúde da Marca', href: '/brand-health', icon: Waves, featureId: 'brand_health', pro: true },
       { name: 'Risco de Marca', href: '/brand-risk', icon: AlertTriangle, featureId: 'risk', pro: true },
@@ -272,6 +274,11 @@ export const Sidebar = ({ collapsed, setCollapsed }) => {
         {!collapsed && (
           <div className="flex-1 flex items-center justify-between">
             <span className="truncate">{item.name}</span>
+            {item.isNew && (
+              <span className="ml-2 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-secondary/15 text-secondary">
+                Novo
+              </span>
+            )}
             {progress !== null && (
               <div className="w-8">
                 <Progress value={progress} className="h-1" />

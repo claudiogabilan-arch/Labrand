@@ -78,6 +78,7 @@ const BrandValuation          = lazy(() => import("./pages/BrandValuation"));
 const BrandArchitecture       = lazy(() => import("./pages/BrandArchitecture"));
 const BrandHistory            = lazy(() => import("./pages/BrandHistory"));
 const BrandCompare            = lazy(() => import("./pages/BrandCompare"));
+const Endomarketing           = lazy(() => import("./pages/Endomarketing"));
 
 const RouteFallback = () => (
   <div className="p-8" data-testid="route-suspense-fallback">
@@ -193,6 +194,7 @@ function AppRouter() {
           <Route path="/collaboration" element={<AppPage><Collaboration /></AppPage>} />
           <Route path="/history" element={<AppPage><BrandHistory /></AppPage>} />
           <Route path="/compare" element={<AppPage><BrandCompare /></AppPage>} />
+          <Route path="/endomarketing" element={<AppPage><Endomarketing /></AppPage>} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

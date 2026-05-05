@@ -1,0 +1,87 @@
+{
+  "summary": "End-to-end validation of new module 'De Dentro Pra Fora' (Endomarketing) — backend + frontend + LLM generation + PDF export + sidebar/CommandPalette wiring + AbortController regression on Reports/History/Touchpoints/Campaigns. All flows pass.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "CommandPalette / Modal Dialogs", "issues": ["Radix Console warning: `DialogContent` requires a `DialogTitle` for screen reader accessibility. Wrap with VisuallyHidden component. Non-blocking but should be fixed for a11y compliance."]}
+    ]
+  },
+
+  "passed_tests": [
+    "POST /api/auth/login (admin@labrand.com.br) → 200 + token",
+    "GET /api/endomarketing/questions → 200, 18 questions, 6 pillars, 3 questions each",
+    "GET /api/endomarketing/diagnosis/{brand_id} (existing) → 200, _id stripped, scores present",
+    "GET /api/endomarketing/diagnosis/{unknown} → 404",
+    "POST /api/endomarketing/diagnosis (empty respostas) → 400",
+    "POST /api/endomarketing/diagnosis (full 18 answers=4) → 200, scores=100/100, nivel=Marca Viva, persisted on GET",
+    "POST /api/endomarketing/generate/{brand_id} → 200 in ~20s, plano_endomarketing + temporada_gamificada keys present",
+    "GET /api/endomarketing/export-pdf/{brand_id} → 200, content-type=application/pdf, valid PDF magic bytes (%PDF)",
+    "GET /api/endomarketing/export-pdf/{unknown} → 404",
+    "Auth required on /api/endomarketing/questions (no token) → 401/403",
+    "Regression: GET /api/reports/history?brand_id=... OK",
+    "Regression: GET /api/brands/{brand_id}/touchpoints OK",
+    "Regression: GET /api/brands/{brand_id}/campaigns OK",
+    "Frontend: /endomarketing route loads, [data-testid=endomarketing-page] visible",
+    "Frontend: 4 tabs (tab-diagnostico, tab-score, tab-plano, tab-temporada) all rendered",
+    "Frontend: 6 pilar-section blocks rendered (engajamento, meritocracia, alta_performance, resultados, economia, pertencimento)",
+    "Frontend: Likert scale shows 5 options per question (q{i}-0..q{i}-4 → values 0=Nunca .. 4=Sempre)",
+    "Frontend: diagnostic-progress bar present",
+    "Frontend: save-diagnostic-btn present",
+    "Frontend: Score tab → score-radar (Recharts), maturity-badge='Marca Viva', 6 pilar-score-* cards",
+    "Frontend: Plano tab → filled state (existing data), plan-export-pdf button present",
+    "Frontend: Temporada tab → filled state with KPIs, narrativa, competição, palco, comunidade, mecânica, cronograma; temporada-export-pdf button present",
+    "Frontend: Sidebar item 'De Dentro Pra Fora' under Diagnóstico section with 'Novo' badge visible",
+    "Frontend: Command Palette (Cmd+K) opens, search 'De Dentro' filters to 1 cmdk-item, click navigates to /endomarketing",
+    "Regression UI: /reports, /history, /touchpoints, /campaigns all load without crash after AbortController refactor",
+    "Regression UI: Fast page-hop simulation (3x cycles across reports→touchpoints→campaigns) completes without unhandled errors"
+  ],
+
+  "test_report_links": [
+    "/app/backend/tests/test_endomarketing.py",
+    "/app/test_reports/pytest/endomarketing_results.xml",
+    "/app/test_reports/iteration_33.json"
+  ],
+
+  "action_items": [
+    "(Low priority) Add DialogTitle (or VisuallyHidden wrapper) to all Radix DialogContent used by CommandPalette and other dialogs to silence the a11y console warning."
+  ],
+
+  "critical_code_review_comments": [
+    "endomarketing.py route file is well-structured (~450 lines): static questionnaire, score computation, idempotent upsert, LLM generation with JSON-fence-tolerant parsing, ReportLab PDF builder.",
+    "_strip_id helper correctly excludes MongoDB _id from all responses.",
+    "LLM error handling returns 502 with detail messages — frontend should surface via toast (verified empty/filled state UI handles both paths).",
+    "Endomarketing.js (622 lines) is borderline of the 700-line guideline. Consider splitting into <DiagnosticTab/>, <ScoreTab/>, <PlanoTab/>, <TemporadaTab/> sub-components if it grows further (already partially structured as inner components).",
+    "AbortController pattern applied consistently across Reports.js, BrandHistory.js, Touchpoints.js, Campaigns.js — no race conditions observed under fast brand/page switches."
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_endomarketing.py (new test file)"
+  ],
+
+  "success_rate": {
+    "backend": "100% (11/11 endpoint tests passed, 1 skipped for unmatched history endpoint variant; LLM generate validated separately at ~20s)",
+    "frontend": "100% (all data-testid elements present, 4 tabs working, Score radar + maturity badge OK, Plano + Temporada filled, sidebar + command palette navigation OK)"
+  },
+
+  "test_credentials": {
+    "admin_email": "admin@labrand.com.br",
+    "admin_password": "Labrand@2026!",
+    "brand_id": "brand_0902ead1b80c"
+  },
+
+  "seed_data_creation": "test_save_diagnosis_full overwrote the existing 'Marca Demo' diagnosis with respostas=4 (all answers=Sempre, score=100). LLM generate then re-populated plano + temporada. Original answers were not preserved — main agent should be aware if the demo data needs restoration.",
+
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "Endomarketing module fully validated end-to-end: backend (questions/diagnosis CRUD, LLM generate ~20s, PDF export), frontend (4 tabs with all data-testids, Recharts radar, sidebar + command palette wiring), and AbortController refactor regression on Reports/History/Touchpoints/Campaigns. Test file at /app/backend/tests/test_endomarketing.py is reusable for future regression. NOTE: the test_save_diagnosis_full test mutates the brand_0902ead1b80c diagnosis to all=4 — if you need original demo answers, reset before testing UI scoring scenarios.",
+
+  "rca of the issue": "No issues blocking the feature."
+}

@@ -12,7 +12,7 @@ import {
   BarChart3, Volume2, Bell, Crosshair, Filter, MapPin, Route, Calendar,
   ClipboardList, Check, TrendingUp, FlaskConical, DollarSign, FileText,
   Briefcase, Crown, UserCheck, Globe, Megaphone, Plug, HeartHandshake,
-  GraduationCap, MessageSquare, Wrench, Star, Settings, Plus, Clock, GitCompareArrows,
+  GraduationCap, MessageSquare, Wrench, Star, Settings, Plus, Clock, GitCompareArrows, Flame,
 } from 'lucide-react';
 
 /**
@@ -33,6 +33,7 @@ const PAGES = [
   { group: 'Construção', name: 'Narrativas',        href: '/narratives',      icon: BookOpen },
   { group: 'Construção', name: 'Arquitetura',       href: '/brand-architecture', icon: Network },
   // Diagnóstico
+  { group: 'Diagnóstico', name: 'De Dentro Pra Fora', href: '/endomarketing',  icon: Flame },
   { group: 'Diagnóstico', name: 'Maturidade',       href: '/maturity',        icon: Activity },
   { group: 'Diagnóstico', name: 'Saúde da Marca',   href: '/brand-health',    icon: Waves },
   { group: 'Diagnóstico', name: 'Risco de Marca',   href: '/brand-risk',      icon: AlertTriangle },

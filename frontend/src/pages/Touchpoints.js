@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useBrand } from '../contexts/BrandContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -29,6 +29,12 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 export default function Touchpoints() {
   const { token } = useAuth();
   const { currentBrand } = useBrand();
+  const abortRef = useRef(null);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; if (abortRef.current) abortRef.current.abort(); };
+  }, []);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
@@ -74,14 +80,18 @@ export default function Touchpoints() {
   };
 
   const loadData = async () => {
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoading(true);
     try {
       const [tpRes, personasRes] = await Promise.all([
         axios.get(`${API}/brands/${currentBrand.brand_id}/touchpoints?persona=${selectedPersona === 'Geral' ? '' : selectedPersona}`,
-          { headers: { Authorization: `Bearer ${token}` } }),
+          { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal }),
         axios.get(`${API}/brands/${currentBrand.brand_id}/personas`,
-          { headers: { Authorization: `Bearer ${token}` } })
+          { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
       ]);
+      if (!mountedRef.current || controller.signal.aborted) return;
       setTouchpoints(tpRes.data.touchpoints || []);
       setByPhase(tpRes.data.by_phase || {});
       setStats(tpRes.data.stats || {});
@@ -92,8 +102,11 @@ export default function Touchpoints() {
       setPersonas(personasRes.data.persona_names || ["Geral"]);
       setPageGuidance(tpRes.data.page_guidance || []);
       setNeedsUpdate(tpRes.data.needs_update || []);
-    } catch { toast.error('Erro ao carregar dados'); }
-    finally { setLoading(false); }
+    } catch (e) {
+      if (axios.isCancel(e) || e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED') return;
+      toast.error('Erro ao carregar dados');
+    }
+    finally { if (mountedRef.current && !controller.signal.aborted) setLoading(false); }
   };
 
   const handleSubmit = async () => {

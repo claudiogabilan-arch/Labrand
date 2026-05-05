@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useBrand } from '../contexts/BrandContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -24,6 +24,15 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 export const Reports = () => {
   const { currentBrand, metrics, fetchMetrics } = useBrand();
   const { getAuthHeaders, token, user } = useAuth();
+  const historyAbortRef = useRef(null);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (historyAbortRef.current) historyAbortRef.current.abort();
+    };
+  }, []);
   const [activeTab, setActiveTab] = useState('overview');
   const [isGenerating, setIsGenerating] = useState(null);
   const [reportHistory, setReportHistory] = useState(null);
@@ -46,19 +55,25 @@ export const Reports = () => {
 
   const loadReportHistory = useCallback(async () => {
     if (!currentBrand?.brand_id) return;
+    if (historyAbortRef.current) historyAbortRef.current.abort();
+    const controller = new AbortController();
+    historyAbortRef.current = controller;
     try {
       const response = await fetch(`${API}/brands/${currentBrand.brand_id}/reports/history`, {
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        signal: controller.signal,
       });
+      if (!mountedRef.current || controller.signal.aborted) return;
       if (response.ok) {
         const data = await response.json();
-        setReportHistory(data.reports || []);
-      } else {
+        if (mountedRef.current) setReportHistory(data.reports || []);
+      } else if (mountedRef.current) {
         setReportHistory([]);
       }
     } catch (error) {
+      if (error?.name === 'AbortError') return;
       console.error('Error loading report history:', error);
-      setReportHistory([]);
+      if (mountedRef.current) setReportHistory([]);
     }
   }, [currentBrand?.brand_id, token]);
 
