@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { SkeletonHero, SkeletonCard, SkeletonList } from '../components/ui/skeleton-patterns';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const formatNum = (n) => n >= 1000000 ? `${(n / 1000000).toFixed(1)}M` : n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n || 0);
@@ -197,20 +198,11 @@ export const Dashboard = () => {
       <div className="ambient-orb -top-24 -right-24 opacity-60" />
 
       {/* ═══════════ ZONA 1 — HERO ═══════════ */}
+      {isLoading ? (
+        <SkeletonHero className="relative z-10" />
+      ) : (
       <Card className="border border-border/50 overflow-hidden relative z-10" data-testid="hero-card">
-        {isLoading ? (
-          <CardContent className="py-10">
-            <div className="flex flex-col md:flex-row md:items-center gap-8 animate-pulse">
-              <div className="flex-1 space-y-4">
-                <div className="h-20 w-40 bg-muted rounded-lg" />
-                <div className="h-4 w-56 bg-muted rounded" />
-                <div className="h-3 w-44 bg-muted rounded" />
-              </div>
-              <div className="w-full md:w-80 h-32 bg-muted rounded-xl" />
-            </div>
-          </CardContent>
-        ) : (
-          <CardContent className="py-8">
+        <CardContent className="py-8">
             <div className="flex flex-col md:flex-row md:items-center gap-8">
               {/* Left — Score */}
               <div className="flex-1">
@@ -238,12 +230,19 @@ export const Dashboard = () => {
               </div>
             </div>
           </CardContent>
-        )}
       </Card>
+      )}
 
       {/* ═══════════ ZONA 2 — PROGRESSO DOS PILARES ═══════════ */}
       <div className="relative z-10">
         <h2 className="font-heading text-lg font-semibold mb-4">Pilares de Marca</h2>
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3" data-testid="pillars-skeleton-grid">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <SkeletonCard key={i} lines={2} showHeader={false} className="h-full" />
+            ))}
+          </div>
+        ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3" data-testid="pillars-bento-grid">
           {pillarInfo.map((pillar) => {
             const Icon = pillar.icon;
@@ -279,6 +278,7 @@ export const Dashboard = () => {
             );
           })}
         </div>
+        )}
       </div>
 
       {/* ═══════════ ZONA 3 — ATIVIDADE ═══════════ */}
@@ -297,7 +297,9 @@ export const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {recentActivity.length === 0 ? (
+            {isLoading ? (
+              <SkeletonList items={5} />
+            ) : recentActivity.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">Nenhuma atividade recente</p>
             ) : (
               <div className="space-y-3">

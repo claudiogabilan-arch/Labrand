@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { toast } from 'sonner';
-import { MapPin, Plus, Loader2, Users, Edit2, Clock } from 'lucide-react';
+import { MapPin, Plus, Users, Edit2, Clock } from 'lucide-react';
 import axios from 'axios';
+import { SkeletonCard, SkeletonList } from '../components/ui/skeleton-patterns';
 
 import GuidanceAlert from '../components/touchpoints/GuidanceAlert';
 import TouchpointForm from '../components/touchpoints/TouchpointForm';
@@ -171,7 +172,26 @@ export default function Touchpoints() {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return (
+      <div className="space-y-6" data-testid="touchpoints-loading">
+        {/* Header */}
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="space-y-2">
+            <div className="h-7 w-56 animate-pulse rounded-md bg-primary/10" />
+            <div className="h-4 w-80 animate-pulse rounded-md bg-primary/10" />
+          </div>
+          <div className="h-9 w-36 animate-pulse rounded-md bg-primary/10" />
+        </div>
+        {/* Stats row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} lines={1} />
+          ))}
+        </div>
+        {/* List */}
+        <SkeletonList items={6} />
+      </div>
+    );
   }
 
   return (

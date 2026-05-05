@@ -16,6 +16,7 @@ import {
   TrendingUp, CheckCircle2, Clock, File, Mail,
   Loader2, Target
 } from 'lucide-react';
+import { SkeletonList } from '../components/ui/skeleton-patterns';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -24,7 +25,7 @@ export const Reports = () => {
   const { getAuthHeaders, token, user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [isGenerating, setIsGenerating] = useState(null);
-  const [reportHistory, setReportHistory] = useState([]);
+  const [reportHistory, setReportHistory] = useState(null);
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().setMonth(new Date().getMonth() - 1)),
     to: new Date()
@@ -51,9 +52,12 @@ export const Reports = () => {
       if (response.ok) {
         const data = await response.json();
         setReportHistory(data.reports || []);
+      } else {
+        setReportHistory([]);
       }
     } catch (error) {
       console.error('Error loading report history:', error);
+      setReportHistory([]);
     }
   }, [currentBrand?.brand_id, token]);
 
@@ -416,7 +420,9 @@ export const Reports = () => {
               <CardDescription>Histórico dos relatórios da marca {currentBrand.name}</CardDescription>
             </CardHeader>
             <CardContent>
-              {reportHistory.length > 0 ? (
+              {reportHistory === null ? (
+                <SkeletonList items={4} />
+              ) : reportHistory.length > 0 ? (
                 <div className="space-y-3">
                   {reportHistory.map((report, index) => (
                     <div key={report.report_id || index} className="flex items-center justify-between p-4 border rounded-lg" data-testid={`history-report-${index}`}>

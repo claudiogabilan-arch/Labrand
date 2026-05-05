@@ -33,6 +33,7 @@ import {
   ArrowRight,
   MapPin
 } from 'lucide-react';
+import { SkeletonCard } from '../components/ui/skeleton-patterns';
 
 import { PillarNavigation } from '../components/PillarNavigation';
 
@@ -332,8 +333,23 @@ export const PillarStart = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-6" data-testid="pillar-start-loading">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 animate-pulse rounded-xl bg-primary/10" />
+          <div className="space-y-2 flex-1">
+            <div className="h-7 w-64 animate-pulse rounded-md bg-primary/10" />
+            <div className="h-4 w-80 animate-pulse rounded-md bg-primary/10" />
+          </div>
+        </div>
+        <div className="flex gap-2 border-b pb-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-9 w-32 animate-pulse rounded-md bg-primary/10" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SkeletonCard lines={4} />
+          <SkeletonCard lines={4} />
+        </div>
       </div>
     );
   }

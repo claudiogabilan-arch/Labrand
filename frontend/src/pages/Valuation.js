@@ -34,6 +34,7 @@ import {
   ArrowDownRight,
   Minus
 } from 'lucide-react';
+import { SkeletonCard, SkeletonChart } from '../components/ui/skeleton-patterns';
 
 // Brand Strength Factors based on Interbrand methodology
 const brandStrengthFactors = [
@@ -286,8 +287,20 @@ export const Valuation = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-6" data-testid="valuation-loading">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-7 w-72 animate-pulse rounded-md bg-primary/10" />
+            <div className="h-4 w-96 animate-pulse rounded-md bg-primary/10" />
+          </div>
+          <div className="h-9 w-32 animate-pulse rounded-md bg-primary/10" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <SkeletonCard lines={2} />
+          <SkeletonCard lines={2} />
+          <SkeletonCard lines={2} />
+        </div>
+        <SkeletonChart height={280} />
       </div>
     );
   }
