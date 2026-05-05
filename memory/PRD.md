@@ -115,6 +115,18 @@ Ferramenta interna de gestao de marcas para agencia de branding.
 - [x] `BrandContext`: removido todo `localStorage.getItem('labrand_token')` fallback — usa `token` do useAuth direto. Apenas `AuthContext` lê localStorage no init
 - Testado: bundle.js 541KB, Dashboard chunk 19KB, Touchpoints +5 chunks ao navegar — code-split confirmado; cross-tab logout via storage event redireciona para /login; Suspense fallback ("Carregando...") tem testid; lint passou em todos os arquivos
 
+### Fase 23 - Dashboard Ecossistema de Marca (Concluido - 05/05/2026)
+- [x] `pages/Dashboard.js` reescrito do zero — painel analitico dark (bg #0D0E10, cards #161719, border #1F2124)
+- [x] Header com seletor de periodo (30/90/365 dias)
+- [x] Linha 1: 4 stat cards (BVS Score, Pilares Preenchidos, Saude da Marca, Mencoes Sociais) com sub-labels coloridos e mini barras de progresso
+- [x] Linha 2: Evolucao da Marca (Recharts AreaChart com 3 series gradient — BVS/Saude/Social) + Forca por Pilar (BarChart horizontal com barras laranja)
+- [x] Linha 3: Funil de Marca (CSS trapezoidal) + Share of Voice (PieChart donut) + Mencoes ao Longo do Tempo (AreaChart stacked positive/neutral/negative)
+- [x] Linha 4: Dimensoes da Marca (RadarChart 6 eixos) + Benchmark de Concorrentes (tabela com linha da marca destacada com border-left laranja)
+- [x] Empty states elegantes em cada card sem dados (icone Database + texto + CTA ghost para preencher modulo correspondente)
+- [x] Tooltip dark customizado, skeleton loading, responsivo (grid 12 cols → empilha em <md)
+- [x] Dados consumidos de 8 endpoints reais (bvs, bvs/history, brand-health, brand-funnel, share-of-voice, social-listening/mentions, competitors/analyses, metrics) via Promise.allSettled
+- Testado: 9 cards renderizaram, dark theme aplicado, valores reais (BVS 53.8, Pilares 4/7, Saude 40%, 7 pillar bars), lint OK, sem console errors
+
 ---
 
 ## Backlog Priorizado
