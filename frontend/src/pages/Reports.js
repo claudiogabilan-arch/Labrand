@@ -6,7 +6,6 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Calendar } from '../components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { toast } from 'sonner';
@@ -14,8 +13,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
   FileText, Download, Calendar as CalendarIcon, BarChart3, PieChart,
-  TrendingUp, CheckCircle2, Clock, FileSpreadsheet, File, Mail,
-  Loader2, Share2, Plus, Target
+  TrendingUp, CheckCircle2, Clock, File, Mail,
+  Loader2, Target
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -30,7 +29,6 @@ export const Reports = () => {
     from: new Date(new Date().setMonth(new Date().getMonth() - 1)),
     to: new Date()
   });
-  const [selectedFormat, setSelectedFormat] = useState('pdf');
   const [customSections, setCustomSections] = useState({
     start: true, values: true, purpose: true, promise: true,
     positioning: true, personality: true, universality: false,
@@ -100,7 +98,13 @@ export const Reports = () => {
           ...getAuthHeaders(),
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ sections, include_charts: true, report_title })
+        body: JSON.stringify({
+          sections,
+          include_charts: true,
+          report_title,
+          date_from: dateRange.from.toISOString(),
+          date_to: dateRange.to.toISOString(),
+        })
       });
       
       if (!response.ok) {
@@ -126,26 +130,41 @@ export const Reports = () => {
       return;
     }
 
-    const selectedPillars = Object.entries(customSections)
-      .filter(([_, checked]) => checked)
-      .map(([key]) => key);
+    // Build sections dynamically from customSections
+    const pillarKeys = ['start', 'values', 'purpose', 'promise', 'positioning', 'personality', 'universality'];
+    const extraSectionMap = { tasks: 'recommendations', decisions: 'score', narratives: 'summary', metrics: 'touchpoints' };
 
-    if (selectedPillars.length === 0) {
+    const selectedPillars = pillarKeys.filter(k => customSections[k]);
+    const selectedExtras = Object.entries(extraSectionMap)
+      .filter(([key]) => customSections[key])
+      .map(([_, section]) => section);
+
+    if (selectedPillars.length === 0 && selectedExtras.length === 0) {
       toast.error('Selecione pelo menos uma seção');
       return;
     }
 
+    // Build sections array
+    const sections = new Set(['summary']);
+    if (selectedPillars.length > 0) sections.add('pillars');
+    selectedExtras.forEach(s => sections.add(s));
+
     setIsGenerating('custom');
     try {
-      const sections = ['summary', 'pillars', 'score', 'touchpoints', 'recommendations'];
-      
       const response = await fetch(`${API}/brands/${currentBrand.brand_id}/reports/executive-pdf`, {
         method: 'POST',
         headers: {
           ...getAuthHeaders(),
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ sections, include_charts: true, report_title: 'Relatório Personalizado' })
+        body: JSON.stringify({
+          sections: [...sections],
+          pillars_filter: selectedPillars.length > 0 && selectedPillars.length < 7 ? selectedPillars : null,
+          include_charts: true,
+          report_title: 'Relatório Personalizado',
+          date_from: dateRange.from.toISOString(),
+          date_to: dateRange.to.toISOString(),
+        })
       });
       
       if (!response.ok) {
@@ -198,10 +217,10 @@ export const Reports = () => {
   };
 
   const reportTypes = [
-    { id: 'brand-health', title: 'Saúde da Marca', description: 'Visão geral do progresso em todos os pilares', icon: BarChart3, color: 'bg-blue-500' },
-    { id: 'pillar-detail', title: 'Detalhamento de Pilares', description: 'Análise detalhada de cada pilar de branding', icon: PieChart, color: 'bg-purple-500' },
-    { id: 'performance', title: 'Performance', description: 'Métricas de desempenho e tendências', icon: TrendingUp, color: 'bg-emerald-500' },
-    { id: 'tasks', title: 'Tarefas e Execução', description: 'Status das tarefas e roadmap', icon: CheckCircle2, color: 'bg-amber-500' }
+    { id: 'brand-health', title: 'Saúde da Marca', description: 'Visão geral do progresso em todos os pilares', icon: BarChart3, color: 'bg-[hsl(var(--chart-1))]' },
+    { id: 'pillar-detail', title: 'Detalhamento de Pilares', description: 'Análise detalhada de cada pilar de branding', icon: PieChart, color: 'bg-[hsl(var(--chart-2))]' },
+    { id: 'performance', title: 'Performance', description: 'Métricas de desempenho e tendências', icon: TrendingUp, color: 'bg-[hsl(var(--chart-3))]' },
+    { id: 'tasks', title: 'Tarefas e Execução', description: 'Status das tarefas e roadmap', icon: CheckCircle2, color: 'bg-[hsl(var(--chart-4))]' }
   ];
 
   const toggleCustomSection = (key) => {
@@ -213,7 +232,7 @@ export const Reports = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-indigo-500 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-[hsl(var(--secondary))] flex items-center justify-center">
             <FileText className="h-6 w-6 text-white" />
           </div>
           <div>
@@ -240,15 +259,9 @@ export const Reports = () => {
               />
             </PopoverContent>
           </Popover>
-          <Select value={selectedFormat} onValueChange={setSelectedFormat}>
-            <SelectTrigger className="w-[120px]" data-testid="export-format-select">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pdf"><div className="flex items-center gap-2"><File className="h-4 w-4 text-rose-500" />PDF</div></SelectItem>
-              <SelectItem value="xlsx"><div className="flex items-center gap-2"><FileSpreadsheet className="h-4 w-4 text-emerald-500" />Excel</div></SelectItem>
-            </SelectContent>
-          </Select>
+          <Badge variant="outline" className="px-3 py-1.5 text-xs gap-1.5">
+            <File className="h-3.5 w-3.5" /> PDF
+          </Badge>
         </div>
       </div>
 
@@ -262,10 +275,10 @@ export const Reports = () => {
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center"><Target className="h-5 w-5 text-blue-600" /></div><div><p className="text-2xl font-bold">{metrics?.overall_completion || 0}%</p><p className="text-xs text-muted-foreground">Progresso Geral</p></div></div></CardContent></Card>
-            <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center"><CheckCircle2 className="h-5 w-5 text-emerald-600" /></div><div><p className="text-2xl font-bold">{metrics?.tasks?.done || 0}</p><p className="text-xs text-muted-foreground">Tarefas Concluídas</p></div></div></CardContent></Card>
-            <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center"><Clock className="h-5 w-5 text-amber-600" /></div><div><p className="text-2xl font-bold">{metrics?.tasks?.in_progress || 0}</p><p className="text-xs text-muted-foreground">Em Andamento</p></div></div></CardContent></Card>
-            <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center"><BarChart3 className="h-5 w-5 text-purple-600" /></div><div><p className="text-2xl font-bold">{metrics?.decisions?.validated || 0}</p><p className="text-xs text-muted-foreground">Decisões Validadas</p></div></div></CardContent></Card>
+            <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-[hsl(var(--chart-1)/.15)] flex items-center justify-center"><Target className="h-5 w-5 text-[hsl(var(--chart-1))]" /></div><div><p className="text-2xl font-bold">{metrics?.overall_completion || 0}%</p><p className="text-xs text-muted-foreground">Progresso Geral</p></div></div></CardContent></Card>
+            <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-[hsl(var(--chart-2)/.15)] flex items-center justify-center"><CheckCircle2 className="h-5 w-5 text-[hsl(var(--chart-2))]" /></div><div><p className="text-2xl font-bold">{metrics?.tasks?.done || 0}</p><p className="text-xs text-muted-foreground">Tarefas Concluídas</p></div></div></CardContent></Card>
+            <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-[hsl(var(--chart-3)/.15)] flex items-center justify-center"><Clock className="h-5 w-5 text-[hsl(var(--chart-3))]" /></div><div><p className="text-2xl font-bold">{metrics?.tasks?.in_progress || 0}</p><p className="text-xs text-muted-foreground">Em Andamento</p></div></div></CardContent></Card>
+            <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-[hsl(var(--chart-4)/.15)] flex items-center justify-center"><BarChart3 className="h-5 w-5 text-[hsl(var(--chart-4))]" /></div><div><p className="text-2xl font-bold">{metrics?.decisions?.validated || 0}</p><p className="text-xs text-muted-foreground">Decisões Validadas</p></div></div></CardContent></Card>
           </div>
 
           <Card>
@@ -296,12 +309,12 @@ export const Reports = () => {
             <CardContent>
               <div className="flex flex-wrap gap-3">
                 <Button onClick={() => handleGenerateReport('brand-health')} disabled={isGenerating !== null} data-testid="export-pdf-btn">
-                  {isGenerating === 'brand-health' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <File className="h-4 w-4 mr-2 text-rose-500" />}
+                  {isGenerating === 'brand-health' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <File className="h-4 w-4 mr-2" />}
                   Exportar PDF
                 </Button>
-                <Button variant="outline" onClick={() => toast.success('Relatório agendado! Você receberá por email semanalmente.')} data-testid="schedule-report-btn">
+                <Button variant="outline" disabled title="Em breve — agendamento por email" data-testid="schedule-report-btn">
                   <Mail className="h-4 w-4 mr-2" />
-                  Agendar por Email
+                  Agendar por Email (em breve)
                 </Button>
               </div>
             </CardContent>
@@ -404,9 +417,9 @@ export const Reports = () => {
                   {reportHistory.map((report, index) => (
                     <div key={report.report_id || index} className="flex items-center justify-between p-4 border rounded-lg" data-testid={`history-report-${index}`}>
                       <div className="flex items-center gap-3">
-                        <File className="h-8 w-8 text-rose-500" />
+                        <File className="h-8 w-8 text-[hsl(var(--secondary))]" />
                         <div>
-                          <p className="font-medium">{report.brand_name || 'Relatório'}</p>
+                          <p className="font-medium">{report.report_title || report.brand_name || 'Relatório'}</p>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>{report.generated_at ? new Date(report.generated_at).toLocaleString('pt-BR') : '-'}</span>
                             <span>-</span>

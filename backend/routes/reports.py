@@ -122,6 +122,9 @@ class PDFReportRequest(BaseModel):
     include_charts: bool = True
     report_title: Optional[str] = "Relatório Executivo"
     language: str = "pt-BR"
+    pillars_filter: Optional[List[str]] = None
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
 
 
 def _date_pt(dt: datetime = None) -> str:
@@ -481,9 +484,14 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
         story.append(Paragraph("Pilares de Marca", st['section_title']))
         story.append(HRFlowable(width="100%", thickness=1, color=BRAND_PRIMARY, spaceAfter=10))
 
+        # Apply filter if provided
+        filtered_pillar_types = pillar_types
+        if request.pillars_filter:
+            filtered_pillar_types = [pt for pt in pillar_types if pt in request.pillars_filter]
+
         # Status table
         pillar_rows = []
-        for pt in pillar_types:
+        for pt in filtered_pillar_types:
             has_data = pt in pillars_data
             status_para = Paragraph(
                 f"<font color='{'#22c55e' if has_data else '#ef4444'}'><b>{'Completo' if has_data else 'Pendente'}</b></font>",
@@ -512,8 +520,8 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
             chart.y = 25
             chart.height = 110
             chart.width = 360
-            chart.data = [[100 if pt in pillars_data else 0 for pt in pillar_types]]
-            chart.categoryAxis.categoryNames = [PILLAR_NAMES[pt][:10] for pt in pillar_types]
+            chart.data = [[100 if pt in pillars_data else 0 for pt in filtered_pillar_types]]
+            chart.categoryAxis.categoryNames = [PILLAR_NAMES[pt][:10] for pt in filtered_pillar_types]
             chart.categoryAxis.labels.fontSize = 7
             chart.valueAxis.valueMin = 0
             chart.valueAxis.valueMax = 100
@@ -526,7 +534,7 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
             story.append(Spacer(1, 0.4*cm))
 
         # Pillar details - data from each collection
-        for pt in pillar_types:
+        for pt in filtered_pillar_types:
             data = pillars_data.get(pt)
             if not data:
                 continue
@@ -757,6 +765,9 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
         "report_title": report_title,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "sections_included": request.sections,
+        "pillars_filter": request.pillars_filter,
+        "period_from": request.date_from,
+        "period_to": request.date_to,
         "generated_by": user["user_id"],
         "completion_rate": completion_rate,
         "bvs_score": bvs_score,
