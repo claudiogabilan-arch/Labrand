@@ -21,7 +21,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export const Reports = () => {
   const { currentBrand, metrics, fetchMetrics } = useBrand();
-  const { getAuthHeaders, token } = useAuth();
+  const { getAuthHeaders, token, user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [isGenerating, setIsGenerating] = useState(null);
   const [reportHistory, setReportHistory] = useState([]);
@@ -104,6 +104,8 @@ export const Reports = () => {
           report_title,
           date_from: dateRange.from.toISOString(),
           date_to: dateRange.to.toISOString(),
+          prepared_by_name: user?.name || '',
+          prepared_by_email: user?.email || '',
         })
       });
       
@@ -164,6 +166,8 @@ export const Reports = () => {
           report_title: 'Relatório Personalizado',
           date_from: dateRange.from.toISOString(),
           date_to: dateRange.to.toISOString(),
+          prepared_by_name: user?.name || '',
+          prepared_by_email: user?.email || '',
         })
       });
       

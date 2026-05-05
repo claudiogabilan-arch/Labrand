@@ -125,6 +125,8 @@ class PDFReportRequest(BaseModel):
     pillars_filter: Optional[List[str]] = None
     date_from: Optional[str] = None
     date_to: Optional[str] = None
+    prepared_by_name: Optional[str] = None
+    prepared_by_email: Optional[str] = None
 
 
 def _date_pt(dt: datetime = None) -> str:
@@ -143,8 +145,8 @@ def _build_styles():
     s = {}
     s['cover_title'] = ParagraphStyle(
         'CoverTitle', parent=styles['Heading1'],
-        fontSize=28, leading=34, spaceAfter=8,
-        textColor=WHITE, fontName='Helvetica-Bold', alignment=TA_LEFT
+        fontSize=32, leading=38, spaceAfter=8,
+        textColor=WHITE, fontName='Times-Bold', alignment=TA_LEFT
     )
     s['cover_sub'] = ParagraphStyle(
         'CoverSub', parent=styles['Normal'],
@@ -154,12 +156,18 @@ def _build_styles():
     s['section_title'] = ParagraphStyle(
         'SectionTitle', parent=styles['Heading2'],
         fontSize=16, leading=20, spaceBefore=16, spaceAfter=10,
-        textColor=BRAND_DARK, fontName='Helvetica-Bold'
+        textColor=BRAND_DARK, fontName='Times-Bold'
     )
     s['section_num'] = ParagraphStyle(
         'SectionNum', parent=styles['Normal'],
         fontSize=10, textColor=BRAND_PRIMARY, fontName='Helvetica-Bold',
         spaceBefore=14, spaceAfter=2
+    )
+    s['editorial_quote'] = ParagraphStyle(
+        'EditorialQuote', parent=styles['Normal'],
+        fontSize=13, leading=18, textColor=BRAND_DARK,
+        fontName='Times-Italic', alignment=TA_CENTER,
+        spaceBefore=12, spaceAfter=12
     )
     s['body'] = ParagraphStyle(
         'Body', parent=styles['Normal'],
@@ -204,33 +212,44 @@ def _build_styles():
     return s
 
 
-def _header_footer(canvas, doc, brand_name: str):
-    """Interior pages: black logo top-left, brand name + date top-right"""
+def _header_footer(canvas, doc, brand_name: str, client_logo_path=None, primary_color=None):
+    """Interior pages: client logo/brand name top-left, page count top-right, confidential footer"""
     canvas.saveState()
+    effective_primary = primary_color or BRAND_PRIMARY
 
-    # Top: Black logo
-    if os.path.exists(LOGO_BLACK):
-        canvas.drawImage(LOGO_BLACK, 2*cm, PAGE_H - 1.6*cm, width=2.2*cm, height=0.7*cm,
-                         preserveAspectRatio=True, mask='auto')
+    # Top-left: Client logo or brand name
+    if client_logo_path and os.path.exists(client_logo_path):
+        try:
+            canvas.drawImage(client_logo_path, 2*cm, PAGE_H - 1.6*cm, width=2.2*cm, height=0.7*cm,
+                             preserveAspectRatio=True, mask='auto')
+        except Exception:
+            canvas.setFont("Helvetica-Bold", 8)
+            canvas.setFillColor(BRAND_DARK)
+            canvas.drawString(2*cm, PAGE_H - 1.2*cm, brand_name)
+    else:
+        canvas.setFont("Helvetica-Bold", 8)
+        canvas.setFillColor(BRAND_DARK)
+        canvas.drawString(2*cm, PAGE_H - 1.2*cm, brand_name)
 
-    # Top-right: Brand name + date
+    # Top-right: Page number
     canvas.setFont("Helvetica", 7.5)
     canvas.setFillColor(BRAND_GRAY)
-    canvas.drawRightString(PAGE_W - 2*cm, PAGE_H - 1.2*cm, f"{brand_name}  |  {_date_short_pt()}")
+    canvas.drawRightString(PAGE_W - 2*cm, PAGE_H - 1.2*cm, f"Página {doc.page}")
 
     # Top line
-    canvas.setStrokeColor(BRAND_PRIMARY)
+    canvas.setStrokeColor(effective_primary)
     canvas.setLineWidth(1.5)
     canvas.line(2*cm, PAGE_H - 1.8*cm, PAGE_W - 2*cm, PAGE_H - 1.8*cm)
 
     # Footer
-    canvas.setFont("Helvetica", 6.5)
-    canvas.setFillColor(BRAND_LIGHT_GRAY)
-    canvas.drawCentredString(PAGE_W / 2, 1.2*cm, f"Página {doc.page}  —  Relatório gerado por LaBrand · Brand OS")
-
     canvas.setStrokeColor(colors.HexColor("#e0e0e0"))
     canvas.setLineWidth(0.5)
     canvas.line(2*cm, 1.5*cm, PAGE_W - 2*cm, 1.5*cm)
+
+    canvas.setFont("Helvetica", 6.5)
+    canvas.setFillColor(BRAND_LIGHT_GRAY)
+    canvas.drawString(2*cm, 1.0*cm, f"Confidencial — uso restrito a {brand_name}")
+    canvas.drawRightString(PAGE_W - 2*cm, 1.0*cm, f"{_date_short_pt()}  |  powered by LaBrand")
     canvas.restoreState()
 
 
@@ -344,7 +363,7 @@ async def _fetch_all_pillar_data(brand_id: str) -> dict:
 
 @router.post("/brands/{brand_id}/reports/executive-pdf")
 async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user: dict = Depends(get_current_user)):
-    """Generate enhanced executive PDF report"""
+    """Generate enhanced executive PDF report with client branding"""
     brand = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
     if not brand:
         raise HTTPException(status_code=404, detail="Marca não encontrada")
@@ -356,6 +375,31 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
     bvs_list = await db.bvs_scores.find({"brand_id": brand_id}, {"_id": 0}).sort("calculated_at", -1).to_list(1)
     culture = await db.brand_culture.find_one({"brand_id": brand_id}, {"_id": 0})
     tracking = await db.brand_tracking.find({"brand_id": brand_id}, {"_id": 0}).sort("created_at", -1).to_list(5)
+
+    # Fetch white-label config for client colors
+    wl = await db.white_label.find_one({"brand_id": brand_id}, {"_id": 0})
+    client_primary = BRAND_PRIMARY
+    client_accent = BRAND_ACCENT
+    client_cover_bg = BRAND_DARK
+    if wl and wl.get("enabled"):
+        if wl.get("primary_color"):
+            try:
+                client_primary = colors.HexColor(wl["primary_color"])
+                client_cover_bg = colors.HexColor(wl["primary_color"])
+            except Exception:
+                pass
+        if wl.get("accent_color"):
+            try:
+                client_accent = colors.HexColor(wl["accent_color"])
+            except Exception:
+                pass
+
+    # Resolve client logo path
+    client_logo_path = None
+    if brand.get("logo_url"):
+        potential = os.path.join(os.path.dirname(os.path.dirname(__file__)), brand["logo_url"].lstrip("/"))
+        if os.path.exists(potential):
+            client_logo_path = potential
 
     # Computed metrics
     pillar_types = list(PILLAR_NAMES.keys())
@@ -371,6 +415,8 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
 
     brand_name = brand.get('name', 'Marca')
     report_title = request.report_title or "Relatório Executivo"
+    prepared_name = request.prepared_by_name or user.get("name", "")
+    prepared_email = request.prepared_by_email or user.get("email", "")
 
     st = _build_styles()
 
@@ -386,15 +432,22 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
 
     # ============ COVER PAGE ============
     cover_data = [
-        [Spacer(1, 4*cm)],
+        [Spacer(1, 3.5*cm)],
         [Paragraph(report_title, st['cover_title'])],
         [Paragraph(f"<b>{brand_name}</b>", st['cover_title'])],
         [Spacer(1, 0.8*cm)],
         [Paragraph(f"Setor: {brand.get('industry', brand.get('sector', 'N/A'))}", st['cover_sub'])],
-        [Paragraph(f"Gerado em: {_date_pt()}", st['cover_sub'])],
-        [Spacer(1, 0.4*cm)],
         [Paragraph(f"Completude: {completion_rate}%  |  BVS Score: {bvs_score}  |  Touchpoints: {len(touchpoints)}", st['cover_sub'])],
+        [Spacer(1, 3*cm)],
     ]
+    # Prepared by block
+    if prepared_name:
+        cover_data.append([Paragraph(f"Preparado por <b>{prepared_name}</b>", st['cover_sub'])])
+    if prepared_email:
+        cover_data.append([Paragraph(prepared_email, st['cover_sub'])])
+    cover_data.append([Paragraph(_date_pt(), st['cover_sub'])])
+    cover_data.append([Paragraph("Versão 1.0", st['cover_sub'])])
+
     cover_table = Table(cover_data, colWidths=[14*cm])
     cover_table.setStyle(TableStyle([
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
@@ -407,7 +460,7 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
     # ============ TABLE OF CONTENTS ============
     story.append(Paragraph("ÍNDICE", st['section_num']))
     story.append(Paragraph("Conteúdo do Relatório", st['section_title']))
-    story.append(HRFlowable(width="100%", thickness=1, color=BRAND_PRIMARY, spaceAfter=10))
+    story.append(HRFlowable(width="100%", thickness=1, color=client_primary, spaceAfter=10))
 
     sec_num = 1
     section_titles = {
@@ -430,7 +483,7 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
     if "summary" in request.sections:
         story.append(Paragraph(f"SEÇÃO {sec_idx}", st['section_num']))
         story.append(Paragraph("Resumo Executivo", st['section_title']))
-        story.append(HRFlowable(width="100%", thickness=1, color=BRAND_PRIMARY, spaceAfter=10))
+        story.append(HRFlowable(width="100%", thickness=1, color=client_primary, spaceAfter=10))
 
         # Key Metrics
         metrics = [
@@ -482,7 +535,7 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
     if "pillars" in request.sections:
         story.append(Paragraph(f"SEÇÃO {sec_idx}", st['section_num']))
         story.append(Paragraph("Pilares de Marca", st['section_title']))
-        story.append(HRFlowable(width="100%", thickness=1, color=BRAND_PRIMARY, spaceAfter=10))
+        story.append(HRFlowable(width="100%", thickness=1, color=client_primary, spaceAfter=10))
 
         # Apply filter if provided
         filtered_pillar_types = pillar_types
@@ -527,7 +580,7 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
             chart.valueAxis.valueMax = 100
             chart.valueAxis.valueStep = 25
             chart.valueAxis.labels.fontSize = 7
-            chart.bars[0].fillColor = BRAND_PRIMARY
+            chart.bars[0].fillColor = client_primary
             chart.bars[0].strokeColor = None
             d.add(chart)
             story.append(d)
@@ -542,6 +595,19 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
             story.append(Spacer(1, 0.3*cm))
             story.append(Paragraph(f"<b>{PILLAR_NAMES[pt]}</b>", st['body_bold']))
             story.append(Spacer(1, 0.1*cm))
+
+            # Editorial quote for key pillar declarations
+            editorial_fields = {
+                "purpose": ["proposito", "missao"],
+                "promise": ["promessa_principal", "promessa_emocional"],
+                "positioning": ["declaracao_posicionamento"],
+            }
+            if pt in editorial_fields:
+                for field in editorial_fields[pt]:
+                    val = data.get(field)
+                    if val and isinstance(val, str) and len(val) > 5:
+                        story.append(Paragraph(f'"{val}"', st['editorial_quote']))
+                        break
 
             detail_rows = []
             for field_key, field_val in data.items():
@@ -566,7 +632,7 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
     if "score" in request.sections:
         story.append(Paragraph(f"SEÇÃO {sec_idx}", st['section_num']))
         story.append(Paragraph("BVS Score & Maturidade", st['section_title']))
-        story.append(HRFlowable(width="100%", thickness=1, color=BRAND_PRIMARY, spaceAfter=10))
+        story.append(HRFlowable(width="100%", thickness=1, color=client_primary, spaceAfter=10))
 
         story.append(Paragraph(f"<b>BVS Score Atual: {bvs_score}</b>", st['body_bold']))
         if bvs_level:
@@ -649,7 +715,7 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
     if "touchpoints" in request.sections and touchpoints:
         story.append(Paragraph(f"SEÇÃO {sec_idx}", st['section_num']))
         story.append(Paragraph("Touchpoints da Marca", st['section_title']))
-        story.append(HRFlowable(width="100%", thickness=1, color=BRAND_PRIMARY, spaceAfter=10))
+        story.append(HRFlowable(width="100%", thickness=1, color=client_primary, spaceAfter=10))
 
         story.append(Paragraph(
             f"Total de <b>{len(touchpoints)}</b> touchpoints mapeados com score médio de <b>{avg_tp:.1f}/10</b>.",
@@ -684,7 +750,7 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
     if "recommendations" in request.sections:
         story.append(Paragraph(f"SEÇÃO {sec_idx}", st['section_num']))
         story.append(Paragraph("Recomendações Estratégicas", st['section_title']))
-        story.append(HRFlowable(width="100%", thickness=1, color=BRAND_PRIMARY, spaceAfter=10))
+        story.append(HRFlowable(width="100%", thickness=1, color=client_primary, spaceAfter=10))
 
         recs = []
 
@@ -732,27 +798,61 @@ async def generate_executive_pdf(brand_id: str, request: PDFReportRequest, user:
             st['body']
         ))
 
+    # ============ CONTRACAPA ============
+    story.append(PageBreak())
+    # Contracapa content will be rendered as last page via onLastPage-like approach
+    # Add spacer then final content
+    story.append(Spacer(1, 2*cm))
+    story.append(HRFlowable(width="100%", thickness=1, color=client_primary, spaceAfter=20))
+    if prepared_name:
+        story.append(Paragraph(f"<b>Preparado por</b>", st['body_bold']))
+        story.append(Spacer(1, 0.2*cm))
+        story.append(Paragraph(f"<b>{prepared_name}</b>", st['body_bold']))
+        if prepared_email:
+            story.append(Paragraph(prepared_email, st['body']))
+        story.append(Paragraph(_date_pt(), st['body']))
+        story.append(Spacer(1, 1*cm))
+    story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER_COLOR, spaceAfter=10))
+    story.append(Paragraph(
+        f"<i>Este documento é confidencial e foi preparado exclusivamente para {brand_name}.</i>",
+        st['body']
+    ))
+    story.append(Spacer(1, 0.5*cm))
+    story.append(Paragraph(
+        "<i>powered by LaBrand · Brand OS</i>",
+        st['body']
+    ))
+
     # ============ BUILD ============
     def first_page(canvas, doc):
         canvas.saveState()
-        # Dark background
-        canvas.setFillColor(BRAND_DARK)
+        # Dark background with client color
+        canvas.setFillColor(client_cover_bg)
         canvas.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
-        # Accent bar
-        canvas.setFillColor(BRAND_PRIMARY)
+        # Accent bar at top
+        canvas.setFillColor(client_accent)
         canvas.rect(0, PAGE_H - 0.8*cm, PAGE_W, 0.8*cm, fill=1, stroke=0)
-        # White logo at bottom
-        if os.path.exists(LOGO_WHITE):
-            canvas.drawImage(LOGO_WHITE, 2*cm, 2*cm, width=3*cm, height=1*cm,
-                             preserveAspectRatio=True, mask='auto')
-        # Footer text
-        canvas.setFont("Helvetica", 7.5)
-        canvas.setFillColor(BRAND_LIGHT_GRAY)
-        canvas.drawString(2*cm, 1.2*cm, "LaBrand · Brand OS  —  " + report_title)
+        # Client logo at top-center (or brand name in large font)
+        if client_logo_path and os.path.exists(client_logo_path):
+            try:
+                canvas.drawImage(client_logo_path, PAGE_W / 2 - 2*cm, PAGE_H - 3.5*cm,
+                                 width=4*cm, height=1.5*cm, preserveAspectRatio=True, mask='auto')
+            except Exception:
+                canvas.setFont("Helvetica-Bold", 40)
+                canvas.setFillColor(WHITE)
+                canvas.drawCentredString(PAGE_W / 2, PAGE_H - 3*cm, brand_name)
+        else:
+            canvas.setFont("Helvetica-Bold", 40)
+            canvas.setFillColor(WHITE)
+            canvas.drawCentredString(PAGE_W / 2, PAGE_H - 3*cm, brand_name)
+        # "powered by LaBrand" at bottom
+        canvas.setFont("Helvetica", 7)
+        canvas.setFillColor(colors.HexColor("#71717a"))
+        canvas.drawCentredString(PAGE_W / 2, 1.2*cm, "powered by LaBrand · Brand OS")
         canvas.restoreState()
 
     def later_pages(canvas, doc):
-        _header_footer(canvas, doc, brand_name)
+        _header_footer(canvas, doc, brand_name, client_logo_path, client_primary)
 
     doc.build(story, onFirstPage=first_page, onLaterPages=later_pages)
 
