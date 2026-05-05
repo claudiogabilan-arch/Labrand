@@ -62,6 +62,13 @@ import {
   Check,
   Route,
   Network,
+  ClipboardList,
+  FlaskConical,
+  Megaphone,
+  HeartHandshake,
+  GraduationCap,
+  MessageSquare,
+  ShieldCheck,
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -76,106 +83,92 @@ try {
 // Top-level items (always visible, no section)
 const topItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, featureId: 'dashboard' },
-  { name: 'Jornada', href: '/journey', icon: Route, featureId: 'journey' },
   { name: 'Mapa Mental', href: '/mindmap', icon: Share2, featureId: 'mindmap' },
-  { name: 'BVS Score', href: '/bvs', icon: Gem, featureId: 'bvs', pro: true },
-  { name: 'Executivo', href: '/executive', icon: Briefcase, featureId: 'executive', pro: true },
-  { name: 'Diagnostico', href: '/maturity', icon: ClipboardCheck, featureId: 'maturity', pro: true },
-  { name: 'Arquitetura', href: '/brand-architecture', icon: Network, featureId: 'brand_architecture' },
-  { name: 'Valuation', href: '/valuation', icon: TrendingUp, featureId: 'valuation' },
-  { name: 'Ferramentas', href: '/brand-tools', icon: Wrench, featureId: 'brand_tools', pro: true },
+  { name: 'Score Geral', href: '/bvs', icon: Gem, featureId: 'bvs', pro: true },
 ];
 
 // Collapsible sections
 const sections = [
   {
-    id: 'pilares',
-    label: 'Pilares de Marca',
+    id: 'sec_construcao',
+    label: 'Construção',
     icon: Heart,
     items: [
-      { name: 'Jeito de Ser', href: '/brand-way', icon: Heart, featureId: 'brand_way' },
+      { name: 'Pilares', href: '/pillars/start', icon: Target, featureId: 'start' },
+      { name: 'Jeito de Ser', href: '/brand-way', icon: Compass, featureId: 'brand_way' },
       { name: 'Naming', href: '/naming', icon: Sparkles, featureId: 'naming', pro: true },
-      { name: 'Start', href: '/pillars/start', icon: Target, pillar: 'start', featureId: 'start' },
-      { name: 'Valores', href: '/pillars/values', icon: Heart, pillar: 'values', featureId: 'values' },
-      { name: 'Propósito', href: '/pillars/purpose', icon: Compass, pillar: 'purpose', featureId: 'purpose' },
-      { name: 'Promessa', href: '/pillars/promise', icon: Star, pillar: 'promise', featureId: 'promise', pro: true },
-      { name: 'Posicionamento', href: '/pillars/positioning', icon: Crosshair, pillar: 'positioning', featureId: 'positioning', pro: true },
-      { name: 'Personalidade', href: '/pillars/personality', icon: Users, pillar: 'personality', featureId: 'personality', pro: true },
-      { name: 'Universal', href: '/pillars/universality', icon: Globe, pillar: 'universality', featureId: 'universality', pro: true },
+      { name: 'Identidade', href: '/identity', icon: Palette, featureId: 'identity' },
+      { name: 'Narrativas', href: '/narratives', icon: BookOpen, featureId: 'narratives' },
+      { name: 'Arquitetura', href: '/brand-architecture', icon: Network, featureId: 'brand_architecture' },
     ]
   },
   {
-    id: 'frameworks',
-    label: 'Frameworks',
-    icon: Activity,
+    id: 'sec_diagnostico',
+    label: 'Diagnóstico',
+    icon: ClipboardCheck,
     items: [
-      { name: 'Saúde da Marca', href: '/brand-health', icon: Activity, featureId: 'brand_health', pro: true },
-      { name: 'Ondas de Valor', href: '/value-waves', icon: Waves, featureId: 'value_waves', pro: true },
-      { name: 'Funil de Marca', href: '/brand-funnel', icon: Filter, featureId: 'brand_funnel', pro: true },
+      { name: 'Maturidade', href: '/maturity', icon: Activity, featureId: 'maturity', pro: true },
+      { name: 'Saúde da Marca', href: '/brand-health', icon: Waves, featureId: 'brand_health', pro: true },
+      { name: 'Risco de Marca', href: '/brand-risk', icon: AlertTriangle, featureId: 'risk', pro: true },
       { name: 'Disaster Check', href: '/disaster-check', icon: Shield, featureId: 'disaster_check', pro: true },
-      { name: 'Cultura & Pessoas', href: '/culture', icon: Users, featureId: 'culture' },
+      { name: 'Alertas', href: '/consistency', icon: Eye, featureId: 'consistency', pro: true },
     ]
   },
   {
-    id: 'competitiva',
-    label: 'Análise Competitiva',
+    id: 'sec_mercado',
+    label: 'Mercado',
     icon: Radio,
     items: [
-      { name: 'Social Listening', href: '/social-listening', icon: Radio, featureId: 'social_listening', pro: true },
-      { name: 'Share of Voice', href: '/share-of-voice', icon: Volume2, featureId: 'share_of_voice', pro: true },
-      { name: 'Atributos Conversão', href: '/conversion-attributes', icon: BarChart3, featureId: 'conversion_attributes', pro: true },
-    ]
-  },
-  {
-    id: 'analise',
-    label: 'Análise & Risco',
-    icon: AlertTriangle,
-    items: [
-      { name: 'Touchpoints', href: '/touchpoints', icon: MapPin, featureId: 'touchpoints' },
-      { name: 'Brand Tracking', href: '/brand-tracking', icon: TrendingUp, featureId: 'brand_tracking', pro: true },
-      { name: 'Risco de Marca', href: '/brand-risk', icon: AlertTriangle, featureId: 'risk', pro: true },
-      { name: 'Alertas', href: '/consistency', icon: Eye, featureId: 'consistency', pro: true },
       { name: 'Concorrentes', href: '/competitors', icon: Users, featureId: 'competitors', pro: true },
       { name: 'Benchmark', href: '/benchmark', icon: BarChart3, featureId: 'benchmark', pro: true },
-      { name: 'Simulador', href: '/simulator', icon: TrendingUp, featureId: 'simulator', pro: true },
-      { name: 'Avaliação', href: '/valuation', icon: DollarSign, featureId: 'valuation', pro: true },
+      { name: 'Share of Voice', href: '/share-of-voice', icon: Volume2, featureId: 'share_of_voice', pro: true },
+      { name: 'Social Listening', href: '/social-listening', icon: Bell, featureId: 'social_listening', pro: true },
+      { name: 'Atributos de Conversão', href: '/conversion-attributes', icon: Crosshair, featureId: 'conversion_attributes', pro: true },
+      { name: 'Funil de Marca', href: '/brand-funnel', icon: Filter, featureId: 'brand_funnel', pro: true },
     ]
   },
   {
-    id: 'inteligencia',
-    label: 'Inteligência',
-    icon: BarChart3,
-    items: [
-      { name: 'Dashboard Intel', href: '/intelligence', icon: BarChart3, featureId: 'intelligence' },
-      { name: 'Integrações', href: '/integrations', icon: Plug, featureId: 'integrations', pro: true },
-      { name: 'Google Analytics', href: '/google-integration', icon: Globe, featureId: 'google_integration', pro: true },
-      { name: 'Meta & Google Ads', href: '/ads', icon: TrendingUp, featureId: 'ads', pro: true },
-      { name: 'CRM', href: '/crm', icon: Building2, featureId: 'crm', pro: true },
-      { name: 'Audiência', href: '/audience', icon: UserCheck, featureId: 'audience' },
-    ]
-  },
-  {
-    id: 'gestao',
-    label: 'Gestão',
+    id: 'sec_execucao',
+    label: 'Execução',
     icon: ListTodo,
     items: [
-      { name: 'LaBrand Academy', href: '/academy', icon: BookOpen, featureId: 'academy' },
-      { name: 'Colaboracao', href: '/collaboration', icon: Users, featureId: 'collaboration' },
-      { name: 'Planejamento', href: '/planning', icon: ListTodo, featureId: 'planning' },
+      { name: 'Touchpoints', href: '/touchpoints', icon: MapPin, featureId: 'touchpoints' },
+      { name: 'Jornada', href: '/journey', icon: Route, featureId: 'journey' },
       { name: 'Campanhas', href: '/campaigns', icon: Calendar, featureId: 'campaigns' },
-      { name: 'Decisões', href: '/scorecard', icon: ClipboardCheck, featureId: 'scorecard' },
-      { name: 'Narrativas', href: '/narratives', icon: BookOpen, featureId: 'narratives' },
+      { name: 'Planejamento', href: '/planning', icon: ClipboardList, featureId: 'planning' },
+      { name: 'Decisões', href: '/scorecard', icon: Check, featureId: 'scorecard' },
+      { name: 'Brand Tracking', href: '/brand-tracking', icon: TrendingUp, featureId: 'brand_tracking', pro: true },
+      { name: 'Simulador', href: '/simulator', icon: FlaskConical, featureId: 'simulator', pro: true },
+      { name: 'Valuation', href: '/valuation', icon: DollarSign, featureId: 'valuation' },
       { name: 'Relatórios', href: '/reports', icon: FileText, featureId: 'reports', pro: true },
     ]
   },
   {
-    id: 'sistema',
+    id: 'sec_inteligencia',
+    label: 'Inteligência',
+    icon: BarChart3,
+    items: [
+      { name: 'Dashboard Executivo', href: '/executive', icon: Briefcase, featureId: 'executive', pro: true },
+      { name: 'Dashboard Intel', href: '/intelligence', icon: Crown, featureId: 'intelligence' },
+      { name: 'Audiência', href: '/audience', icon: UserCheck, featureId: 'audience' },
+      { name: 'Google Analytics', href: '/google-integration', icon: Globe, featureId: 'google_integration', pro: true },
+      { name: 'Ads — Meta + Google', href: '/ads', icon: Megaphone, featureId: 'ads', pro: true },
+      { name: 'CRM', href: '/crm', icon: Building2, featureId: 'crm', pro: true },
+      { name: 'Integrações', href: '/integrations', icon: Plug, featureId: 'integrations', pro: true },
+      { name: 'Cultura & Pessoas', href: '/culture', icon: HeartHandshake, featureId: 'culture' },
+      { name: 'Academy', href: '/academy', icon: GraduationCap, featureId: 'academy' },
+      { name: 'Colaboração', href: '/collaboration', icon: MessageSquare, featureId: 'collaboration' },
+    ]
+  },
+  {
+    id: 'sec_sistema',
     label: 'Sistema',
     icon: Settings,
     items: [
+      { name: 'Ferramentas', href: '/brand-tools', icon: Wrench, featureId: 'brand_tools', pro: true },
       { name: 'Créditos IA', href: '/ai-credits', icon: Star, featureId: 'ai_credits' },
       { name: 'Configurações', href: '/settings', icon: Settings, featureId: 'settings' },
-      { name: 'Admin', href: '/admin', icon: Shield, featureId: 'admin', adminOnly: true },
+      { name: 'Admin', href: '/admin', icon: ShieldCheck, featureId: 'admin', adminOnly: true },
     ]
   },
 ];
