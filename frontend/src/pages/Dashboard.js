@@ -37,7 +37,8 @@ import {
   Music,
   Eye,
   Share2,
-  BarChart3
+  BarChart3,
+  ChevronDown,
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -77,9 +78,9 @@ export const Dashboard = () => {
   const [clickupData, setClickupData] = useState({ connected: false, history: [], stats: {} });
   const [clickupPeriod, setClickupPeriod] = useState('all');
   const [socialDash, setSocialDash] = useState(null);
+  const [integrationsOpen, setIntegrationsOpen] = useState(false);
 
   useEffect(() => {
-    // Show tutorial on first visit
     const tutorialComplete = localStorage.getItem('labrand_tutorial_complete');
     if (!tutorialComplete) {
       setShowTutorial(true);
@@ -178,122 +179,100 @@ export const Dashboard = () => {
     );
   }
 
-  const overallProgress = metrics?.overall_completion || 0;
+  // Score logic
+  const score = metrics?.bvs_score ?? metrics?.overall_completion ?? 0;
+  const scoreVariation = metrics?.bvs_variation ?? null;
+
+  // Next action logic
+  const nextPillar = pillarInfo.find(p => (metrics?.pillars?.[p.key] || 0) < 100);
+  const nextAction = nextPillar
+    ? { title: `Completar Pilar ${nextPillar.name}`, href: nextPillar.href }
+    : { title: 'Avaliar Maturidade da Marca', href: '/maturity' };
+
+  const isLoading = !metrics;
 
   return (
     <div className="space-y-8 relative" data-testid="dashboard">
       {/* Ambient orb for visual life */}
       <div className="ambient-orb -top-24 -right-24 opacity-60" />
 
-      {/* Welcome Section */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 relative z-10">
-        <div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight">
-            Olá, {user?.name?.split(' ')[0]}!
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Gerencie a marca <span className="font-medium text-foreground">{currentBrand.name}</span>
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Badge variant="outline" className="px-3 py-1.5 border-border/60 text-sm font-medium">
-            <TrendingUp className="h-3.5 w-3.5 mr-1.5 text-secondary" />
-            {overallProgress}% concluído
-          </Badge>
-        </div>
-      </div>
+      {/* ═══════════ ZONA 1 — HERO ═══════════ */}
+      <Card className="border border-border/50 overflow-hidden relative z-10" data-testid="hero-card">
+        {isLoading ? (
+          <CardContent className="py-10">
+            <div className="flex flex-col md:flex-row md:items-center gap-8 animate-pulse">
+              <div className="flex-1 space-y-4">
+                <div className="h-20 w-40 bg-muted rounded-lg" />
+                <div className="h-4 w-56 bg-muted rounded" />
+                <div className="h-3 w-44 bg-muted rounded" />
+              </div>
+              <div className="w-full md:w-80 h-32 bg-muted rounded-xl" />
+            </div>
+          </CardContent>
+        ) : (
+          <CardContent className="py-8">
+            <div className="flex flex-col md:flex-row md:items-center gap-8">
+              {/* Left — Score */}
+              <div className="flex-1">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2 font-medium">Score Geral</p>
+                <p className="font-heading text-7xl font-bold tracking-tight leading-none" data-testid="hero-score">
+                  {score}
+                </p>
+                {scoreVariation !== null && scoreVariation !== 0 && (
+                  <p className={`text-sm font-medium mt-2 flex items-center gap-1 ${scoreVariation > 0 ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'}`} data-testid="hero-variation">
+                    {scoreVariation > 0 ? '▲' : '▼'} {scoreVariation > 0 ? '+' : ''}{scoreVariation} esta semana
+                  </p>
+                )}
+                <p className="text-sm text-muted-foreground mt-2">
+                  Pontuação consolidada da sua marca
+                </p>
+              </div>
 
-      {/* Overall Progress Card */}
-      <Card className="border border-border/50 overflow-hidden relative z-10" data-testid="overall-progress-card">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-secondary/80 to-secondary/20" style={{width: `${overallProgress}%`}} />
-        <CardContent className="pt-6 pb-6">
-          <div className="flex flex-col md:flex-row md:items-center gap-6">
-            <div className="flex-1">
-              <h3 className="font-heading font-semibold text-base mb-3">Progresso Geral da Marca</h3>
-              <Progress value={overallProgress} className="h-1.5 [&>div]:bg-secondary" />
-              <p className="text-sm text-muted-foreground mt-2">
-                {overallProgress < 30 && 'Você está começando! Complete os pilares para fortalecer sua marca.'}
-                {overallProgress >= 30 && overallProgress < 70 && 'Bom progresso! Continue preenchendo os pilares.'}
-                {overallProgress >= 70 && overallProgress < 100 && 'Quase lá! Finalize os últimos detalhes.'}
-                {overallProgress === 100 && 'Parabéns! Todos os pilares estão completos.'}
-              </p>
-              <div className="mt-3 p-3 bg-accent rounded-lg border border-secondary/10">
-                <div className="flex items-center gap-2 text-sm">
-                  <TrendingUp className="h-4 w-4 text-secondary" />
-                  <span className="text-muted-foreground">Impacto no</span>
-                  <span className="font-semibold text-accent-foreground">BVS Score:</span>
-                  <span className="font-bold text-accent-foreground">
-                    {overallProgress < 30 && '+5-15 pontos ao completar pilares'}
-                    {overallProgress >= 30 && overallProgress < 70 && '+10-20 pontos potenciais'}
-                    {overallProgress >= 70 && '+25 pontos de Força da Marca'}
-                  </span>
-                </div>
+              {/* Right — Next Action */}
+              <div className="w-full md:w-80 p-5 rounded-xl border border-border/60 bg-muted/30" data-testid="next-action-card">
+                <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium mb-3">Próximo passo recomendado</p>
+                <h3 className="font-heading font-semibold text-base mb-4">{nextAction.title}</h3>
+                <Button onClick={() => navigate(nextAction.href)} className="w-full" data-testid="next-action-btn">
+                  Continuar <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
               </div>
             </div>
-            <div className="flex gap-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-foreground">{metrics?.tasks?.completed || 0}</div>
-                <div className="text-xs text-muted-foreground">Concluídas</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-amber-500">{metrics?.tasks?.in_progress || 0}</div>
-                <div className="text-xs text-muted-foreground">Andamento</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-emerald-500">{metrics?.decisions?.validated || 0}</div>
-                <div className="text-xs text-muted-foreground">Validadas</div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
 
-      {/* Pillars Grid */}
+      {/* ═══════════ ZONA 2 — PROGRESSO DOS PILARES ═══════════ */}
       <div className="relative z-10">
         <h2 className="font-heading text-lg font-semibold mb-4">Pilares de Marca</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3" data-testid="pillars-bento-grid">
           {pillarInfo.map((pillar) => {
             const Icon = pillar.icon;
             const progress = metrics?.pillars?.[pillar.key] || 0;
-            
+
             return (
-              <Link 
-                key={pillar.key} 
+              <Link
+                key={pillar.key}
                 to={pillar.href}
                 data-testid={`pillar-card-${pillar.key}`}
               >
-                <Card className={`h-full pillar-card group ${progress === 100 ? 'border-emerald-200/60' : progress > 0 ? 'border-amber-200/40' : 'border-border/50'}`}>
-                  <CardContent className="pt-6 pb-5">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className={`w-10 h-10 rounded-xl ${pillar.color} flex items-center justify-center`}>
-                        <Icon className="h-5 w-5 text-white" />
+                <Card className={`h-full pillar-card group ${progress === 100 ? 'border-[hsl(var(--success))]/40' : progress > 0 ? 'border-[hsl(var(--warning))]/30' : 'border-border/50'}`}>
+                  <CardContent className="pt-4 pb-4 px-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className={`w-8 h-8 rounded-lg ${pillar.color} flex items-center justify-center`}>
+                        <Icon className="h-4 w-4 text-white" />
                       </div>
-                      {progress === 100 ? (
-                        <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                      ) : (
-                        <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-secondary transition-colors duration-200" />
-                      )}
+                      {progress === 100 && <CheckCircle2 className="h-4 w-4 text-[hsl(var(--success))]" />}
                     </div>
-                    <h3 className="font-heading font-semibold text-sm mb-1">{pillar.name}</h3>
-                    <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{pillar.description}</p>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">Progresso</span>
-                        <span className={`font-medium ${progress === 100 ? 'text-emerald-600' : progress > 0 ? 'text-amber-600' : 'text-muted-foreground'}`}>
-                          {progress}%
-                        </span>
-                      </div>
-                      <Progress 
-                        value={progress} 
-                        className={`h-1 [&>div]:transition-all [&>div]:duration-500 ${progress === 100 ? '[&>div]:bg-emerald-500' : progress > 0 ? '[&>div]:bg-amber-500' : '[&>div]:bg-muted-foreground/20'}`} 
-                      />
-                      {progress === 0 && (
-                        <p className="text-xs text-secondary/70 flex items-center gap-1">
-                          <Sparkles className="h-3 w-3" />
-                          +3 pts no BVS ao completar
-                        </p>
-                      )}
+                    <h3 className="font-heading font-semibold text-xs mb-1 truncate">{pillar.name}</h3>
+                    <div className="flex items-center justify-between text-[11px] mb-1.5">
+                      <span className={`font-medium ${progress === 100 ? 'text-[hsl(var(--success))]' : progress > 0 ? 'text-[hsl(var(--warning))]' : 'text-muted-foreground'}`}>
+                        {progress}%
+                      </span>
                     </div>
+                    <Progress
+                      value={progress}
+                      className={`h-1 [&>div]:transition-all [&>div]:duration-500 ${progress === 100 ? '[&>div]:bg-[hsl(var(--success))]' : progress > 0 ? '[&>div]:bg-[hsl(var(--warning))]' : '[&>div]:bg-muted-foreground/20'}`}
+                    />
                   </CardContent>
                 </Card>
               </Link>
@@ -302,60 +281,9 @@ export const Dashboard = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 relative z-10">
-        <Card className="pillar-card cursor-pointer group" onClick={() => navigate('/planning')} data-testid="quick-action-planning">
-          <CardContent className="pt-6 pb-5">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100">
-                <ListTodo className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="font-heading font-semibold text-sm">Planejamento</h3>
-                <p className="text-xs text-muted-foreground">
-                  {metrics?.tasks?.backlog || 0} tarefas no backlog
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="pillar-card cursor-pointer group" onClick={() => navigate('/scorecard')} data-testid="quick-action-scorecard">
-          <CardContent className="pt-6 pb-5">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center border border-amber-100">
-                <CheckCircle2 className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <h3 className="font-heading font-semibold text-sm">Decisões</h3>
-                <p className="text-xs text-muted-foreground">
-                  {metrics?.decisions?.pending || 0} pendentes
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="pillar-card cursor-pointer group" onClick={() => navigate('/narratives')} data-testid="quick-action-narratives">
-          <CardContent className="pt-6 pb-5">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center border border-purple-100">
-                <Sparkles className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <h3 className="font-heading font-semibold text-sm">Narrativas</h3>
-                <p className="text-xs text-muted-foreground">
-                  Histórias e manifesto
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Activity + Approvals Row */}
+      {/* ═══════════ ZONA 3 — ATIVIDADE ═══════════ */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 relative z-10">
-        {/* Recent Activity */}
+        {/* Coluna esquerda — Atividade Recente */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -387,260 +315,223 @@ export const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Quick Status */}
-        <Card>
+        {/* Coluna direita — Mentor IA */}
+        <Card className="border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-br from-amber-50/50 to-orange-50/30 dark:from-amber-950/20 dark:to-orange-950/10">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-heading flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-muted-foreground" />
-              Status Rapido
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center">
+                  <Lightbulb className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-heading">Mentor de Marca</CardTitle>
+                  <CardDescription className="text-xs">Insights para {currentBrand?.name}</CardDescription>
+                </div>
+              </div>
+              <Button
+                onClick={generateMentorInsights}
+                disabled={isLoadingInsights}
+                variant="outline"
+                size="sm"
+                className="border-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900"
+                data-testid="generate-insights-btn"
+              >
+                {isLoadingInsights ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" />
+                )}
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors" onClick={() => navigate('/collaboration')} data-testid="pending-approvals-card">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                  <CheckCircle2 className="h-4 w-4 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Aprovacoes Pendentes</p>
-                  <p className="text-xs text-muted-foreground">Aguardando sua acao</p>
-                </div>
+          <CardContent>
+            {mentorInsights ? (
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <div className="whitespace-pre-wrap text-sm leading-relaxed">{mentorInsights}</div>
               </div>
-              <span className="text-lg font-bold text-amber-600">{pendingApprovals}</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors" onClick={() => {}} data-testid="unread-notifs-card">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-secondary/10 flex items-center justify-center">
-                  <Bell className="h-4 w-4 text-secondary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Notificacoes</p>
-                  <p className="text-xs text-muted-foreground">Nao lidas</p>
-                </div>
-              </div>
-              <span className="text-lg font-bold text-secondary">{unreadNotifs}</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors" onClick={() => navigate('/naming')} data-testid="naming-card">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                  <Sparkles className="h-4 w-4 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Naming</p>
-                  <p className="text-xs text-muted-foreground">Ferramenta de criacao de nomes</p>
-                </div>
-              </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Clique no botão para receber recomendações de marca, oportunidades de mercado e sugestões estratégicas.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* ClickUp Activity Widget */}
-      {clickupData.connected && (
-        <Card className="relative z-10" data-testid="clickup-dashboard-widget">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <CardTitle className="text-base font-heading flex items-center gap-2">
-                  <Link2 className="h-4 w-4 text-violet-600" />
-                  ClickUp
-                </CardTitle>
-                {clickupData.stats?.total > 0 && (
-                  <Badge variant="secondary" className="text-xs font-bold" data-testid="clickup-total-badge">
-                    {clickupData.stats.total} sincronizada{clickupData.stats.total !== 1 ? 's' : ''}
-                  </Badge>
-                )}
-              </div>
-              <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate('/planning')} data-testid="clickup-widget-go-planning">
-                Planejamento <ArrowRight className="h-3 w-3 ml-1" />
-              </Button>
-            </div>
-            <div className="flex items-center justify-between mt-1">
-              {clickupData.selected_list_name && (
-                <p className="text-xs text-muted-foreground">Lista: <span className="font-medium">{clickupData.selected_list_name}</span></p>
-              )}
-              <div className="flex border rounded-md overflow-hidden" data-testid="clickup-period-filter">
-                {[
-                  { key: 'week', label: 'Semana', count: clickupData.stats?.this_week },
-                  { key: 'month', label: 'Mês', count: clickupData.stats?.this_month },
-                  { key: 'all', label: 'Todos', count: clickupData.stats?.total },
-                ].map(p => (
-                  <button
-                    key={p.key}
-                    onClick={() => loadClickupHistoryByPeriod(p.key)}
-                    className={`px-2.5 py-1 text-xs font-medium transition-colors ${
-                      clickupPeriod === p.key
-                        ? 'bg-violet-600 text-white'
-                        : 'hover:bg-muted text-muted-foreground'
-                    }`}
-                    data-testid={`clickup-filter-${p.key}`}
-                  >
-                    {p.label}{p.count > 0 ? ` (${p.count})` : ''}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {clickupData.history.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                {clickupPeriod === 'all' ? 'Nenhuma tarefa sincronizada ainda. Crie tarefas no Planejamento para vê-las aqui.' : 'Nenhuma sincronização neste período.'}
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {clickupData.history.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b last:border-0" data-testid={`clickup-activity-${i}`}>
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-8 w-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
-                        <CheckCircle2 className="h-4 w-4 text-violet-600" />
+      {/* ═══════════ INTEGRAÇÕES ATIVAS (colapsável) ═══════════ */}
+      {(clickupData.connected || socialDash) && (
+        <div className="relative z-10" data-testid="integrations-section">
+          <button
+            onClick={() => setIntegrationsOpen(!integrationsOpen)}
+            className="flex items-center gap-2 w-full text-left py-2 group"
+            data-testid="integrations-toggle"
+          >
+            <h2 className="font-heading text-sm font-semibold text-muted-foreground uppercase tracking-wider">Integrações ativas</h2>
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${integrationsOpen ? '' : '-rotate-90'}`} />
+          </button>
+
+          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${integrationsOpen ? 'max-h-[2000px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
+            <div className="space-y-5">
+              {/* ClickUp */}
+              {clickupData.connected && (
+                <Card data-testid="clickup-dashboard-widget">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <CardTitle className="text-base font-heading flex items-center gap-2">
+                          <Link2 className="h-4 w-4 text-violet-600" />
+                          ClickUp
+                        </CardTitle>
+                        {clickupData.stats?.total > 0 && (
+                          <Badge variant="secondary" className="text-xs font-bold" data-testid="clickup-total-badge">
+                            {clickupData.stats.total} sincronizada{clickupData.stats.total !== 1 ? 's' : ''}
+                          </Badge>
+                        )}
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{item.task_title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.synced_by_name} · {new Date(item.synced_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                        </p>
+                      <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate('/planning')} data-testid="clickup-widget-go-planning">
+                        Planejamento <ArrowRight className="h-3 w-3 ml-1" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      {clickupData.selected_list_name && (
+                        <p className="text-xs text-muted-foreground">Lista: <span className="font-medium">{clickupData.selected_list_name}</span></p>
+                      )}
+                      <div className="flex border rounded-md overflow-hidden" data-testid="clickup-period-filter">
+                        {[
+                          { key: 'week', label: 'Semana', count: clickupData.stats?.this_week },
+                          { key: 'month', label: 'Mês', count: clickupData.stats?.this_month },
+                          { key: 'all', label: 'Todos', count: clickupData.stats?.total },
+                        ].map(p => (
+                          <button
+                            key={p.key}
+                            onClick={() => loadClickupHistoryByPeriod(p.key)}
+                            className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+                              clickupPeriod === p.key
+                                ? 'bg-violet-600 text-white'
+                                : 'hover:bg-muted text-muted-foreground'
+                            }`}
+                            data-testid={`clickup-filter-${p.key}`}
+                          >
+                            {p.label}{p.count > 0 ? ` (${p.count})` : ''}
+                          </button>
+                        ))}
                       </div>
                     </div>
-                    {item.clickup_url && (
-                      <a href={item.clickup_url} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 flex-shrink-0 ml-2"
-                        data-testid={`clickup-activity-link-${i}`}
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">Abrir</span>
-                      </a>
+                  </CardHeader>
+                  <CardContent>
+                    {clickupData.history.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        {clickupPeriod === 'all' ? 'Nenhuma tarefa sincronizada ainda.' : 'Nenhuma sincronização neste período.'}
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {clickupData.history.map((item, i) => (
+                          <div key={i} className="flex items-center justify-between py-2 border-b last:border-0" data-testid={`clickup-activity-${i}`}>
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="h-8 w-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
+                                <CheckCircle2 className="h-4 w-4 text-violet-600" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium truncate">{item.task_title}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {item.synced_by_name} · {new Date(item.synced_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </div>
+                            </div>
+                            {item.clickup_url && (
+                              <a href={item.clickup_url} target="_blank" rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 flex-shrink-0 ml-2"
+                                data-testid={`clickup-activity-link-${i}`}
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                  </CardContent>
+                </Card>
+              )}
 
-      {/* Social Media Consolidated Dashboard */}
-      {socialDash && (
-        <Card data-testid="social-dashboard-widget">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-heading flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-pink-500" />
-                Social Media — Visão Geral
-              </CardTitle>
-              <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate('/social-listening')} data-testid="social-widget-go-listening">
-                Social Listening <ArrowRight className="h-3 w-3 ml-1" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Platform followers */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              {Object.entries(socialDash.platforms || {}).map(([plat, data]) => {
-                const icons = { instagram: Instagram, facebook: Facebook, linkedin: Linkedin, youtube: Youtube, tiktok: Music };
-                const colors = { instagram: 'text-pink-500', facebook: 'text-blue-600', linkedin: 'text-blue-700', youtube: 'text-red-600', tiktok: 'text-gray-800' };
-                const Icon = icons[plat] || Globe;
-                return (
-                  <div key={plat} className="text-center p-3 rounded-lg bg-muted/50 border" data-testid={`social-plat-${plat}`}>
-                    <Icon className={`h-5 w-5 mx-auto mb-1 ${colors[plat] || 'text-gray-500'}`} />
-                    <p className="text-lg font-bold">{formatNum(data.followers || 0)}</p>
-                    <p className="text-[10px] text-muted-foreground capitalize">{plat}</p>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Engagement totals */}
-            <div className="grid grid-cols-4 gap-3">
-              {[
-                { icon: Heart, label: 'Curtidas', value: socialDash.total_engagement?.likes || 0, color: 'text-red-500' },
-                { icon: MessageSquare, label: 'Comentários', value: socialDash.total_engagement?.comments || 0, color: 'text-blue-500' },
-                { icon: Share2, label: 'Shares', value: socialDash.total_engagement?.shares || 0, color: 'text-green-500' },
-                { icon: Eye, label: 'Views', value: socialDash.total_engagement?.views || 0, color: 'text-purple-500' },
-              ].map((m, i) => (
-                <div key={i} className="text-center">
-                  <m.icon className={`h-4 w-4 mx-auto mb-0.5 ${m.color}`} />
-                  <p className="text-sm font-bold">{formatNum(m.value)}</p>
-                  <p className="text-[10px] text-muted-foreground">{m.label}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Top posts */}
-            {socialDash.top_posts?.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Top Posts</p>
-                <div className="space-y-2">
-                  {socialDash.top_posts.slice(0, 3).map((post, i) => {
-                    const icons = { instagram: Instagram, facebook: Facebook, linkedin: Linkedin, youtube: Youtube, tiktok: Music };
-                    const Icon = icons[post.platform] || Globe;
-                    const eng = post.engagement || {};
-                    return (
-                      <div key={i} className="flex items-center justify-between py-1.5 border-b last:border-0 text-sm" data-testid={`top-post-${i}`}>
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <Icon className="h-4 w-4 flex-shrink-0" />
-                          <p className="truncate text-xs">{post.content || '(sem texto)'}</p>
+              {/* Social Media */}
+              {socialDash && (
+                <Card data-testid="social-dashboard-widget">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base font-heading flex items-center gap-2">
+                        <BarChart3 className="h-4 w-4 text-pink-500" />
+                        Social Media — Visão Geral
+                      </CardTitle>
+                      <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate('/social-listening')} data-testid="social-widget-go-listening">
+                        Social Listening <ArrowRight className="h-3 w-3 ml-1" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                      {Object.entries(socialDash.platforms || {}).map(([plat, data]) => {
+                        const icons = { instagram: Instagram, facebook: Facebook, linkedin: Linkedin, youtube: Youtube, tiktok: Music };
+                        const colors = { instagram: 'text-pink-500', facebook: 'text-blue-600', linkedin: 'text-blue-700', youtube: 'text-red-600', tiktok: 'text-gray-800' };
+                        const Icon = icons[plat] || Globe;
+                        return (
+                          <div key={plat} className="text-center p-3 rounded-lg bg-muted/50 border" data-testid={`social-plat-${plat}`}>
+                            <Icon className={`h-5 w-5 mx-auto mb-1 ${colors[plat] || 'text-gray-500'}`} />
+                            <p className="text-lg font-bold">{formatNum(data.followers || 0)}</p>
+                            <p className="text-[10px] text-muted-foreground capitalize">{plat}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="grid grid-cols-4 gap-3">
+                      {[
+                        { icon: Heart, label: 'Curtidas', value: socialDash.total_engagement?.likes || 0, color: 'text-red-500' },
+                        { icon: MessageSquare, label: 'Comentários', value: socialDash.total_engagement?.comments || 0, color: 'text-blue-500' },
+                        { icon: Share2, label: 'Shares', value: socialDash.total_engagement?.shares || 0, color: 'text-green-500' },
+                        { icon: Eye, label: 'Views', value: socialDash.total_engagement?.views || 0, color: 'text-purple-500' },
+                      ].map((m, i) => (
+                        <div key={i} className="text-center">
+                          <m.icon className={`h-4 w-4 mx-auto mb-0.5 ${m.color}`} />
+                          <p className="text-sm font-bold">{formatNum(m.value)}</p>
+                          <p className="text-[10px] text-muted-foreground">{m.label}</p>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0 ml-2">
-                          {eng.likes > 0 && <span><Heart className="h-3 w-3 inline text-red-400" /> {formatNum(eng.likes)}</span>}
-                          {eng.views > 0 && <span><Eye className="h-3 w-3 inline text-purple-400" /> {formatNum(eng.views)}</span>}
-                          {post.url && <a href={post.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3" /></a>}
+                      ))}
+                    </div>
+                    {socialDash.top_posts?.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Top Posts</p>
+                        <div className="space-y-2">
+                          {socialDash.top_posts.slice(0, 3).map((post, i) => {
+                            const icons = { instagram: Instagram, facebook: Facebook, linkedin: Linkedin, youtube: Youtube, tiktok: Music };
+                            const Icon = icons[post.platform] || Globe;
+                            const eng = post.engagement || {};
+                            return (
+                              <div key={i} className="flex items-center justify-between py-1.5 border-b last:border-0 text-sm" data-testid={`top-post-${i}`}>
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                  <Icon className="h-4 w-4 flex-shrink-0" />
+                                  <p className="truncate text-xs">{post.content || '(sem texto)'}</p>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0 ml-2">
+                                  {eng.likes > 0 && <span><Heart className="h-3 w-3 inline text-red-400" /> {formatNum(eng.likes)}</span>}
+                                  {eng.views > 0 && <span><Eye className="h-3 w-3 inline text-purple-400" /> {formatNum(eng.views)}</span>}
+                                  {post.url && <a href={post.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3" /></a>}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <p className="text-[10px] text-muted-foreground text-center">
-              {socialDash.total_engagement?.posts || 0} posts analisados de {socialDash.connected_count} rede{socialDash.connected_count > 1 ? 's' : ''}
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Mentor / AI Insights */}
-      <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center">
-                <Lightbulb className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Mentor de Marca</CardTitle>
-                <CardDescription>Insights personalizados para {currentBrand?.name}</CardDescription>
-              </div>
-            </div>
-            <Button 
-              onClick={generateMentorInsights} 
-              disabled={isLoadingInsights}
-              variant="outline"
-              className="border-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900"
-            >
-              {isLoadingInsights ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
+                    <p className="text-[10px] text-muted-foreground text-center">
+                      {socialDash.total_engagement?.posts || 0} posts analisados de {socialDash.connected_count} rede{socialDash.connected_count > 1 ? 's' : ''}
+                    </p>
+                  </CardContent>
+                </Card>
               )}
-              Gerar Insights
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {mentorInsights ? (
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              <div className="whitespace-pre-wrap text-sm">{mentorInsights}</div>
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Clique em "Gerar Insights" para receber recomendações de melhorias, ações de marca, 
-              oportunidades de mercado e sugestões de novos produtos baseados nos dados da sua marca.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      )}
 
       {/* Tutorial */}
       {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
