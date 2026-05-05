@@ -23,14 +23,12 @@ export const BrandProvider = ({ children }) => {
   const hasFetchedRef = useRef(false);
 
   const fetchBrands = useCallback(async () => {
-    // Get token directly from localStorage as fallback
-    const authToken = token || localStorage.getItem('labrand_token');
-    if (!authToken) return [];
-    
+    if (!token) return [];
+
     setLoading(true);
     try {
       const response = await axios.get(`${API}/brands`, {
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: { Authorization: `Bearer ${token}` },
         withCredentials: true
       });
       const brandsList = response.data || [];
@@ -61,13 +59,12 @@ export const BrandProvider = ({ children }) => {
 
   // AUTO-FETCH: Load brands whenever user is authenticated
   useEffect(() => {
-    const authToken = token || localStorage.getItem('labrand_token');
-    if (user && authToken && !hasFetchedRef.current) {
+    if (user && token && !hasFetchedRef.current) {
       hasFetchedRef.current = true;
       fetchBrands();
     }
     // Reset when user logs out
-    if (!user && !authToken) {
+    if (!user && !token) {
       hasFetchedRef.current = false;
       setBrands([]);
       setCurrentBrand(null);
@@ -83,8 +80,7 @@ export const BrandProvider = ({ children }) => {
   }, []);
 
   const getHeaders = useCallback(() => {
-    const authToken = token || localStorage.getItem('labrand_token');
-    return authToken ? { Authorization: `Bearer ${authToken}` } : {};
+    return token ? { Authorization: `Bearer ${token}` } : {};
   }, [token]);
 
   const fetchBrand = useCallback(async (brandId) => {

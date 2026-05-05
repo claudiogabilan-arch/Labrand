@@ -107,6 +107,14 @@ Ferramenta interna de gestao de marcas para agencia de branding.
 - [x] Mobile responsivo (md:grid-cols-2 → empilha em <md)
 - Testado: Curl validou snapshot retornando 7 pillars com summary; Playwright validou empty state, deep-link com 2 cards/scores/7 pillar rows/purpose diff, sidebar ativo, Cmd+K mostra opcao "Comparar com Sandro Serzedello"
 
+### Fase 22 - Robustez Frontend (Concluido - 05/05/2026)
+- [x] `components/ErrorBoundary.js` — class component com getDerivedStateFromError + componentDidCatch, fallback UI com botoes "Voltar ao Dashboard" / "Recarregar"
+- [x] `hooks/useApiCall.js` — single-in-flight axios call com AbortController, abort no unmount, isCancel/CanceledError → null retornado para short-circuit limpo, isMounted() guard
+- [x] `App.js` reescrito: `lazy() + Suspense` em ~55 paginas, `ErrorBoundary` envolvendo `<Suspense><Routes/>`. Pages de auth (LoginPage, ResetPassword, VerifyEmail, AcceptInvite, NotFound) ficam eager no bundle inicial
+- [x] `AuthContext`: listener de evento `storage` para sync entre abas (logout em uma → reflete na outra)
+- [x] `BrandContext`: removido todo `localStorage.getItem('labrand_token')` fallback — usa `token` do useAuth direto. Apenas `AuthContext` lê localStorage no init
+- Testado: bundle.js 541KB, Dashboard chunk 19KB, Touchpoints +5 chunks ao navegar — code-split confirmado; cross-tab logout via storage event redireciona para /login; Suspense fallback ("Carregando...") tem testid; lint passou em todos os arquivos
+
 ---
 
 ## Backlog Priorizado

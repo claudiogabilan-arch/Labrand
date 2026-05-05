@@ -45,6 +45,21 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, [checkAuth]);
 
+  // Cross-tab sync: when another tab writes/clears the token in localStorage,
+  // mirror that change into this tab's context state so a logout in tab A
+  // immediately reflects in tab B.
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key !== 'labrand_token') return;
+      if (e.newValue !== token) {
+        setToken(e.newValue);
+        if (!e.newValue) setUser(null);
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [token]);
+
   const login = async (email, password) => {
     const response = await axios.post(`${API}/auth/login`, { email, password });
     const { token: newToken, ...userData } = response.data;
