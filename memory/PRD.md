@@ -53,6 +53,14 @@ Ferramenta interna de gestao de marcas para agencia de branding.
 - [x] **Architecture -> Valuation**: Verificado e funcionando (Iteration 32)
 - Testado: Backend 100%, Frontend 100% (iteration_32)
 
+### Fase 15 - Historico de Marca (Concluido - 05/05/2026)
+- [x] Pagina `/history` com timeline agrupada por data
+- [x] Filtros: usuario, modulo, intervalo de datas
+- [x] Paginacao "Carregar mais" (20 por pagina)
+- [x] Backend `/api/brands/{id}/activity` com skip/limit/user_id/module/date_from/date_to
+- [x] Item "Historico" adicionado na secao SISTEMA do sidebar
+- Testado: Backend via curl (total:9, has_more, filtros validos), Frontend smoke screenshot OK
+
 ---
 
 ## Backlog Priorizado

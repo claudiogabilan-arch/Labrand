@@ -140,9 +140,33 @@ async def log_activity(brand_id: str, user: dict, action: str, description: str,
 
 
 @router.get("/brands/{brand_id}/activity")
-async def get_activity_log(brand_id: str, limit: int = 50, user: dict = Depends(get_current_user)):
-    activities = await db.activity_log.find({"brand_id": brand_id}, {"_id": 0}).sort("created_at", -1).to_list(limit)
-    return {"activities": activities, "total": len(activities)}
+async def get_activity_log(
+    brand_id: str,
+    limit: int = 20,
+    skip: int = 0,
+    user_id: str = None,
+    module: str = None,
+    date_from: str = None,
+    date_to: str = None,
+    user: dict = Depends(get_current_user)
+):
+    query = {"brand_id": brand_id}
+    if user_id:
+        query["user_id"] = user_id
+    if module:
+        query["$or"] = [
+            {"action": {"$regex": module, "$options": "i"}},
+            {"description": {"$regex": module, "$options": "i"}},
+            {"metadata.module": module}
+        ]
+    if date_from:
+        query.setdefault("created_at", {})["$gte"] = date_from
+    if date_to:
+        query.setdefault("created_at", {})["$lte"] = date_to
+
+    total = await db.activity_log.count_documents(query)
+    activities = await db.activity_log.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    return {"activities": activities, "total": total, "has_more": (skip + limit) < total}
 
 
 @router.post("/brands/{brand_id}/activity/log")

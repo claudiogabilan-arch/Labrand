@@ -69,6 +69,7 @@ import {
   GraduationCap,
   MessageSquare,
   ShieldCheck,
+  Clock,
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -166,6 +167,7 @@ const sections = [
     icon: Settings,
     items: [
       { name: 'Ferramentas', href: '/brand-tools', icon: Wrench, featureId: 'brand_tools', pro: true },
+      { name: 'Histórico', href: '/history', icon: Clock, featureId: 'history' },
       { name: 'Créditos IA', href: '/ai-credits', icon: Star, featureId: 'ai_credits' },
       { name: 'Configurações', href: '/settings', icon: Settings, featureId: 'settings' },
       { name: 'Admin', href: '/admin', icon: ShieldCheck, featureId: 'admin', adminOnly: true },
