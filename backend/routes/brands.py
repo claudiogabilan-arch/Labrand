@@ -51,36 +51,53 @@ async def create_brand(brand_data: BrandCreate, user: dict = Depends(get_current
 async def get_brands(page: int = 1, limit: int = 50, user: dict = Depends(get_current_user)):
     """Get all brands for current user (owned + team member). Admins see ALL brands."""
     skip = (page - 1) * limit
-    # Admins see everything
-    if user.get("is_admin") or user.get("role") == "admin":
-        all_brands = await db.brands.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
-        return all_brands
+    is_admin = user.get("is_admin") or user.get("role") == "admin"
 
-    # Brands where user is owner
-    owned_brands = await db.brands.find(
-        {"owner_id": user["user_id"]},
-        {"_id": 0}
-    ).to_list(100)
-    
-    # Brands where user is a team member (from team_members collection)
-    memberships = await db.team_members.find(
-        {"user_id": user["user_id"]},
-        {"_id": 0, "brand_id": 1, "role": 1}
-    ).to_list(100)
-    
-    team_brand_ids = [m["brand_id"] for m in memberships]
-    owned_brand_ids = {b["brand_id"] for b in owned_brands}
-    # Only fetch team brands not already owned
-    new_team_ids = [bid for bid in team_brand_ids if bid not in owned_brand_ids]
-    
-    team_brands = []
-    if new_team_ids:
-        team_brands = await db.brands.find(
-            {"brand_id": {"$in": new_team_ids}},
+    if is_admin:
+        all_brands = await db.brands.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
+    else:
+        # Brands where user is owner
+        owned_brands = await db.brands.find(
+            {"owner_id": user["user_id"]},
             {"_id": 0}
         ).to_list(100)
-    
-    return owned_brands + team_brands
+
+        # Brands where user is a team member (from team_members collection)
+        memberships = await db.team_members.find(
+            {"user_id": user["user_id"]},
+            {"_id": 0, "brand_id": 1, "role": 1}
+        ).to_list(100)
+
+        team_brand_ids = [m["brand_id"] for m in memberships]
+        owned_brand_ids = {b["brand_id"] for b in owned_brands}
+        new_team_ids = [bid for bid in team_brand_ids if bid not in owned_brand_ids]
+
+        team_brands = []
+        if new_team_ids:
+            team_brands = await db.brands.find(
+                {"brand_id": {"$in": new_team_ids}},
+                {"_id": 0}
+            ).to_list(100)
+
+        all_brands = owned_brands + team_brands
+
+    # Enrich with owner_name/email so the frontend can warn when admin
+    # is acting on a brand owned by someone else.
+    owner_ids = list({b.get("owner_id") for b in all_brands if b.get("owner_id")})
+    owners_map = {}
+    if owner_ids:
+        owners = await db.users.find(
+            {"user_id": {"$in": owner_ids}},
+            {"_id": 0, "user_id": 1, "name": 1, "email": 1}
+        ).to_list(len(owner_ids))
+        owners_map = {u["user_id"]: u for u in owners}
+    for b in all_brands:
+        owner = owners_map.get(b.get("owner_id"))
+        if owner:
+            b["owner_name"] = owner.get("name")
+            b["owner_email"] = owner.get("email")
+
+    return all_brands
 
 
 @router.get("/brands/{brand_id}")

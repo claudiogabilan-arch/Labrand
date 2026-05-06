@@ -9,7 +9,7 @@ import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { toast } from 'sonner';
-import { Building2, Plus, Pencil, Trash2, Save, Loader2 } from 'lucide-react';
+import { Building2, Plus, Pencil, Trash2, Save, Loader2, AlertTriangle, UserCheck } from 'lucide-react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -34,7 +34,7 @@ const brandColors = [
 ];
 
 export default function SettingsBrands() {
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, user } = useAuth();
   const { brands, currentBrand, updateBrand, createBrand } = useBrand();
   const [isSaving, setIsSaving] = useState(false);
   const [editingBrand, setEditingBrand] = useState(null);
@@ -211,6 +211,16 @@ export default function SettingsBrands() {
                       {brandType && <Badge variant="secondary" className="text-xs">{brandType.label}</Badge>}
                       {parentBrand && <Badge variant="outline" className="text-xs bg-amber-50">Mae: {parentBrand.name}</Badge>}
                       {currentBrand?.brand_id === brand.brand_id && <Badge className="text-xs">Ativa</Badge>}
+                      {brand.owner_id === user?.user_id ? (
+                        <Badge variant="outline" className="text-xs gap-1 border-emerald-500/40 text-emerald-600 bg-emerald-500/5" data-testid={`owner-badge-${brand.brand_id}`}>
+                          <UserCheck className="h-3 w-3" />
+                          Criada por você
+                        </Badge>
+                      ) : brand.owner_name ? (
+                        <Badge variant="outline" className="text-xs gap-1 border-amber-500/40 text-amber-600 bg-amber-500/5" data-testid={`other-owner-badge-${brand.brand_id}`}>
+                          Criada por {brand.owner_name}
+                        </Badge>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -225,20 +235,45 @@ export default function SettingsBrands() {
         </div>
 
         {/* Delete Confirmation */}
-        {deletingBrand && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4 space-y-4">
-              <h3 className="font-bold text-lg">Excluir Marca</h3>
-              <p className="text-muted-foreground">Tem certeza que deseja excluir <strong>{deletingBrand.name}</strong>? Esta acao nao pode ser desfeita.</p>
-              <div className="flex gap-3 justify-end">
-                <Button variant="outline" onClick={() => setDeletingBrand(null)}>Cancelar</Button>
-                <Button variant="destructive" onClick={() => handleDeleteBrand(deletingBrand)} data-testid="confirm-delete-brand">
-                  <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                </Button>
+        {deletingBrand && (() => {
+          const isOwnedByOther = deletingBrand.owner_id && deletingBrand.owner_id !== user?.user_id;
+          const ownerLabel = deletingBrand.owner_name || deletingBrand.owner_email || 'outro usuário';
+          return (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" data-testid="delete-brand-dialog">
+              <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4 space-y-4">
+                <h3 className="font-bold text-lg">Excluir Marca</h3>
+
+                {isOwnedByOther && (
+                  <div
+                    className="flex gap-3 p-3 rounded-md border border-amber-500/40 bg-amber-500/10"
+                    data-testid="other-owner-warning"
+                  >
+                    <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-semibold text-amber-700 dark:text-amber-500">
+                        Esta marca está sendo trabalhada por outro usuário
+                      </p>
+                      <p className="text-amber-700/90 dark:text-amber-400/90 mt-1">
+                        Criada por <strong>{ownerLabel}</strong>. Excluir agora vai apagar todo o trabalho dessa pessoa
+                        (pilares, decisões, narrativas, campanhas etc).
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-muted-foreground">
+                  Tem certeza que deseja excluir <strong>{deletingBrand.name}</strong>? Esta ação não pode ser desfeita.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <Button variant="outline" onClick={() => setDeletingBrand(null)} data-testid="cancel-delete-brand">Cancelar</Button>
+                  <Button variant="destructive" onClick={() => handleDeleteBrand(deletingBrand)} data-testid="confirm-delete-brand">
+                    <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </CardContent>
     </Card>
   );
