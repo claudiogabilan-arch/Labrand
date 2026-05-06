@@ -119,10 +119,12 @@ async def update_brand(brand_id: str, brand_data: dict, user: dict = Depends(get
 
 @router.delete("/brands/{brand_id}")
 async def delete_brand(brand_id: str, user: dict = Depends(get_current_user)):
-    """Delete a brand and all related data"""
-    brand = await db.brands.find_one({"brand_id": brand_id, "owner_id": user["user_id"]}, {"_id": 0})
+    """Delete a brand and all related data. Owner OR admin can delete."""
+    is_admin = user.get("is_admin") or user.get("role") == "admin"
+    query = {"brand_id": brand_id} if is_admin else {"brand_id": brand_id, "owner_id": user["user_id"]}
+    brand = await db.brands.find_one(query, {"_id": 0})
     if not brand:
-        raise HTTPException(status_code=404, detail="Marca não encontrada")
+        raise HTTPException(status_code=404, detail="Marca não encontrada ou sem permissão")
     
     # Delete brand and all related data
     await db.brands.delete_one({"brand_id": brand_id})

@@ -78,10 +78,12 @@ export default function SettingsBrands() {
   const handleDeleteBrand = async (brand) => {
     try {
       await axios.delete(`${API}/brands/${brand.brand_id}`, { headers: getAuthHeaders(), withCredentials: true });
-      toast.success('Marca excluida com sucesso!');
+      toast.success('Marca excluída com sucesso!');
       setDeletingBrand(null);
       window.location.reload();
-    } catch { toast.error('Erro ao excluir marca'); }
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || 'Erro ao excluir marca');
+    }
   };
 
   return (
